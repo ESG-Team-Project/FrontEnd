@@ -62,9 +62,7 @@ export default function RootLayout({
           <div className="sticky top-0 min-w-full">
             <NaviBar />
           </div>
-          <div className="flex flex-col items-center min-w-full min-h-full">
-            {children}
-          </div>
+          <div className="min-w-full min-h-full">{children}</div>
         </div>
       </body>
     </html>
