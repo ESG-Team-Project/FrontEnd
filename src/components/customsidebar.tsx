@@ -27,10 +27,11 @@ export default function CustomSidebar(props: SidebarProps) {
         <SidebarGroup>
           <SidebarGroupLabel asChild>
             <CollapsibleTrigger>{title}</CollapsibleTrigger>
+
+            <CollapsibleContent>
+              <SidebarGroupContent>{children}</SidebarGroupContent>
+            </CollapsibleContent>
           </SidebarGroupLabel>
-          <CollapsibleContent>
-            <SidebarGroupContent>{children}</SidebarGroupContent>
-          </CollapsibleContent>
         </SidebarGroup>
       </Collapsible>
     </SidebarInset>
