@@ -54,15 +54,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko" className="overflow-x-hidden">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${pretendard.variable} antialiased font-pretendard`}
+        className={`${pretendard.variable} antialiased font-pretendard overflow-x-hidden w-full min-h-screen`}
+        style={{ overflowX: 'hidden', maxWidth: '100vw' }}
       >
-        <div className="flex flex-col items-start min-w-full min-h-full">
-          <div className="sticky top-0 min-w-full">
-            <NaviBar />
-          </div>
-          <div className="flex flex-col items-center min-w-full min-h-full">
+        <div className="flex flex-col w-full overflow-hidden min-h-full">
+          <NaviBar />
+          <main className="w-full overflow-hidden">
             {children}
           </div>
         </div>
