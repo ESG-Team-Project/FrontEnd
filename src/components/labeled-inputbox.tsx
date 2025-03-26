@@ -10,7 +10,7 @@ type InputBoxProps = {
   type : string
 }
 
-export default function InputBox(props: InputBoxProps) {
+export default function LabeledInputBox(props: InputBoxProps) {
   const { label, children, className, type} = props
   return (
     <div className={cn("flex flex-col gap-1", className)}>

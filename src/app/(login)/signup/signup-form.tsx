@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
-import InputBox from "@/components/input-box"
+import InputBox from "@/components/labeled-inputbox"
 import Link from "next/link"
 
 export function SignUpForm () {
@@ -22,7 +22,7 @@ export function SignUpForm () {
             <form className="space-y-4" onSubmit={handleSubmit}>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-4xl text-emerald-700">Sign Up</CardTitle>
+                  <CardTitle className="text-4xl text-(--color-primary)">Sign Up</CardTitle>
                 </CardHeader>
     
                 <CardContent className="space-y-4">
@@ -49,12 +49,12 @@ export function SignUpForm () {
     
                   <div className="flex gap-2">
                     {step === 1 && (
-                      <Button type="button" className="w-full text-white bg-emerald-600" onClick={next}>
+                      <Button type="button" className="w-full text-white bg-(--color-primary-foreground)" onClick={next}>
                         다음
                       </Button>
                     )}
                     {step === 2 && (
-                        <Button type="submit" className="w-full text-white bg-emerald-600">
+                        <Button type="submit" className="w-full text-white bg-(--color-primary-foreground)">
                             회원가입
                         </Button>
                     )}
