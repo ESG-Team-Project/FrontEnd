@@ -1,21 +1,45 @@
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
-import React from "react"
-import { Input } from "./ui/input"
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import React from "react";
 
-type InputBoxProps = {
-  label: string
-  children?: string
-  className?: string
-  type : string
-}
+type LabeledInputBoxProps = {
+  label: string;
+  name?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  className?: string;
+  type: string;
+  direction?: "row" | "col";
+};
 
-export default function LabeledInputBox(props: InputBoxProps) {
-  const { label, children, className, type} = props
+export default function LabeledInputBox({
+  label,
+  name,
+  value,
+  onChange,
+  className,
+  type,
+  direction = "col",
+}: LabeledInputBoxProps) {
   return (
-    <div className={cn("flex flex-col gap-1", className)}>
+    <div
+      className={cn(
+        `flex ${
+          direction === "row" ? "items-center gap-2" : "flex-col"
+        } ${className} flex justify-between w-full`
+      )}
+    >
       <Label>{label}</Label>
-      <Input type={type}  placeholder={children} required />
+      <Input
+        id={name}
+        name={name}
+        type={type}
+        value={value}
+        onChange={onChange}
+        required
+        className="max-w-75"
+      />
     </div>
-  )
+  );
 }
