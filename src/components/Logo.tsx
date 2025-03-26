@@ -7,12 +7,12 @@ type LogoProps = {
 export default function Logo(props: LogoProps) {
   const { srcURL, children } = props;
   return (
-    <div className="flex flex-row items-center h-20 ">
+    <div className="flex flex-row items-center">
       <Avatar>
         <AvatarImage src={srcURL} alt="@shadcn" />
         <AvatarFallback></AvatarFallback>
       </Avatar>
-      <p>{children}</p>
+      <p className="p-2">{children}</p>
     </div>
   );
 }
