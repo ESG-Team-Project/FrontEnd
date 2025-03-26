@@ -119,4 +119,25 @@
   body {
     @apply bg-background text-foreground;
   }
+  html,
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* 모든 요소의 가로 스크롤 방지 */
+  * {
+    max-width: 100%;
+  }
+
+  /* 버튼 텍스트에 여백 추가 */
+  button {
+    white-space: nowrap;
+  }
+}
+
+::selection {
+  color: white;
+  background-color: rgba(0, 122, 255, 0.7);
 }

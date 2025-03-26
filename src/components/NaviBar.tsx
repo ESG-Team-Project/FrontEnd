@@ -1,44 +1,62 @@
+"use client";
 import {
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import Logo from "./Logo";
+import { useState, useEffect } from "react";
 
 export default function NaviBar() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    // localStorage에서 로그인 상태 확인
+    const token = localStorage.getItem('auth_token');
+    const user = localStorage.getItem('user');
+    if (token && user) {
+      setIsLoggedIn(true);
+      setUserName(JSON.parse(user).username);
+    }
+  }, []);
+
   return (
-    <NavigationMenu className="justify-between min-w-full p-4 bg-white shadow">
-      <NavigationMenuList>
-        <Logo srcURL="https://github.com/shadcn.png">logotest</Logo>
-      </NavigationMenuList>
-      <NavigationMenuList>
-        <NavigationMenuItem>
-          <Link href="경로" legacyBehavior passHref>
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              ESG Dashboard
-            </NavigationMenuLink>
-          </Link>
-          <Link href="경로" legacyBehavior passHref>
-            <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-              ESG DATA POOL
-            </NavigationMenuLink>
-          </Link>
-        </NavigationMenuItem>
-      </NavigationMenuList>
-      <NavigationMenuList>
-        <Avatar>
-          <AvatarImage src="https://avatars.githubusercontent.com/u/118759932?v=4&size=64" />
-          <AvatarFallback>CNs</AvatarFallback>
-        </Avatar>
-        <Link href="r" legacyBehavior passHref>
-          <Button>대시보드 시작하기</Button>
-        </Link>
-      </NavigationMenuList>
+    <NavigationMenu className="sticky top-0 bg-white shadow-sm min-w-full">
+      <div className="w-full max-w-screen-xl mx-auto px-4">
+        <div className="flex w-full justify-between items-center h-16">
+          <NavigationMenu>
+            <Link href="/" className="flex items-center gap-2 shrink-0">
+              <Logo />
+              <span className="text-xl sm:text-2xl font-bold">Green Dynamics</span>
+            </Link>
+          </NavigationMenu>
+
+          <NavigationMenu className="flex items-center gap-2 sm:gap-4">
+            {isLoggedIn ? (
+              <Link href="/mypage">
+                <Avatar className="cursor-pointer">
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`} />
+                  <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="outline" className="bg-white text-black whitespace-nowrap">로그인</Button>
+              </Link>
+            )}
+            <Link href="/dashboard">
+              <Button variant="default" className="bg-black text-white text-xs sm:text-sm whitespace-nowrap">
+                <span className="hidden sm:inline">대시보드 시작하기</span>
+                <span className="sm:hidden">시작하기</span>
+              </Button>
+            </Link>
+          </NavigationMenu>
+        </div>
+      </div>
     </NavigationMenu>
   );
 }
