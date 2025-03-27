@@ -1,12 +1,13 @@
-export default function Layout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
+import DashboardSidebar from '@/components/dashboard-sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
-        <div className="flex flex-col items-center min-w-full min-h-full">
-            {children}
-        </div>
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-row w-full h-full">
+        <SidebarProvider className="h-full">
+          <DashboardSidebar />
+        </SidebarProvider>
+      <section className='w-full'>{children}</section>
+    </div>
   );
 }
