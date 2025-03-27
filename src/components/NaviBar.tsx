@@ -25,7 +25,7 @@ export default function NaviBar() {
   }, []);
 
   return (
-    <NavigationMenu className="sticky top-0 bg-white shadow-sm min-w-full">
+    <NavigationMenu className="fixed top-0 left-0 right-0 bg-white shadow-sm min-w-full z-50">
       <div className="w-full max-w-screen-xl mx-auto px-4">
         <div className="flex w-full justify-between items-center h-16">
           <NavigationMenu>

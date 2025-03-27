@@ -51,7 +51,7 @@ export default function RootLayout({
       >
         <div className="flex flex-col w-full overflow-hidden min-h-full">
           <NaviBar />
-          <main className="w-full overflow-hidden">
+          <main className="w-full overflow-hidden pt-16">
             {children}
           </main>
         </div>
