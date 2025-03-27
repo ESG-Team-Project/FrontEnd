@@ -27,7 +27,7 @@ export default function AccountForm() {
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
+    <form className="space-y-6 w-full max-w-4xl" onSubmit={handleSubmit}>
       <LabeledInputBox
         label="담당자 이름"
         name="name"
@@ -35,6 +35,9 @@ export default function AccountForm() {
         value={formData.name}
         onChange={handleChange}
         direction="row"
+        width="w-[400px]"
+        labelWidth="w-[100px]"
+        className="gap-4"
       />
       <LabeledInputBox
         label="이메일"
@@ -43,6 +46,9 @@ export default function AccountForm() {
         value={formData.email}
         onChange={handleChange}
         direction="row"
+        width="w-[400px]"
+        labelWidth="w-[100px]"
+        className="gap-4"
       />
       <LabeledInputBox
         label="비밀번호"
@@ -51,6 +57,9 @@ export default function AccountForm() {
         value={formData.password}
         onChange={handleChange}
         direction="row"
+        width="w-[400px]"
+        labelWidth="w-[100px]"
+        className="gap-4"
       />
       <LabeledInputBox
         label="비밀번호 확인"
@@ -59,6 +68,9 @@ export default function AccountForm() {
         value={formData.confirmPassword}
         onChange={handleChange}
         direction="row"
+        width="w-[400px]"
+        labelWidth="w-[100px]"
+        className="gap-4"
       />
       <LabeledInputBox
         label="휴대전화"
@@ -67,12 +79,15 @@ export default function AccountForm() {
         value={formData.phone}
         onChange={handleChange}
         direction="row"
+        width="w-[400px]"
+        labelWidth="w-[100px]"
+        className="gap-4"
       />
 
       <div className="flex justify-end">
         <Button
           type="submit"
-          className="w-1/8 mt-4 bg-black text-white hover:bg-white hover:text-black border border-black"
+          className="w-[100px] mt-4 bg-black text-white hover:bg-white hover:text-black border border-black"
         >
           저장
         </Button>

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ChartNoAxesCombined, Lightbulb, BarChart3, Users, Building2 } from "lucide-react"
+import { ChartNoAxesCombined, Lightbulb, BarChart3, Users, Building2, Building, User } from "lucide-react"
 
 export default function Page() {
 
