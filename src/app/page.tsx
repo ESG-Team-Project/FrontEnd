@@ -2,10 +2,6 @@ import { Button } from "@/components/ui/button";
 import { ChartNoAxesCombined, Lightbulb, BarChart3, Users, Building2 } from "lucide-react"
 
 export default function Page() {
-  const menuItems = [
-    { title: "담당자 정보", url: "/", icon: User },
-    { title: "회사 정보", url: "/mypage/company", icon: Building },
-  ];
 
   return (
     <div className="w-full overflow-hidden">
