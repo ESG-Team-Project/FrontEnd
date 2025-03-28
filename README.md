@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ESG 대시보드
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-14.0-black)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.0-38B2AC)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6)
 
-First, run the development server:
+ESG 대시보드는 기업의 환경, 사회, 지배구조(ESG) 데이터를 시각화하고 관리할 수 있는 인터랙티브 대시보드 플랫폼입니다. 다양한 차트 유형을 통해 데이터를 직관적으로 분석할 수 있습니다.
+
+## 주요 기능
+
+- **다양한 차트 시각화**: 막대 차트, 라인 차트, 파이 차트 등을 통한 데이터 시각화
+- **인터랙티브 대시보드**: 사용자가 직접 차트를 추가/삭제하여 커스터마이징 가능
+- **대시보드 잠금 기능**: 편집 모드를 잠그고 해제하여 실수로 인한 변경 방지
+- **반응형 디자인**: 모바일부터 데스크톱까지 모든 화면 크기에 최적화
+- **사용자 인증**: 기업 및 담당자 정보 관리
+
+## 시작하기
+
+### 필수 조건
+
+- Node.js 18.0 이상
+- npm 또는 yarn 또는 pnpm
+
+### 설치 방법
+
+저장소를 클론하고 의존성을 설치합니다:
+
+```bash
+# 저장소 클론
+git clone https://github.com/your-username/esg-dashboard.git
+cd esg-dashboard
+
+# 의존성 설치
+npm install
+# 또는
+yarn install
+# 또는
+pnpm install
+```
+
+### 개발 서버 실행
 
 ```bash
 npm run dev
-# or
+# 또는
 yarn dev
-# or
+# 또는
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+브라우저에서 [http://localhost:3000](http://localhost:3000)으로 접속하여 애플리케이션을 확인할 수 있습니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 기술 스택
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **프레임워크**: [Next.js](https://nextjs.org/)
+- **언어**: [TypeScript](https://www.typescriptlang.org/)
+- **스타일링**: [Tailwind CSS](https://tailwindcss.com/)
+- **차트 라이브러리**: [Recharts](https://recharts.org/)
+- **UI 컴포넌트**: Shadcn UI
 
-## Learn More
+## 프로젝트 구조
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                # Next.js 앱 라우터
+│   ├── (login)/        # 로그인/회원가입 관련 페이지
+│   ├── dashboard/      # 대시보드 페이지
+│   └── mypage/         # 마이페이지
+├── components/         # 재사용 가능한 컴포넌트
+│   ├── dashboard/      # 대시보드 전용 컴포넌트
+│   └── ui/             # UI 컴포넌트
+└── lib/                # 유틸리티 및 헬퍼 함수
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 기여 방법
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+프로젝트에 기여하고 싶으시다면:
 
-## Deploy on Vercel
+1. 이 저장소를 포크합니다.
+2. 새로운 브랜치를 생성합니다: `git checkout -b feature/amazing-feature`
+3. 변경사항을 커밋합니다: `git commit -m 'Add some amazing feature'`
+4. 브랜치에 푸시합니다: `git push origin feature/amazing-feature`
+5. Pull Request를 생성합니다.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 라이선스
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+
+
+## 감사의 말
+
+- [Next.js](https://nextjs.org/) - React 프레임워크
+- [Tailwind CSS](https://tailwindcss.com/) - CSS 프레임워크
+- [Recharts](https://recharts.org/) - 차트 라이브러리
+- [Shadcn UI](https://ui.shadcn.com/) - UI 컴포넌트

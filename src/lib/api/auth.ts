@@ -28,12 +28,15 @@ interface LoginRequest {
  */
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
-    const response: AxiosResponse<LoginResponse> = await axiosInstance.post('/auth/login', credentials);
-    
+    const response: AxiosResponse<LoginResponse> = await axiosInstance.post(
+      '/users/login',
+      credentials
+    );
+
     // 토큰 저장
     const { token } = response.data;
     setToken(token);
-    
+
     return response.data;
   } catch (error) {
     throw error;
@@ -68,7 +71,7 @@ export const verifyToken = async (): Promise<boolean> => {
   try {
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return false;
-    
+
     const response = await axiosInstance.get('/auth/verify');
     return response.status === 200;
   } catch (error) {
@@ -77,4 +80,4 @@ export const verifyToken = async (): Promise<boolean> => {
     }
     return false;
   }
-}; 
+};

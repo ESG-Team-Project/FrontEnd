@@ -1,22 +1,51 @@
-import React from "react";
-import Mainframe from "./mainframe";
-import Charts from "./charts";
+'use client';
+
+import React, { useState } from 'react';
+import { ChartAreaInteractive } from '@/components/chartarea-interactive';
+import { Card, CardContent, CardTitle } from '@/components/ui/card';
+// import CustomSidebar from '@/components/customsidebar'
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import DashboardHeader from './dashboard-header';
+
+type Props = {
+  companyName: string;
+  managerName: string;
+};
 
 export default function Page() {
   return (
-    <div
-      style={{
-        backgroundColor: "rgba(0,180,117,0.2)", //#00b475",
-        height: "100vh", // 화면 전체 높이
-        display: "flex", // 텍스트를 중앙 정렬하기 위해 flex 사용
-        justifyContent: "center", // 가로 중앙 정렬
-        alignItems: "center", // 세로 중앙 정렬
-        color: "#fff", // 텍스트 색상 (가독성을 위해 흰색)
-        fontSize: "50px", // 텍스트 크기
-        fontWeight: "bold", // 텍스트 굵기
-      }}
-    >
-      으아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아아앙아아아아아아
+    <div className="flex flex-col justify-center w-full gap-4 min-h-auto md:p-4 bg-(--color-background) ">
+      <div className="flex flex-row justify-center w-full min-h-auto">
+        <Card className="flex w-full">
+          <CardContent>
+            <form>
+              <p className="pb-2">회사명: {companyName} </p>
+              <p>담당자 이름: {managerName} </p>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <ChartAreaInteractive label="Title" />
+        <ChartAreaInteractive label="Title" />
+        <ChartAreaInteractive label="Title" />
+        <ChartAreaInteractive label="Title" />
+        <Card className='w-full'>
+          <CardContent>
+            dfdg
+          </CardContent>
+        </Card>
+        <Card className='w-full'>
+          <CardContent>
+            dfdg
+          </CardContent>
+        </Card>
+        <Card className='w-full'>
+          <CardContent>
+            dfdg
+          </CardContent>
+        </Card>
+      </div>
     </div>
-  );
+  )
 }
