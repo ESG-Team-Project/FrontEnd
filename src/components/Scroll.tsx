@@ -1,5 +1,5 @@
-import React from "react";
-import { ScrollArea } from "./ui/scroll-area";
+import React from 'react';
+import { ScrollArea } from './ui/scroll-area';
 
 type ScrollProps = {
   className: string;

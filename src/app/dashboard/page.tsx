@@ -30,22 +30,16 @@ export default function Page() {
         <ChartAreaInteractive label="Title" />
         <ChartAreaInteractive label="Title" />
         <ChartAreaInteractive label="Title" />
-        <Card className='w-full'>
-          <CardContent>
-            dfdg
-          </CardContent>
+        <Card className="w-full">
+          <CardContent>dfdg</CardContent>
         </Card>
-        <Card className='w-full'>
-          <CardContent>
-            dfdg
-          </CardContent>
+        <Card className="w-full">
+          <CardContent>dfdg</CardContent>
         </Card>
-        <Card className='w-full'>
-          <CardContent>
-            dfdg
-          </CardContent>
+        <Card className="w-full">
+          <CardContent>dfdg</CardContent>
         </Card>
       </div>
     </div>
-  )
+  );
 }

@@ -15,7 +15,7 @@ import {
   ChartSpline,
   ChartNoAxesCombined,
   ChartColumnStacked,
-  ChartBarStacked
+  ChartBarStacked,
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { SidebarGroupContent } from './ui/sidebar';

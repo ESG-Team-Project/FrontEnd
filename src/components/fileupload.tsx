@@ -1,7 +1,7 @@
-"use client";
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
-import { Upload } from "lucide-react";
+'use client';
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload } from 'lucide-react';
 
 export default function FileUpload() {
   const [files, setFiles] = useState<File[]>([]);
@@ -12,7 +12,7 @@ export default function FileUpload() {
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: { "text/csv": [".csv", "text/plain"] },
+    accept: { 'text/csv': ['.csv', 'text/plain'] },
   });
 
   return (
@@ -32,15 +32,10 @@ export default function FileUpload() {
 
       {files.length > 0 && (
         <div className="mt-4 w-full max-w-md">
-          <p className="text-gray-700 dark:text-gray-300 font-semibold">
-            업로드된 파일:
-          </p>
+          <p className="text-gray-700 dark:text-gray-300 font-semibold">업로드된 파일:</p>
           <ul className="mt-2 space-y-1">
-            {files.map((file) => (
-              <li
-                key={file.name}
-                className="text-gray-600 dark:text-gray-300 text-sm"
-              >
+            {files.map(file => (
+              <li key={file.name} className="text-gray-600 dark:text-gray-300 text-sm">
                 📂 {file.name}
               </li>
             ))}

@@ -1,4 +1,4 @@
-import CompanyForm from "./company-form";
+import CompanyForm from './company-form';
 
 export default function MyPage() {
   return (

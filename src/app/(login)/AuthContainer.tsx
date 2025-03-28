@@ -1,11 +1,11 @@
-'use client'
+'use client';
 
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 
 interface AuthContainerProps {
-  children: React.ReactNode
-  title: string
-  footerContent: React.ReactNode
+  children: React.ReactNode;
+  title: string;
+  footerContent: React.ReactNode;
 }
 
 export default function AuthContainer({ children, title, footerContent }: AuthContainerProps) {
@@ -18,16 +18,12 @@ export default function AuthContainer({ children, title, footerContent }: AuthCo
               <CardTitle className="text-4xl font-bold text-emerald-600">{title}</CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4">
-              {children}
-            </CardContent>
+            <CardContent className="space-y-4">{children}</CardContent>
 
-            <CardFooter>
-              {footerContent}
-            </CardFooter>
+            <CardFooter>{footerContent}</CardFooter>
           </Card>
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}

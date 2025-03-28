@@ -1,13 +1,13 @@
-"use client";
-import { Button } from "@/components/ui/button";
+'use client';
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogClose,
-} from "@/components/ui/dialog";
-import { ESGCombobox } from "./combobox"; // 분리한 combobox 가져오기
+} from '@/components/ui/dialog';
+import { ESGCombobox } from './combobox'; // 분리한 combobox 가져오기
 
 export function ESGChartDialog({
   open,
@@ -30,10 +30,7 @@ export function ESGChartDialog({
         <div className="space-y-4">
           {/* 차트 제목 입력 */}
           <div>
-            <label
-              htmlFor="chart-title"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="chart-title" className="block text-sm font-medium text-gray-700">
               차트 제목
             </label>
             <input
@@ -46,9 +43,7 @@ export function ESGChartDialog({
 
           {/* ESG 항목 선택 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              ESG 항목
-            </label>
+            <label className="block text-sm font-medium text-gray-700">ESG 항목</label>
             <ESGCombobox />
           </div>
         </div>

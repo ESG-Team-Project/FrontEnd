@@ -92,4 +92,4 @@ export const deletePost = async (id: number) => {
     console.error('게시글 삭제 실패:', error);
     throw error;
   }
-}; 
+};

@@ -10,7 +10,10 @@ export { authService };
  * @param {AxiosRequestConfig} config - axios 설정
  * @returns {Promise<AxiosResponse>} API 응답
  */
-export const get = async <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+export const get = async <T = any>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<AxiosResponse<T>> => {
   return axiosInstance.get<T>(url, config);
 };
 
@@ -21,7 +24,11 @@ export const get = async <T = any>(url: string, config?: AxiosRequestConfig): Pr
  * @param {AxiosRequestConfig} config - axios 설정
  * @returns {Promise<AxiosResponse>} API 응답
  */
-export const post = async <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+export const post = async <T = any>(
+  url: string,
+  data?: any,
+  config?: AxiosRequestConfig
+): Promise<AxiosResponse<T>> => {
   return axiosInstance.post<T>(url, data, config);
 };
 
@@ -32,7 +39,11 @@ export const post = async <T = any>(url: string, data?: any, config?: AxiosReque
  * @param {AxiosRequestConfig} config - axios 설정
  * @returns {Promise<AxiosResponse>} API 응답
  */
-export const put = async <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+export const put = async <T = any>(
+  url: string,
+  data?: any,
+  config?: AxiosRequestConfig
+): Promise<AxiosResponse<T>> => {
   return axiosInstance.put<T>(url, data, config);
 };
 
@@ -43,7 +54,11 @@ export const put = async <T = any>(url: string, data?: any, config?: AxiosReques
  * @param {AxiosRequestConfig} config - axios 설정
  * @returns {Promise<AxiosResponse>} API 응답
  */
-export const patch = async <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+export const patch = async <T = any>(
+  url: string,
+  data?: any,
+  config?: AxiosRequestConfig
+): Promise<AxiosResponse<T>> => {
   return axiosInstance.patch<T>(url, data, config);
 };
 
@@ -53,7 +68,10 @@ export const patch = async <T = any>(url: string, data?: any, config?: AxiosRequ
  * @param {AxiosRequestConfig} config - axios 설정
  * @returns {Promise<AxiosResponse>} API 응답
  */
-export const del = async <T = any>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
+export const del = async <T = any>(
+  url: string,
+  config?: AxiosRequestConfig
+): Promise<AxiosResponse<T>> => {
   return axiosInstance.delete<T>(url, config);
 };
 
@@ -67,4 +85,4 @@ const apiService = {
   auth: authService,
 };
 
-export default apiService; 
+export default apiService;

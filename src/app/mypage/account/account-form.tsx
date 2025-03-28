@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import LabeledInputBox from "@/components/labeled-inputbox";
-import { Button } from "@/components/ui/button";
+import React, { useState } from 'react';
+import LabeledInputBox from '@/components/labeled-inputbox';
+import { Button } from '@/components/ui/button';
 
 export default function AccountForm() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    phone: "",
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    phone: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
+    setFormData(prevData => ({
       ...prevData,
       [name]: value,
     }));
@@ -23,7 +23,7 @@ export default function AccountForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form Data:", formData);
+    console.log('Form Data:', formData);
   };
 
   return (

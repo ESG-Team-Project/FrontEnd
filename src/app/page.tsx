@@ -16,10 +16,7 @@ export default function Page() {
       <div className="flex flex-col items-center w-full gap-16 pt-10 pb-10  bg-gradient-to-b from-emerald-100 to-white">
         <div className="flex flex-col max-w-xl gap-8 px-4 mx-auto text-center">
           <h1 className="text-4xl font-bold md:text-6xl">
-            <span className="text-emerald-600">
-              ESG 경영
-            </span>
-            을 위한 통합 대시보드
+            <span className="text-emerald-600">ESG 경영</span>을 위한 통합 대시보드
           </h1>
           <span className="text-sm md:text-base">
             귀사의 환경, 사회, 지배구조 데이터를 한눈에 파악하고 분석할 수 있는 내부 대시보드입니다.

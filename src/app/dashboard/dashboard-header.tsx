@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 
 export default function DashboardHeader() {
   const [locked, setLocked] = useState(false);
@@ -13,7 +13,9 @@ export default function DashboardHeader() {
           <Switch checked={locked} onCheckedChange={setLocked} />
         </label>
       </div>
-      <Button variant="outline" className="bg-white">파일 선택</Button>
+      <Button variant="outline" className="bg-white">
+        파일 선택
+      </Button>
     </div>
   );
 }

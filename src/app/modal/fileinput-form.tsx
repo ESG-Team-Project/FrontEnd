@@ -1,14 +1,9 @@
-"use client";
-import { useState, useCallback } from "react";
-import { useDropzone } from "react-dropzone";
-import { Upload, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+'use client';
+import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { Upload, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export function FileInputDialog({
   open,
@@ -20,22 +15,22 @@ export function FileInputDialog({
   const [files, setFiles] = useState<File[]>([]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
+    setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
   }, []);
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: { "text/csv": [".csv", "text/plain"] },
+    accept: { 'text/csv': ['.csv', 'text/plain'] },
   });
 
   const handleSave = () => {
-    console.log("저장된 파일 목록:", files);
-    alert("파일이 저장되었습니다!");
+    console.log('저장된 파일 목록:', files);
+    alert('파일이 저장되었습니다!');
   };
 
   // 파일 삭제 함수
   const removeFile = (fileName: string) => {
-    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
+    setFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
   };
 
   return (
@@ -62,11 +57,9 @@ export function FileInputDialog({
         {/* 업로드된 파일 리스트 */}
         {files.length > 0 && (
           <div className="mt-4">
-            <p className="text-gray-700 dark:text-gray-300 font-bold">
-              업로드된 파일
-            </p>
+            <p className="text-gray-700 dark:text-gray-300 font-bold">업로드된 파일</p>
             <ul className="mt-2 space-y-1">
-              {files.map((file) => (
+              {files.map(file => (
                 <li
                   key={file.name}
                   className="flex justify-between items-center text-gray-600 dark:text-gray-300 text-sm border-b py-2"

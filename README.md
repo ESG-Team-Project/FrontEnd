@@ -86,7 +86,6 @@ src/
 
 이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 
-
 ## 감사의 말
 
 - [Next.js](https://nextjs.org/) - React 프레임워크
