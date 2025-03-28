@@ -9,18 +9,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function NaviBar() {
+  const location = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
+  // const [userName, setUserName] = useState('');
 
   useEffect(() => {
     // localStorage에서 로그인 상태 확인
     const token = localStorage.getItem('auth_token');
-    const user = localStorage.getItem('user');
-    if (token && user) {
+    // const user = localStorage.getItem('user');
+    // {/*&& user*/}
+    if (token) {
       setIsLoggedIn(true);
-      setUserName(JSON.parse(user).username);
+      // setUserName(JSON.parse(user).username);
     }
   }, []);
 
@@ -36,13 +39,23 @@ export default function NaviBar() {
           </NavigationMenu>
 
           <NavigationMenu className="flex items-center gap-2 sm:gap-4">
+            <Link href="/">
+              <Button
+                variant="ghost"
+                className={
+                  location === '/mypage/account'
+                    ? 'text-black bg-white whitespace-nowrap'
+                    : 'text-black hidden bg-white whitespace-nowrap'
+                }
+              >
+                로그아웃
+              </Button>
+            </Link>
             {isLoggedIn ? (
-              <Link href="/mypage">
+              <Link href="/mypage/account">
                 <Avatar className="cursor-pointer">
-                  <AvatarImage
-                    src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userName}`}
-                  />
-                  <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=LDM`} />
+                  {/* <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback> */}
                 </Avatar>
               </Link>
             ) : (

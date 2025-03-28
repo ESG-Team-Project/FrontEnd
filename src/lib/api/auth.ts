@@ -34,7 +34,9 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
     );
 
     // 토큰 저장
-    const { token } = response.data;
+    const { token, user } = response.data;
+    console.log(user);
+
     setToken(token);
 
     return response.data;
