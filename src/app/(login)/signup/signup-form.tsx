@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import InputBox from "@/components/labeled-inputbox"
+import LabeledInputBox from "@/components/labeled-inputbox"
 import Link from "next/link"
 import AuthContainer from '../AuthContainer'
 
@@ -31,22 +31,22 @@ export function SignUpForm() {
             <form className="space-y-4" onSubmit={handleSubmit}>
                 {step === 1 && (
                     <>
-                        <InputBox label="이메일" type="email">
+                        <LabeledInputBox label="이메일" type="email">
                             you@example.com
-                        </InputBox>
-                        <InputBox label="비밀번호" type="password" />
-                        <InputBox label="비밀번호 확인" type="password"/>
+                        </LabeledInputBox>
+                        <LabeledInputBox label="비밀번호" type="password" />
+                        <LabeledInputBox label="비밀번호 확인" type="password"/>
                     </>
                 )}
 
                 {step === 2 && (
                     <>
-                        <InputBox label="회사명" type="string" />
-                        <InputBox label="대표자명" type="string" />
-                        <InputBox label="사업자 등록번호" type="string" />
-                        <InputBox label="대표번호" type="string" />
-                        <InputBox label="담당자명" type="string" />
-                        <InputBox label="전화번호" type="string" />
+                        <LabeledInputBox label="회사명" type="string" />
+                        <LabeledInputBox label="대표자명" type="string" />
+                        <LabeledInputBox label="사업자 등록번호" type="string" />
+                        <LabeledInputBox label="대표번호" type="string" />
+                        <LabeledInputBox label="담당자명" type="string" />
+                        <LabeledInputBox label="전화번호" type="string" />
                     </>
                 )}
 

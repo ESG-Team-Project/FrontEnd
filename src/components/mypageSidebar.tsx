@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react';
 
 import {
   SidebarInset,
@@ -9,7 +9,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar";
+} from '@/components/ui/sidebar';
+import { usePathname } from 'next/navigation';
 
 interface Item {
   title: string;
@@ -21,15 +22,23 @@ interface SidebarProps {
 }
 
 export function AppSidebar({ items }: SidebarProps) {
+  const location = usePathname();
+  console.log(location);
   return (
     <SidebarInset>
-      <SidebarMenu className="right-0 sticy">
+      <SidebarMenu className="pl-2 w-max">
         {items.map(({ title, url, icon: IconComponent }) => (
-          <SidebarMenuItem key={title}>
-            <SidebarMenuButton>
-              <a href={url} className="flex items-center gap-2 h-fit">
-                <IconComponent className="" /> {/* 아이콘 렌더링 */}
-                <span className="flex flex-row">{title}</span>
+          <SidebarMenuItem key={title} className="w-full">
+            <SidebarMenuButton
+              className={
+                location === url
+                  ? 'h-full w-full rounded-l-md  shadow-[-12px_0px_6px_-5px_#1a202c] bg-gray-50'
+                  : 'h-full w-full rounded-l-md'
+              }
+            >
+              <a href={url} className="flex flex-row items-center justify-between w-full">
+                <IconComponent className="w-10 h-10" />
+                <span className="w-full text-2xl text-center">{title}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
