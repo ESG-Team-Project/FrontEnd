@@ -181,7 +181,7 @@ type EsgIndicator = { id: string; label: string };
 export function ESGCombobox() {
   const [openCategoryPopover, setOpenCategoryPopover] = React.useState(false);
   const [openIndicatorPopover, setOpenIndicatorPopover] = React.useState(false);
-  const [category, setCategory] = React.useState<EsgCategory | "">("");
+  const [category, setCategory] = React.useState<EsgCategory | null>(null);
   const [indicator, setIndicator] = React.useState<string>("");
 
   const categoryOptions = [
@@ -194,6 +194,7 @@ export function ESGCombobox() {
 
   return (
     <div>
+      {/* Category Selection */}
       <Popover open={openCategoryPopover} onOpenChange={setOpenCategoryPopover}>
         <PopoverTrigger asChild>
           <Button
@@ -201,53 +202,75 @@ export function ESGCombobox() {
             role="combobox"
             aria-expanded={openCategoryPopover}
             className="w-full max-w-[500px] justify-between bg-white"
-            onClick={() => {
-              if (category) {
-                setCategory(""); // Reset category and indicator
-                setIndicator(""); // Reset indicator
-                setOpenCategoryPopover(true); // Open the category popover
-              }
-            }}
           >
             {category
-              ? `${
-                  categoryOptions.find((item) => item.value === category)?.label
-                }`
+              ? categoryOptions.find((item) => item.value === category)?.label
               : "ESG 항목 선택"}
             <ChevronsUpDown className="opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full max-w-[500px] p-0 bg-white overflow-auto">
+        <PopoverContent className="w-full max-w-[500px] p-0 bg-white">
           <Command>
-            <CommandInput placeholder="Search ESG..." className="h-9" />
             <CommandList>
-              <CommandEmpty>항목을 찾을 수 없습니다.</CommandEmpty>
               <CommandGroup>
-                {!category ? (
-                  categoryOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={(value) => {
-                        setCategory(value as EsgCategory);
-                        setIndicator("");
-                        setOpenCategoryPopover(false); // Close the category popover
-                        setOpenIndicatorPopover(true); // Open the indicator popover
-                      }}
-                    >
-                      {option.label}
-                    </CommandItem>
-                  ))
+                {categoryOptions.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={(value) => {
+                      setCategory(value as EsgCategory);
+                      setIndicator(""); // Reset indicator
+                      setOpenCategoryPopover(false); // Close category popover
+                      setOpenIndicatorPopover(true); // Open indicator popover
+                    }}
+                  >
+                    {option.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+      {/* Indicator Selection */}
+      {category && (
+        <Popover
+          open={openIndicatorPopover}
+          onOpenChange={setOpenIndicatorPopover}
+          modal={true}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={openIndicatorPopover}
+              className="w-full max-w-[500px] justify-between bg-white mt-2"
+            >
+              {indicator
+                ? indicators.find((item) => item.label === indicator)?.label
+                : "지표 선택"}
+              <ChevronsUpDown className="opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="min-w-full  p-0 bg-white">
+            <Command>
+              <CommandInput placeholder="Search Indicator..." />
+              <CommandList>
+                {indicators.length === 0 ? (
+                  <CommandEmpty>항목을 찾을 수 없습니다.</CommandEmpty>
                 ) : (
-                  <ScrollArea className="h-72 w-48 overflow-auto rounded-md border">
-                    <div className="p-4">
+                  <ScrollArea className="h-48 w-full overflow-auto">
+                    <CommandGroup>
                       {indicators.map((option) => (
                         <CommandItem
                           key={option.id}
-                          value={option.id}
-                          onSelect={(value) => {
-                            setIndicator(value === indicator ? "" : value);
-                            setOpenIndicatorPopover(false); // Close the indicator popover
+                          value={option.label}
+                          onSelect={(currentValue) => {
+                            setIndicator(
+                              currentValue === indicator ? "" : currentValue
+                            );
+                            setOpenIndicatorPopover(false); // Close the popover
                           }}
                         >
                           {option.label}
@@ -261,63 +284,9 @@ export function ESGCombobox() {
                           />
                         </CommandItem>
                       ))}
-                    </div>
+                    </CommandGroup>
                   </ScrollArea>
                 )}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      {/* If category is selected, show a second combobox for indicators */}
-      {category && (
-        <Popover
-          open={openIndicatorPopover}
-          onOpenChange={setOpenIndicatorPopover}
-        >
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={openIndicatorPopover}
-              className="w-full max-w-[500px] justify-between bg-white mt-2"
-            >
-              {indicator
-                ? indicators.find((item) => item.id === indicator)?.label
-                : "지표 선택"}
-              <ChevronsUpDown className="opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full max-w-[500px] p-0 bg-white">
-            <Command>
-              <CommandInput placeholder="Search Indicator..." className="h-9" />
-              <CommandList>
-                <CommandEmpty>항목을 찾을 수 없습니다.</CommandEmpty>
-                <CommandGroup>
-                  <ScrollArea className="h-60 overflow-auto">
-                    {indicators.map((option) => (
-                      <CommandItem
-                        key={option.id}
-                        value={option.id}
-                        onSelect={(value) => {
-                          setIndicator(value === indicator ? "" : value);
-                          setOpenIndicatorPopover(false); // Close the indicator popover
-                        }}
-                      >
-                        {option.label}
-                        <Check
-                          className={cn(
-                            "ml-auto",
-                            indicator === option.id
-                              ? "opacity-100"
-                              : "opacity-0"
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </ScrollArea>
-                </CommandGroup>
               </CommandList>
             </Command>
           </PopoverContent>
