@@ -28,7 +28,7 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      <div className="w-[260px] border-r flex flex-col h-[700px] bg-white p-4 overflow-y-auto">
+      <div className="w-[260px] h-[700px] flex flex-col bg-white p-4 min-h-full">
         {/* 사용자 정보 영역 */}
         <div className="flex flex-col items-center gap-2 pb-4 border-b">
           <Avatar className="w-16 h-16">
