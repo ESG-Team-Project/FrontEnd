@@ -4,7 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import api  from '@/lib/api/axios';
+import api from '@/lib/api';
 import {
   Table,
   TableBody,
@@ -26,47 +26,55 @@ export function FileInputDialog({
   const [files, setFiles] = useState<File[]>([]);
   const [csvData, setCsvData] = useState<Map<any, any>>(new Map()); // 업로드된 파일의 내용을 저장할 상태
   const [maxColumns, setMaxColumns] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSave = async () => {
     if (files.length === 0) return;
-  
-    try {
-      // 파일을 읽어서 텍스트로 변환
-      const file = files[0]; // 첫 번째 파일만 업로드
-      const text = await file.text();
-  
     
-      const payload = {
-        file: text, // 또는 필요하다면 base64로 인코딩
-        companyId: 1,
-        dataType: 'gri',
-      };
-      
-      const res = await api.post ('/data-import/csv', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      const result = await res.data;
-      console.log('업로드 성공:', result);
-      alert('파일이 성공적으로 업로드되었습니다!');
-      setFiles([]);
-    } catch (error) {
-      console.error('업로드 중 오류 발생:', error);
-      alert('파일 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
+    setIsUploading(true);
+    const formData = new FormData();
+    
+    // for...of 구문 사용 (forEach 대신)
+    for (const file of files) {
+      formData.append('files', file);
     }
-  
-    setOpen(false);
-    setCsvData(new Map()); // 업로드 후 CSV 데이터 초기화
-    setMaxColumns(0); // 업로드 후 최대 컬럼 수 초기화  
+    
+    try {
+      // 첫번째 방법: axios 인스턴스를 통한 요청
+      /* const response = await api.post('/data-import/csv', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      }); */
+      
+      // 두번째 방법: 기존 fetch 사용
+      const res = await fetch('/api/data-import/csv', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) {
+        throw new Error('파일 업로드 실패');
+      }
+      
+      const result = await res.json();
+      console.log('[파일 업로드] 성공:', result);
+      alert('파일이 성공적으로 업로드되었습니다!');
+      setFiles([]); // 업로드 후 파일 목록 초기화
+      setCsvData(new Map()); // 업로드 후 CSV 데이터 초기화
+      setMaxColumns(0); // 업로드 후 최대 컬럼 수 초기화
+    } catch (error) {
+      console.error('[파일 업로드] 오류 발생:', error);
+      alert('파일 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
+    } finally {
+      setIsUploading(false);
+      setOpen(false); // 업로드 후 다이얼로그 닫기
+    }
   };
 
   // 파일 업로드 핸들러
-  // useCallback을 사용하여 메모이제이션된 콜백 함수를 생성합니다. 
-  const onDrop = useCallback( (acceptedFiles: File[]) => {
+  // useCallback을 사용하여 메모이제이션된 콜백 함수를 생성합니다.
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles?.[0];
     if (file) {
       const reader = new FileReader();
@@ -136,7 +144,7 @@ export function FileInputDialog({
         {/* 파일 업로드 영역 */}
         <div
           {...getRootProps()}
-          className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 Ihover:border-gray-500 dark:hover:border-gray-400"
+          className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
         >
           <input {...getInputProps()} />
           <div className="flex flex-col items-center w-full">
@@ -144,7 +152,7 @@ export function FileInputDialog({
             <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
               CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
             </p>
-          </div> 
+          </div>
         </div>
 
         <div>
@@ -211,6 +219,7 @@ export function FileInputDialog({
                 >
                   📂 {file.name}
                   <button
+                    type="button"
                     onClick={() => removeFile(file.name)}
                     className="text-black-500 hover:text-black-700"
                   >
@@ -223,9 +232,10 @@ export function FileInputDialog({
             <div className="flex justify-end">
               <Button
                 onClick={handleSave}
+                disabled={isUploading}
                 className="px-4 py-2 mt-4 text-white bg-black border border-black rounded w-1/8 hover:bg-white hover:text-black"
               >
-                저장
+                {isUploading ? '업로드 중...' : '저장'}
               </Button>
             </div>
           </div>

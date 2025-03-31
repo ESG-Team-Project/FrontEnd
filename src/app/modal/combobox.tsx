@@ -259,11 +259,7 @@ export function ESGCombobox() {
 
       {/* Indicator Selection */}
       {category && (
-        <Popover
-          open={openIndicatorPopover}
-          onOpenChange={setOpenIndicatorPopover}
-          modal={true}
-        >
+        <Popover open={openIndicatorPopover} onOpenChange={setOpenIndicatorPopover} modal={true}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -271,9 +267,7 @@ export function ESGCombobox() {
               aria-expanded={openIndicatorPopover}
               className="w-full max-w-[500px] justify-between bg-white mt-2"
             >
-              {indicator
-                ? indicators.find((item) => item.label === indicator)?.label
-                : "지표 선택"}
+              {indicator ? indicators.find(item => item.label === indicator)?.label : '지표 선택'}
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -286,24 +280,20 @@ export function ESGCombobox() {
                 ) : (
                   <ScrollArea className="h-48 w-full overflow-auto">
                     <CommandGroup>
-                      {indicators.map((option) => (
+                      {indicators.map(option => (
                         <CommandItem
                           key={option.id}
                           value={option.label}
-                          onSelect={(currentValue) => {
-                            setIndicator(
-                              currentValue === indicator ? "" : currentValue
-                            );
+                          onSelect={currentValue => {
+                            setIndicator(currentValue === indicator ? '' : currentValue);
                             setOpenIndicatorPopover(false); // Close the popover
                           }}
                         >
                           {option.label}
                           <Check
                             className={cn(
-                              "ml-auto",
-                              indicator === option.id
-                                ? "opacity-100"
-                                : "opacity-0"
+                              'ml-auto',
+                              indicator === option.id ? 'opacity-100' : 'opacity-0'
                             )}
                           />
                         </CommandItem>

@@ -16,10 +16,7 @@ export default function DashboardHeader() {
             <Switch checked={locked} onCheckedChange={setLocked} />
           </label>
         </div>
-        <Button
-          variant="outline"
-          className="bg-white"
-          onClick={() => setOpen(true)}>
+        <Button variant="outline" className="bg-white" onClick={() => setOpen(true)}>
           파일 선택
         </Button>
       </div>
