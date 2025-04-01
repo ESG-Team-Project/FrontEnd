@@ -8,7 +8,6 @@ console.log('[AXIOS] API 기본 URL:', baseURL);
 
 // 토큰 저장 키 - fallback으로 사용
 const TOKEN_KEY = 'auth';
-const LEGACY_TOKEN_KEY = 'auth_token'; // 이전 버전과의 호환성을 위해 유지
 
 // Jotai 스토어에서 토큰 가져오기 (다양한 방법 시도)
 export const getTokenFromAtom = (): string | null => {
@@ -40,13 +39,6 @@ export const getTokenFromAtom = (): string | null => {
       } catch (e) {
         console.error('[AXIOS] 로컬 스토리지 JSON 파싱 오류:', e);
       }
-    }
-    
-    // 방법 3: 이전 버전과의 호환성을 위해 auth_token에서도 확인
-    const legacyToken = localStorage.getItem(LEGACY_TOKEN_KEY);
-    if (legacyToken) {
-      console.log('[AXIOS] 레거시 토큰 저장소에서 토큰 찾음');
-      return legacyToken;
     }
     
     console.log('[AXIOS] 토큰을 찾을 수 없음');
@@ -126,8 +118,7 @@ axiosInstance.interceptors.response.use(
         // 현재 경로를 쿼리 파라미터로 추가
         const currentPath = window.location.pathname;
         const redirectPath = encodeURIComponent(currentPath);
-        // 원본 코드에서는 '/auth/login'을 사용
-        window.location.href = `/auth/login?redirectTo=${redirectPath}`;
+        window.location.href = `/login?redirectTo=${redirectPath}`;
       }
     } else if (error.response?.status === 403) {
       console.log('[AXIOS 인증 오류] 403 Forbidden - 접근 권한이 없음');
@@ -139,9 +130,7 @@ axiosInstance.interceptors.response.use(
       // 현재 로컬 스토리지 상태 확인
       if (typeof window !== 'undefined') {
         const authJson = localStorage.getItem(TOKEN_KEY);
-        const legacyToken = localStorage.getItem(LEGACY_TOKEN_KEY);
         console.log(`[AXIOS 인증 오류] 로컬 스토리지 auth: ${authJson ? '존재' : '없음'}`);
-        console.log(`[AXIOS 인증 오류] 레거시 토큰: ${legacyToken ? '존재' : '없음'}`);
       }
     }
 

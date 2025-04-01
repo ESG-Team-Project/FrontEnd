@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import NaviBar from '@/components/NaviBar';
+import { Provider } from 'jotai';
 
 const pretendard = localFont({
   src: [
@@ -52,10 +53,12 @@ export default function RootLayout({
         className={`${pretendard.variable} antialiased font-pretendard overflow-x-hidden w-full min-h-screen`}
         style={{ overflowX: 'hidden', maxWidth: '100vw' }}
       >
+        <Provider>
         <div className="flex flex-col w-full min-h-full overflow-hidden">
           <NaviBar />
           <main className="w-full pt-16 overflow-hidden">{children}</main>
         </div>
+        </Provider>
       </body>
     </html>
   );

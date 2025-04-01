@@ -31,9 +31,7 @@ export const getCurrentUser = async () => {
     if (typeof window !== 'undefined') {
       try {
         const authData = localStorage.getItem('auth');
-        const legacyToken = localStorage.getItem('auth_token');
-        console.log('[API] 로컬스토리지 확인 (auth):', authData ? '있음' : '없음');
-        console.log('[API] 로컬스토리지 확인 (auth_token):', legacyToken ? '있음' : '없음');
+        console.log('[API] 로컬스토리지 확인:', authData ? '있음' : '없음');
       } catch (e) {
         console.error('[API] 로컬스토리지 접근 오류:', e);
       }

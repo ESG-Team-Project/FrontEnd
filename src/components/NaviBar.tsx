@@ -8,24 +8,20 @@ import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
-import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { useAtom } from 'jotai';
+import { isLoggedInAtom, userAtom, authAtom } from '@/lib/atoms/auth';
+import { logout } from '@/lib/api/auth';
 
 export default function NaviBar() {
   const location = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // const [userName, setUserName] = useState('');
-
-  useEffect(() => {
-    // localStorage에서 로그인 상태 확인
-    const token = localStorage.getItem('auth_token');
-    // const user = localStorage.getItem('user');
-    // {/*&& user*/}
-    if (token) {
-      setIsLoggedIn(true);
-      // setUserName(JSON.parse(user).username);
-    }
-  }, []);
+  const [isLoggedIn] = useAtom(isLoggedInAtom);
+  const [user] = useAtom(userAtom);
+  const [auth, setAuth] = useAtom(authAtom);
+  
+  const handleLogout = () => {
+    logout(setAuth);
+  };
 
   return (
     <NavigationMenu className="fixed top-0 left-0 right-0 z-50 min-w-full bg-white shadow-sm">
@@ -39,25 +35,22 @@ export default function NaviBar() {
           </NavigationMenu>
 
           <NavigationMenu className="flex items-center gap-2 sm:gap-4">
-            <Link href="/">
-              <Button
-                variant="ghost"
-                className={
-                  location === '/mypage/account'
-                    ? 'text-black bg-white whitespace-nowrap'
-                    : 'text-black hidden bg-white whitespace-nowrap'
-                }
-              >
-                로그아웃
-              </Button>
-            </Link>
             {isLoggedIn ? (
-              <Link href="/mypage/account">
-                <Avatar className="cursor-pointer">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=LDM`} />
-                  {/* <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback> */}
-                </Avatar>
-              </Link>
+              <>
+                <Button 
+                  variant="ghost" 
+                  className="text-black bg-white whitespace-nowrap"
+                  onClick={handleLogout}
+                >
+                  로그아웃
+                </Button>
+                <Link href="/mypage/account">
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.name || 'User'}`} />
+                    <AvatarFallback>{(user?.name || 'User').slice(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                </Link>
+              </>
             ) : (
               <Link href="/login">
                 <Button variant="outline" className="text-black bg-white whitespace-nowrap">

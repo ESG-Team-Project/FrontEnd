@@ -33,9 +33,9 @@ export function FileInputDialog({
     
     setIsUploading(true);
     const formData = new FormData();
-    
-    // for...of 구문 사용 (forEach 대신)
+    // forEach 대신 for...of 루프 사용
     for (const file of files) {
+      // FormData에 파일을 추가합니다.
       formData.append('files', file);
     }
     

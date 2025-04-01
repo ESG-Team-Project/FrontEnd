@@ -2,7 +2,7 @@
 import { AppSidebar } from '@/components/mypageSidebar';
 import { Building, User } from 'lucide-react';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import DashboardHeader from '../dashboard/dashboard-header';
+import ProtectedRoute from '@/components/protected-route';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const menuItems = [
@@ -11,11 +11,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="flex flex-row w-screen">
-      <SidebarProvider className="w-fit">
-        <AppSidebar items={menuItems} />
-      </SidebarProvider>
-      <div className="justify-center w-screen">{children}</div>
-    </div>
+    <ProtectedRoute>
+      <div className="flex flex-row w-screen">
+        <SidebarProvider className="w-fit">
+          <AppSidebar items={menuItems} />
+        </SidebarProvider>
+        <div className="justify-center w-screen">{children}</div>
+      </div>
+    </ProtectedRoute>
   );
 }
