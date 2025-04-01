@@ -5,6 +5,17 @@ import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import api  from '@/lib/api/axios';
+import DataTable from './dataFrame';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export function FileInputDialog({
   open,
@@ -14,6 +25,8 @@ export function FileInputDialog({
   setOpen: (open: boolean) => void;
 }) {
   const [files, setFiles] = useState<File[]>([]);
+  const [csvData, setCsvData] = useState<Map<any, any>>(new Map()); // 업로드된 파일의 내용을 저장할 상태
+  const [maxColumns, setMaxColumns] = useState<number>(0);
 
   const handleSave = async () => {
     if (files.length === 0) return;
@@ -23,12 +36,13 @@ export function FileInputDialog({
       const file = files[0]; // 첫 번째 파일만 업로드
       const text = await file.text();
   
+    
       const payload = {
         file: text, // 또는 필요하다면 base64로 인코딩
         companyId: 1,
         dataType: 'gri',
       };
-
+      
       const res = await api.post ('/data-import/csv', {
         method: 'POST',
         headers: {
@@ -47,13 +61,56 @@ export function FileInputDialog({
     }
   
     setOpen(false);
+    setCsvData(new Map()); // 업로드 후 CSV 데이터 초기화
+    setMaxColumns(0); // 업로드 후 최대 컬럼 수 초기화  
   };
 
   // 파일 업로드 핸들러
   // useCallback을 사용하여 메모이제이션된 콜백 함수를 생성합니다. 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback( (acceptedFiles: File[]) => {
+    const file = acceptedFiles?.[0];
+    if (file) {
+      const reader = new FileReader();
+    
+      reader.onload = () => {
+        const csvText = reader.result as string;
+        const parsedData = parseCSV(csvText);
+        setCsvData(parsedData);
+    
+        // 컬럼 개수 결정 (가장 긴 행 기준)
+        let maxCols = 0;
+        parsedData.forEach((row) => {
+          const colCount = Object.keys(row).length; // 열의 개수
+          if (colCount > maxCols) {
+            maxCols = colCount;
+          }
+        });
+        setMaxColumns(maxCols);
+      };
+    
+      reader.readAsText(file);
+    }
     setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
   }, []);
+
+  const parseCSV = (csvText: string): Map<number, Record<number,string>> => {
+    const rows = csvText.split("\n").map((row) => row.trim());
+    const result = new Map<any, any>();
+  
+    rows.forEach((row, rowIndex) => {
+      const columns = row.split(",");
+      
+      // 각 행을 { colIndex: value } 형태의 객체로 변환
+      const rowObject = columns.reduce<Record<number, string>>((acc, column, colIndex) => {
+        acc[colIndex] = column; // colIndex를 키로, column을 값으로 사용
+        return acc;
+      }, {});
+  
+      result.set(rowIndex, rowObject); // rowIndex를 키로, rowObject를 값으로 Map에 저장
+    });
+  
+    return result;
+  };
 
   // useDropzone 훅을 사용하여 드래그 앤 드롭 기능을 구현합니다.
   // onDrop 핸들러와 accept 옵션을 설정합니다.
@@ -65,6 +122,8 @@ export function FileInputDialog({
   // 파일 삭제 핸들러
   const removeFile = (fileName: string) => {
     setFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+    setCsvData(new Map()); // 파일 삭제 시 CSV 데이터 초기화
+    setMaxColumns(0); // 파일 삭제 시 최대 컬럼 수 초기화 
   };
 
   return (
@@ -88,6 +147,56 @@ export function FileInputDialog({
           </div> 
         </div>
 
+        <div>
+            
+          {/* 테이블 */}
+          {files.length ===0? null:
+          <div>
+            <div>{files[0].name} 미리보기</div>
+            <ScrollArea className="w-116  whitespace-nowrap p-1 border">
+              <Table>
+                <TableCaption>A list of your uploaded CSV.</TableCaption>
+                  {csvData.size === 0 ? null :
+                    <TableHeader>
+                    {Array.from({ length: maxColumns+1 }).map((_, colIndex) => (
+                  <TableHead key={colIndex} className='max-w-12 min-w-12 border p-2 overflow-hidden  whitespace-nowrap border-amber-400' onClick={(e) => (e.currentTarget.contentEditable = "true")}
+                  onBlur={(e) => (e.currentTarget.contentEditable = "true")}>{colIndex===0?"행|열":`${colIndex}`}</TableHead>
+                  ))}
+           
+                    </TableHeader>
+                  }
+                    <TableBody >
+              {/* 데이터가 없으면 "업로드된 파일이 없습니다." 표시 */}
+              {csvData.size === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={maxColumns+1} >업로드된 파일이 없습니다.</TableCell>
+                </TableRow>
+              ) : (
+                Array.from(csvData.entries()).slice(0, 5).map(([key, row], rowIndex) => (
+                  <TableRow >             
+                    {Array.from({ length: maxColumns+1 }).map((_, cellIndex) => (
+                      <TableCell
+                        key={cellIndex}
+                        className={cellIndex ===0?'max-w-12 min-w-12 p-2 border border-amber-400 overflow-hidden whitespace-nowrap':'max-w-12 min-w-12 p-2 border overflow-hidden whitespace-nowrap cursor-pointer'}
+                          onClick={(e)=>{cellIndex ===0?(e.currentTarget.contentEditable = 'false'):(e.currentTarget.contentEditable = 'true')}}
+                        onBlur={(e)=>{cellIndex ===0?(e.currentTarget.contentEditable = 'false'):(e.currentTarget.contentEditable = 'true')}}
+                      >
+                        {cellIndex===0?rowIndex+1:(row[cellIndex-1] || '')}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              
+              )}
+            </TableBody>
+            
+
+          </Table>
+          <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+          </div>
+        }
+        </div>
         {/* 업로드된 파일 리스트 */}
         {files.length > 0 && (
           <div className="mt-4">
