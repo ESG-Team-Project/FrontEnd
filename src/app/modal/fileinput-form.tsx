@@ -4,6 +4,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import api  from '@/lib/api/axios';
 
 export function FileInputDialog({
   open,
@@ -14,30 +15,38 @@ export function FileInputDialog({
 }) {
   const [files, setFiles] = useState<File[]>([]);
 
-  // 파일 저장 핸들러
   const handleSave = async () => {
-    const formData = new FormData();
-    files.forEach(file => {
-      // FormData에 파일을 추가합니다.
-    formData.append('files', file); // 첫 번째 파일만 저장하는 예시입니다.
-  });
-  try {
-    const res = await fetch('/api/data-import/csv', {
-      method: 'POST',
-      body: formData,
-    });
-    if (!res.ok) {
-      throw new Error('파일 업로드 실패');
+    if (files.length === 0) return;
+  
+    try {
+      // 파일을 읽어서 텍스트로 변환
+      const file = files[0]; // 첫 번째 파일만 업로드
+      const text = await file.text();
+  
+      const payload = {
+        file: text, // 또는 필요하다면 base64로 인코딩
+        companyId: 1,
+        dataType: 'gri',
+      };
+
+      const res = await api.post ('/data-import/csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      const result = await res.data;
+      console.log('업로드 성공:', result);
+      alert('파일이 성공적으로 업로드되었습니다!');
+      setFiles([]);
+    } catch (error) {
+      console.error('업로드 중 오류 발생:', error);
+      alert('파일 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
-    const result = await res.json();
-    console.log('파일 업로드 성공:', result);
-    alert('파일이 성공적으로 업로드되었습니다!');
-    setFiles([]); // 업로드 후 파일 목록 초기화
-  } catch (error) {
-    console.error('파일 업로드 중 오류 발생:', error);
-    alert('파일 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
-  }
-    setOpen(false); // 업로드 후 다이얼로그 닫기
+  
+    setOpen(false);
   };
 
   // 파일 업로드 핸들러
