@@ -24,84 +24,107 @@ export function FileInputDialog({
   setOpen: (open: boolean) => void;
 }) {
   const [files, setFiles] = useState<File[]>([]);
-  const [csvData, setCsvData] = useState<Map<number, Record<number, string>>>(new Map());
+  const [csvData, setCsvData] = useState<Map<any, any>>(new Map()); // 업로드된 파일의 내용을 저장할 상태
   const [maxColumns, setMaxColumns] = useState<number>(0);
 
   const handleSave = async () => {
     if (files.length === 0) return;
-
+  
     try {
-      const file = files[0];
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('companyId', '1');
-      formData.append('dataType', 'gri');
-
-      const res = await api.post('/data-import/csv', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      // 파일을 읽어서 텍스트로 변환
+      const file = files[0]; // 첫 번째 파일만 업로드
+      const text = await file.text();
+  
+    
+      const payload = {
+        file: text, // 또는 필요하다면 base64로 인코딩
+        companyId: 1,
+        dataType: 'gri',
+      };
+      
+      const res = await api.post ('/data-import/csv', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: JSON.stringify(payload),
       });
-
-      console.log('업로드 성공:', res.data);
+  
+      const result = await res.data;
+      console.log('업로드 성공:', result);
       alert('파일이 성공적으로 업로드되었습니다!');
       setFiles([]);
     } catch (error) {
       console.error('업로드 중 오류 발생:', error);
       alert('파일 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
-
+  
     setOpen(false);
-    setCsvData(new Map());
-    setMaxColumns(0);
+    setCsvData(new Map()); // 업로드 후 CSV 데이터 초기화
+    setMaxColumns(0); // 업로드 후 최대 컬럼 수 초기화  
   };
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  // 파일 업로드 핸들러
+  // useCallback을 사용하여 메모이제이션된 콜백 함수를 생성합니다. 
+  const onDrop = useCallback( (acceptedFiles: File[]) => {
     const file = acceptedFiles?.[0];
     if (file) {
       const reader = new FileReader();
-
+    
       reader.onload = () => {
         const csvText = reader.result as string;
         const parsedData = parseCSV(csvText);
         setCsvData(parsedData);
-
+    
+        // 컬럼 개수 결정 (가장 긴 행 기준)
         let maxCols = 0;
         parsedData.forEach((row) => {
-          maxCols = Math.max(maxCols, Object.keys(row).length);
+          const colCount = Object.keys(row).length; // 열의 개수
+          if (colCount > maxCols) {
+            maxCols = colCount;
+          }
         });
         setMaxColumns(maxCols);
       };
-
+    
       reader.readAsText(file);
     }
-    setFiles(acceptedFiles);
+    setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
   }, []);
 
-  const parseCSV = (csvText: string): Map<number, Record<number, string>> => {
-    const rows = csvText.split('\n').map((row) => row.trim());
-    const result = new Map<number, Record<number, string>>();
-
+  const parseCSV = (csvText: string): Map<number, Record<number,string>> => {
+    const rows = csvText.split("\n").map((row) => row.trim());
+    const result = new Map<any, any>();
+  
     rows.forEach((row, rowIndex) => {
-      const columns = row.split(',');
-      const rowObject: Record<number, string> = {};
-      columns.forEach((column, colIndex) => {
-        rowObject[colIndex] = column;
-      });
-      result.set(rowIndex, rowObject);
+      const columns = row.split(",");
+      
+      // 각 행을 { colIndex: value } 형태의 객체로 변환
+      const rowObject = columns.reduce<Record<number, string>>((acc, column, colIndex) => {
+        acc[colIndex] = column; // colIndex를 키로, column을 값으로 사용
+        return acc;
+      }, {});
+  
+      result.set(rowIndex, rowObject); // rowIndex를 키로, rowObject를 값으로 Map에 저장
     });
-
+  
     return result;
   };
 
+  // useDropzone 훅을 사용하여 드래그 앤 드롭 기능을 구현합니다.
+  // onDrop 핸들러와 accept 옵션을 설정합니다.
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: { 'text/csv': ['.csv'] },
   });
 
+  // 파일 삭제 핸들러
   const removeFile = (fileName: string) => {
-    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
-    setCsvData(new Map());
-    setMaxColumns(0);
+    setFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+    setCsvData(new Map()); // 파일 삭제 시 CSV 데이터 초기화
+    setMaxColumns(0); // 파일 삭제 시 최대 컬럼 수 초기화 
   };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="w-full max-w-lg p-6 bg-white rounded-lg dark:bg-gray-900">
