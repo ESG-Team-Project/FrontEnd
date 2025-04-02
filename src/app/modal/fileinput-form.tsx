@@ -1,11 +1,11 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import api  from '@/lib/api/axios';
-import DataTable from './dataFrame';
+import api from '@/lib/api/axios';
+import { DataFrame } from '@/lib/api/dataFrame';
 import {
   Table,
   TableBody,
@@ -14,7 +14,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 export function FileInputDialog({
@@ -25,105 +25,59 @@ export function FileInputDialog({
   setOpen: (open: boolean) => void;
 }) {
   const [files, setFiles] = useState<File[]>([]);
-  const [csvData, setCsvData] = useState<Map<any, any>>(new Map()); // 업로드된 파일의 내용을 저장할 상태
+  const [dataFrame, setDataFrame] = useState<DataFrame | null>(null);
   const [maxColumns, setMaxColumns] = useState<number>(0);
+  const [text, setText] = useState("Click to Edit");
+  useEffect(() => {
+    if (files.length > 0) {
+      const file = files[0];
+      const df = new DataFrame(file);
+      df.init().then(() => {
+        setDataFrame(df);
+        const maxCols = Math.max(...Array.from(df.data.values()).map(row => Object.keys(row).length), 0);
+        setMaxColumns(maxCols);
+      });
+    }
+  }, [files]);
 
   const handleSave = async () => {
-    if (files.length === 0) return;
-  
+    if (!dataFrame) return;
+
     try {
-      // 파일을 읽어서 텍스트로 변환
-      const file = files[0]; // 첫 번째 파일만 업로드
-      const text = await file.text();
-  
-    
       const payload = {
-        file: text, // 또는 필요하다면 base64로 인코딩
+        file: JSON.stringify(Array.from(dataFrame.data.entries())), // JSON 형태로 변환하여 업로드
         companyId: 1,
         dataType: 'gri',
       };
-      
-      const res = await api.post ('/data-import/csv', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: JSON.stringify(payload),
-      });
-  
-      const result = await res.data;
-      console.log('업로드 성공:', result);
+
+      const res = await api.post('/data-import/csv', payload);
+
+      console.log('업로드 성공:', res.data);
       alert('파일이 성공적으로 업로드되었습니다!');
       setFiles([]);
+      setDataFrame(null);
+      setMaxColumns(0);
     } catch (error) {
       console.error('업로드 중 오류 발생:', error);
       alert('파일 업로드 중 오류가 발생했습니다. 다시 시도해 주세요.');
     }
-  
+
     setOpen(false);
-    setCsvData(new Map()); // 업로드 후 CSV 데이터 초기화
-    setMaxColumns(0); // 업로드 후 최대 컬럼 수 초기화  
   };
 
-  // 파일 업로드 핸들러
-  // useCallback을 사용하여 메모이제이션된 콜백 함수를 생성합니다. 
-  const onDrop = useCallback( (acceptedFiles: File[]) => {
-    const file = acceptedFiles?.[0];
-    if (file) {
-      const reader = new FileReader();
-    
-      reader.onload = () => {
-        const csvText = reader.result as string;
-        const parsedData = parseCSV(csvText);
-        setCsvData(parsedData);
-    
-        // 컬럼 개수 결정 (가장 긴 행 기준)
-        let maxCols = 0;
-        parsedData.forEach((row) => {
-          const colCount = Object.keys(row).length; // 열의 개수
-          if (colCount > maxCols) {
-            maxCols = colCount;
-          }
-        });
-        setMaxColumns(maxCols);
-      };
-    
-      reader.readAsText(file);
-    }
-    setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setFiles(acceptedFiles);
   }, []);
 
-  const parseCSV = (csvText: string): Map<number, Record<number,string>> => {
-    const rows = csvText.split("\n").map((row) => row.trim());
-    const result = new Map<any, any>();
-  
-    rows.forEach((row, rowIndex) => {
-      const columns = row.split(",");
-      
-      // 각 행을 { colIndex: value } 형태의 객체로 변환
-      const rowObject = columns.reduce<Record<number, string>>((acc, column, colIndex) => {
-        acc[colIndex] = column; // colIndex를 키로, column을 값으로 사용
-        return acc;
-      }, {});
-  
-      result.set(rowIndex, rowObject); // rowIndex를 키로, rowObject를 값으로 Map에 저장
-    });
-  
-    return result;
-  };
-
-  // useDropzone 훅을 사용하여 드래그 앤 드롭 기능을 구현합니다.
-  // onDrop 핸들러와 accept 옵션을 설정합니다.
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: { 'text/csv': ['.csv', 'text/plain'] },
   });
 
-  // 파일 삭제 핸들러
   const removeFile = (fileName: string) => {
     setFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
-    setCsvData(new Map()); // 파일 삭제 시 CSV 데이터 초기화
-    setMaxColumns(0); // 파일 삭제 시 최대 컬럼 수 초기화 
+    setDataFrame(null);
+    setMaxColumns(0);
   };
 
   return (
@@ -136,7 +90,7 @@ export function FileInputDialog({
         {/* 파일 업로드 영역 */}
         <div
           {...getRootProps()}
-          className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 Ihover:border-gray-500 dark:hover:border-gray-400"
+          className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
         >
           <input {...getInputProps()} />
           <div className="flex flex-col items-center w-full">
@@ -147,76 +101,75 @@ export function FileInputDialog({
           </div> 
         </div>
 
-        <div>
-            
-          {/* 테이블 */}
-          {files.length ===0? null:
+        {/* 테이블 */}
+        {dataFrame && (
           <div>
-            <div>{files[0].name} 미리보기</div>
-            <ScrollArea className="w-116  whitespace-nowrap p-1 border">
+            <div>{files[0]?.name} 미리보기</div>
+            <ScrollArea className="w-116 whitespace-nowrap p-1 border">
               <Table>
                 <TableCaption>A list of your uploaded CSV.</TableCaption>
-                  {csvData.size === 0 ? null :
-                    <TableHeader>
-                    {Array.from({ length: maxColumns+1 }).map((_, colIndex) => (
-                  <TableHead key={colIndex} className='max-w-12 min-w-12 border p-2 overflow-hidden  whitespace-nowrap border-amber-400' onClick={(e) => (e.currentTarget.contentEditable = "true")}
-                  onBlur={(e) => (e.currentTarget.contentEditable = "true")}>{colIndex===0?"행|열":`${colIndex}`}</TableHead>
-                  ))}
-           
-                    </TableHeader>
-                  }
-                    <TableBody >
-              {/* 데이터가 없으면 "업로드된 파일이 없습니다." 표시 */}
-              {csvData.size === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={maxColumns+1} >업로드된 파일이 없습니다.</TableCell>
-                </TableRow>
-              ) : (
-                Array.from(csvData.entries()).slice(0, 5).map(([key, row], rowIndex) => (
-                  <TableRow >             
-                    {Array.from({ length: maxColumns+1 }).map((_, cellIndex) => (
-                      <TableCell
-                        key={cellIndex}
-                        className={cellIndex ===0?'max-w-12 min-w-12 p-2 border border-amber-400 overflow-hidden whitespace-nowrap':'max-w-12 min-w-12 p-2 border overflow-hidden whitespace-nowrap cursor-pointer'}
-                          onClick={(e)=>{cellIndex ===0?(e.currentTarget.contentEditable = 'false'):(e.currentTarget.contentEditable = 'true')}}
-                        onBlur={(e)=>{cellIndex ===0?(e.currentTarget.contentEditable = 'false'):(e.currentTarget.contentEditable = 'true')}}
-                      >
-                        {cellIndex===0?rowIndex+1:(row[cellIndex-1] || '')}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              
-              )}
-            </TableBody>
-            
+                {dataFrame.data.size > 0 && (
+                  <TableHeader>
+                    <TableRow className='border border-emerald-700 '>
+                      <TableHead className='border border-emerald-700 p-2'>행|열</TableHead>
+                      {Array.from({ length: maxColumns }).map((_, colIndex) => (
+                        <TableHead key={colIndex} 
+                        className='border p-2 border-emerald-700 min-w-max'
+                        onClick= {(e)=>{e.currentTarget.contentEditable="true"}}
+                        onBlur={(e) => {setText(e.currentTarget.innerText); 
+                        e.currentTarget.contentEditable = "false"; 
+                      }}
+                        >
+                          {colIndex + 1 ||""}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  </TableHeader>
+                )}
 
-          </Table>
-          <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+                <TableBody>
+                  {dataFrame.data.size === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={maxColumns + 1}>업로드된 파일이 없습니다.</TableCell>
+                    </TableRow>
+                  ) : (
+                    Array.from(dataFrame.data.entries()).slice(0, 5).map(([rowIndex, row]) => (
+                      <TableRow key={rowIndex}>
+                        <TableCell className='border border-emerald-700 p-2'>{rowIndex + 1}</TableCell>
+                        {Array.from({ length: maxColumns }).map((_, colIndex) => (
+                          <TableCell
+                            key={colIndex}
+                            className=' p-2 border cursor-pointer overflow-hidden whitespace-nowrap min-w-12 max-w-12'
+                            contentEditable={false}
+                          >
+                            {row[colIndex] || ''}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
           </div>
-        }
-        </div>
+        )}
+
         {/* 업로드된 파일 리스트 */}
         {files.length > 0 && (
           <div className="mt-4">
             <p className="font-bold text-gray-700 dark:text-gray-300">업로드된 파일</p>
             <ul className="mt-2 space-y-1">
               {files.map(file => (
-                <li
-                  key={file.name}
-                  className="flex items-center justify-between py-2 text-sm text-gray-600 border-b dark:text-gray-300"
-                >
+                <li key={file.name} className="flex items-center justify-between py-2 text-sm text-gray-600 border-b dark:text-gray-300">
                   📂 {file.name}
-                  <button
-                    onClick={() => removeFile(file.name)}
-                    className="text-black-500 hover:text-black-700"
-                  >
+                  <button onClick={() => removeFile(file.name)} className="text-black-500 hover:text-black-700">
                     <X className="w-5 h-5" />
                   </button>
                 </li>
               ))}
             </ul>
+
             {/* 저장 버튼 */}
             <div className="flex justify-end">
               <Button
