@@ -128,7 +128,7 @@ export function FileInputDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="w-full max-w-lg p-6 bg-white rounded-lg dark:bg-gray-900">
+      <DialogContent aria-description={undefined} className="w-full max-w-lg p-6 bg-white rounded-lg dark:bg-gray-900">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">파일 추가</DialogTitle>
         </DialogHeader>
@@ -157,12 +157,14 @@ export function FileInputDialog({
               <Table>
                 <TableCaption>A list of your uploaded CSV.</TableCaption>
                   {csvData.size === 0 ? null :
+                  
                     <TableHeader>
+                      <TableRow key={0}>
                     {Array.from({ length: maxColumns+1 }).map((_, colIndex) => (
-                  <TableHead key={colIndex} className='max-w-12 min-w-12 border p-2 overflow-hidden  whitespace-nowrap border-amber-400' onClick={(e) => (e.currentTarget.contentEditable = "true")}
+                  <TableHead key={colIndex} className='min-w-max border p-2 overflow-hidden  whitespace-nowrap border-amber-400' onClick={(e) => (e.currentTarget.contentEditable = "true")}
                   onBlur={(e) => (e.currentTarget.contentEditable = "true")}>{colIndex===0?"행|열":`${colIndex}`}</TableHead>
                   ))}
-           
+                    </TableRow>
                     </TableHeader>
                   }
                     <TableBody >
@@ -173,7 +175,7 @@ export function FileInputDialog({
                 </TableRow>
               ) : (
                 Array.from(csvData.entries()).slice(0, 5).map(([key, row], rowIndex) => (
-                  <TableRow >             
+                  <TableRow key={key+1} >             
                     {Array.from({ length: maxColumns+1 }).map((_, cellIndex) => (
                       <TableCell
                         key={cellIndex}
