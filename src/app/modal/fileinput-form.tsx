@@ -3,9 +3,8 @@ import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import api  from '@/lib/api/axios';
-import DataTable from './dataFrame';
 import {
   Table,
   TableBody,
@@ -116,7 +115,7 @@ export function FileInputDialog({
   // onDrop 핸들러와 accept 옵션을 설정합니다.
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    accept: { 'text/csv': ['.csv', 'text/plain'] },
+    accept: { 'text/csv': ['.csv'] },
   });
 
   // 파일 삭제 핸들러
@@ -131,6 +130,7 @@ export function FileInputDialog({
       <DialogContent className="w-full max-w-lg p-6 bg-white rounded-lg dark:bg-gray-900">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">파일 추가</DialogTitle>
+          <DialogDescription>업로드할 파일을 선택하거나 드래그하세요.</DialogDescription>
         </DialogHeader>
 
         {/* 파일 업로드 영역 */}
@@ -157,12 +157,14 @@ export function FileInputDialog({
               <Table>
                 <TableCaption>A list of your uploaded CSV.</TableCaption>
                   {csvData.size === 0 ? null :
+                  
                     <TableHeader>
+                      <TableRow key={0}>
                     {Array.from({ length: maxColumns+1 }).map((_, colIndex) => (
-                  <TableHead key={colIndex} className='max-w-12 min-w-12 border p-2 overflow-hidden  whitespace-nowrap border-amber-400' onClick={(e) => (e.currentTarget.contentEditable = "true")}
+                  <TableHead key={colIndex} className='min-w-max border p-2 overflow-hidden  whitespace-nowrap border-amber-400' onClick={(e) => (e.currentTarget.contentEditable = "true")}
                   onBlur={(e) => (e.currentTarget.contentEditable = "true")}>{colIndex===0?"행|열":`${colIndex}`}</TableHead>
                   ))}
-           
+                    </TableRow>
                     </TableHeader>
                   }
                     <TableBody >
@@ -173,7 +175,7 @@ export function FileInputDialog({
                 </TableRow>
               ) : (
                 Array.from(csvData.entries()).slice(0, 5).map(([key, row], rowIndex) => (
-                  <TableRow >             
+                  <TableRow key={key+1} >             
                     {Array.from({ length: maxColumns+1 }).map((_, cellIndex) => (
                       <TableCell
                         key={cellIndex}

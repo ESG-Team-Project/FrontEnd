@@ -5,9 +5,6 @@ import {
   BarChart3,
   Users,
   Building2,
-  Building,
-  User,
-  Building,
 } from 'lucide-react';
 
 export default function Page() {
