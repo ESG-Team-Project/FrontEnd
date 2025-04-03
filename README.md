@@ -43,6 +43,7 @@ pnpm install
 프로젝트 루트에 다음 환경 변수 파일을 생성합니다:
 
 **.env.local** (개인 개발 환경 - git에 포함되지 않음)
+
 ```
 # 인증 우회 설정 (개발/테스트용)
 NEXT_PUBLIC_BYPASS_AUTH=true
@@ -52,6 +53,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 **.env.development** (개발 환경 - git에 포함됨)
+
 ```
 # 인증 우회 설정
 NEXT_PUBLIC_BYPASS_AUTH=false
@@ -61,6 +63,7 @@ NEXT_PUBLIC_API_URL=http://192.168.0.224:8080/api
 ```
 
 **.env.production** (프로덕션 환경)
+
 ```
 # 인증 우회 설정 (프로덕션에서는 항상 false)
 NEXT_PUBLIC_BYPASS_AUTH=false
@@ -70,10 +73,12 @@ NEXT_PUBLIC_API_URL=http://192.168.0.224:8080/api
 ```
 
 **주요 환경 변수**:
+
 - `NEXT_PUBLIC_BYPASS_AUTH`: 인증 보호 기능 우회 설정 (`true`: 우회 활성화, `false`: 우회 비활성화)
 - `NEXT_PUBLIC_API_URL`: API 서버 URL
 
 **개발 중 인증 우회 방법**:
+
 1. `.env.local` 파일에서 `NEXT_PUBLIC_BYPASS_AUTH=true` 설정
 2. URL에 `?bypass_auth=true` 쿼리 파라미터 추가 (예: `http://localhost:3000/mypage/company?bypass_auth=true`)
 

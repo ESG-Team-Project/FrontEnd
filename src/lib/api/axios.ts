@@ -18,11 +18,11 @@ export const getTokenFromAtom = (): string | null => {
   try {
     const store = getDefaultStore();
     const auth = store.get(authAtom);
-    
+
     if (auth?.token) {
       return auth.token;
     }
-    
+
     const authJson = localStorage.getItem(TOKEN_KEY);
     if (authJson) {
       try {
@@ -34,7 +34,7 @@ export const getTokenFromAtom = (): string | null => {
         console.error('[AXIOS] 로컬 스토리지 JSON 파싱 오류:', e);
       }
     }
-    
+
     return null;
   } catch (error) {
     console.error('[AXIOS] 토큰 로딩 오류:', error);
@@ -74,7 +74,10 @@ axiosInstance.interceptors.response.use(
   (error: AxiosError) => {
     // 인증 오류 처리 (401) - 에러 로그만 남기고 에러를 전파
     if (error.response?.status === 401) {
-      console.error('[AXIOS Interceptor] 401 Unauthorized Error detected. Propagating error.', error);
+      console.error(
+        '[AXIOS Interceptor] 401 Unauthorized Error detected. Propagating error.',
+        error
+      );
       // 직접적인 리다이렉션 로직 제거 - ProtectedRoute에서 처리하도록 함
       // if (typeof window !== 'undefined') {
       //   const currentPath = window.location.pathname;

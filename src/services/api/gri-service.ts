@@ -7,15 +7,15 @@ export async function getCompanyGriData(companyId: string): Promise<CompanyGRIDa
   // 실제로는 API 호출로 구현:
   // const response = await fetch(`/api/company/${companyId}/gri`);
   // return await response.json();
-  
+
   // 임시 데이터 생성
   const initialData: Record<string, CompanyGRICategoryValue> = {};
   griCategories.forEach(cat => {
-    initialData[cat.id] = { 
-      categoryId: cat.id, 
+    initialData[cat.id] = {
+      categoryId: cat.id,
       dataType: cat.isQuantitative ? 'timeSeries' : 'text',
       timeSeriesData: cat.isQuantitative ? [] : undefined,
-      textValue: cat.isQuantitative ? undefined : null
+      textValue: cat.isQuantitative ? undefined : null,
     };
   });
 
@@ -31,7 +31,7 @@ export async function getCompanyGriData(companyId: string): Promise<CompanyGRIDa
 // GRI 데이터 저장하는 함수
 export async function saveCompanyGriData(data: CompanyGRIData): Promise<boolean> {
   console.log(`Saving GRI data for company: ${data.companyId}`);
-  
+
   // 실제로는 API 호출로 구현:
   // const response = await fetch(`/api/company/${data.companyId}/gri`, {
   //   method: 'PUT',
@@ -41,9 +41,9 @@ export async function saveCompanyGriData(data: CompanyGRIData): Promise<boolean>
   //   body: JSON.stringify(data),
   // });
   // return response.ok;
-  
+
   // 저장 성공 시뮬레이션 (지연 효과)
   await new Promise(resolve => setTimeout(resolve, 700));
-  
+
   return true;
-} 
+}

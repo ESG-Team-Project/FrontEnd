@@ -16,37 +16,37 @@ import type { ChartData } from '@/types/chart';
 import DashboardShell from '@/components/dashboard-shell';
 import TotalCharts from '@/components/dashboards/TotalCharts';
 import { Button } from '@/components/ui/button';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
-  PointElement, 
-  LineElement, 
-  ArcElement, 
-  Title, 
-  Tooltip, 
-  Legend, 
-  Filler, 
-  type ChartOptions, 
-  type ChartData as ChartJSData 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  type ChartOptions,
+  type ChartData as ChartJSData,
 } from 'chart.js';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { FileInputDialog } from '@/app/modal/fileinput-form';
-import { ESGChartDialog } from '@/app/modal/chartinput-form';//=!=
+import { ESGChartDialog } from '@/app/modal/chartinput-form'; //=!=
 import { CustomButton } from '@/components/ui/custom-button';
 
 // Chart.js에 필요한 모든 요소 등록
 ChartJS.register(
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
-  PointElement, 
-  LineElement, 
-  ArcElement, 
-  Title, 
-  Tooltip, 
-  Legend, 
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
   Filler
 );
 
@@ -66,14 +66,14 @@ const sampleCharts: ChartData[] = [
         backgroundColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'],
         borderColor: ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c'],
         borderWidth: 1,
-      }
+      },
     ],
     options: {
       indexAxis: 'y',
       plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true } }
+      scales: { x: { beginAtZero: true } },
     },
-    colSpan: 1
+    colSpan: 1,
   },
   {
     id: '2',
@@ -89,12 +89,12 @@ const sampleCharts: ChartData[] = [
         backgroundColor: ['#2ecc71', '#3498db', '#f39c12', '#95a5a6'],
         borderColor: ['#ffffff'],
         borderWidth: 2,
-      }
+      },
     ],
     options: {
-      plugins: { legend: { position: 'top' } }
+      plugins: { legend: { position: 'top' } },
     },
-    colSpan: 1
+    colSpan: 1,
   },
   {
     id: '3',
@@ -108,13 +108,13 @@ const sampleCharts: ChartData[] = [
         label: 'ESG 점수',
         data: [65, 67, 70, 73, 75, 78],
         borderColor: '#3498db',
-        tension: 0.1
-      }
+        tension: 0.1,
+      },
     ],
     options: {
-      scales: { y: { beginAtZero: false } }
+      scales: { y: { beginAtZero: false } },
     },
-    colSpan: 1
+    colSpan: 1,
   },
   {
     id: '4',
@@ -130,14 +130,14 @@ const sampleCharts: ChartData[] = [
         borderColor: '#2ecc71',
         backgroundColor: 'rgba(46, 204, 113, 0.2)',
         fill: true,
-        tension: 0.1
-      }
+        tension: 0.1,
+      },
     ],
     options: {
-      scales: { y: { beginAtZero: true } }
+      scales: { y: { beginAtZero: true } },
     },
-    colSpan: 1
-  }
+    colSpan: 1,
+  },
 ];
 
 export default function Dashboard() {
@@ -181,9 +181,9 @@ export default function Dashboard() {
         title: {
           display: false,
         },
-        tooltip: { 
+        tooltip: {
           enabled: true,
-        }
+        },
       },
     };
 
@@ -206,7 +206,11 @@ export default function Dashboard() {
           );
         }
         case 'pie': {
-          const options = { ...baseOptions, maintainAspectRatio: false, ...(chart.options || {}) } as ChartOptions<'pie'>; 
+          const options = {
+            ...baseOptions,
+            maintainAspectRatio: false,
+            ...(chart.options || {}),
+          } as ChartOptions<'pie'>;
           const data = chartDataProp as ChartJSData<'pie'>;
           return (
             <div style={chartContainerStyle}>
@@ -223,22 +227,24 @@ export default function Dashboard() {
             </div>
           );
         }
-        case 'area': { // Area는 Line으로 렌더링
+        case 'area': {
+          // Area는 Line으로 렌더링
           const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'line'>; // Line 옵션 사용
           // Area 차트 데이터셋에는 fill: true가 필요 (sampleCharts에 이미 설정됨)
           const data = chartDataProp as ChartJSData<'line'>; // Line 데이터 사용
           return (
             <div style={chartContainerStyle}>
-              <Line options={options} data={data} /> 
+              <Line options={options} data={data} />
             </div>
           );
         }
-        case 'donut': { // Donut은 Pie로 렌더링
-           const options = {
+        case 'donut': {
+          // Donut은 Pie로 렌더링
+          const options = {
             ...baseOptions,
             maintainAspectRatio: false,
-            cutout: '50%', 
-            ...(chart.options || {})
+            cutout: '50%',
+            ...(chart.options || {}),
           } as ChartOptions<'pie'>; // Pie 옵션 사용
           const data = chartDataProp as ChartJSData<'pie'>; // Pie 데이터 사용
           return (
@@ -270,11 +276,16 @@ export default function Dashboard() {
   // 반응형 열 크기 클래스 조정
   const getColumnClass = (colSpan = 1) => {
     switch (colSpan) {
-      case 1: return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
-      case 2: return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-2 xl:col-span-2';
-      case 3: return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-3 xl:col-span-3';
-      case 4: return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-4 xl:col-span-4';
-      default: return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
+      case 1:
+        return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
+      case 2:
+        return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-2 xl:col-span-2';
+      case 3:
+        return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-3 xl:col-span-3';
+      case 4:
+        return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-4 xl:col-span-4';
+      default:
+        return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
     }
   };
 
@@ -283,15 +294,15 @@ export default function Dashboard() {
       pageTitle="ESG 대시보드"
       rightMenuItems={
         <>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
             onClick={() => setIsChartModalOpen(true)}
           >
             차트 추가
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9 ml-2"
             onClick={() => setFileModalOpen(true)}
           >
@@ -314,7 +325,7 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
-      
+
       {/* 모달 */}
       <ESGChartDialog open={isChartModalOpen} setOpen={setIsChartModalOpen} />
       <FileInputDialog open={fileModalOpen} setOpen={setFileModalOpen} />

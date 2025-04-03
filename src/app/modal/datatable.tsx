@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import * as React from "react";
+import * as React from 'react';
 import {
   Table,
   TableHeader,
@@ -8,9 +8,9 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Plus, Trash2, Edit } from "lucide-react";
+} from '@/components/ui/table';
+import { Input } from '@/components/ui/input';
+import { Plus, Trash2, Edit } from 'lucide-react';
 import { ChartData } from '@/types/chart';
 
 interface DataTableProps {
@@ -19,23 +19,27 @@ interface DataTableProps {
   onDataChange: (labels: string[], datasets: ChartData['datasets']) => void;
 }
 
-export default function DataTable({ initialLabels = [], initialDatasets = [], onDataChange }: DataTableProps) {
+export default function DataTable({
+  initialLabels = [],
+  initialDatasets = [],
+  onDataChange,
+}: DataTableProps) {
   const [columns, setColumns] = React.useState<string[]>(() => {
     if (initialLabels && initialLabels.length > 0) {
       const datasetLabels = initialDatasets?.map(ds => ds?.label || '') || [];
       return ['Label', ...datasetLabels];
-    } 
-    return ["Label", "Value"];
+    }
+    return ['Label', 'Value'];
   });
 
   const [rows, setRows] = React.useState(() => {
     if (initialLabels && initialLabels.length > 0) {
       return initialLabels.map((label, index) => ({
         id: Date.now() + index,
-        columns: [label, ...(initialDatasets?.map(ds => ds?.data?.[index] ?? '') || [])]
+        columns: [label, ...(initialDatasets?.map(ds => ds?.data?.[index] ?? '') || [])],
       }));
     }
-    return [{ id: Date.now(), columns: Array(columns.length).fill("") }];
+    return [{ id: Date.now(), columns: Array(columns.length).fill('') }];
   });
 
   const [editingColumnIndex, setEditingColumnIndex] = React.useState<number | null>(null);
@@ -61,17 +65,17 @@ export default function DataTable({ initialLabels = [], initialDatasets = [], on
   };
 
   const addRow = () => {
-    setRows([...rows, { id: Date.now(), columns: Array(columns.length).fill("") }]);
+    setRows([...rows, { id: Date.now(), columns: Array(columns.length).fill('') }]);
   };
 
   const deleteRow = (rowId: number) => {
-    setRows(rows.filter((row) => row.id !== rowId));
+    setRows(rows.filter(row => row.id !== rowId));
   };
 
   const addColumn = () => {
     const newColumnName = `데이터셋 ${columns.length}`;
     setColumns([...columns, newColumnName]);
-    setRows(rows.map((row) => ({ ...row, columns: [...row.columns, ""] })));
+    setRows(rows.map(row => ({ ...row, columns: [...row.columns, ''] })));
   };
 
   const handleColumnHeaderDoubleClick = (index: number) => {
@@ -87,7 +91,7 @@ export default function DataTable({ initialLabels = [], initialDatasets = [], on
   const handleColumnNameBlur = () => {
     if (editingColumnIndex !== null && editingColumnIndex > 0) {
       const newColumns = [...columns];
-      newColumns[editingColumnIndex] = tempColumnName.trim() || columns[editingColumnIndex]; 
+      newColumns[editingColumnIndex] = tempColumnName.trim() || columns[editingColumnIndex];
       setColumns(newColumns);
     }
     setEditingColumnIndex(null);
@@ -102,13 +106,13 @@ export default function DataTable({ initialLabels = [], initialDatasets = [], on
   return (
     <div className="p-4">
       <div className="relative w-full h-[400px] border border-gray-200 overflow-y-auto overflow-x-auto">
-        <div className="w-max" style={{ minWidth: "100%" }}>
+        <div className="w-max" style={{ minWidth: '100%' }}>
           <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((col, colIndex) => (
-                  <TableHead 
-                    key={colIndex} 
+                  <TableHead
+                    key={colIndex}
                     className={`min-w-[150px] ${colIndex > 0 ? 'cursor-pointer' : ''}`}
                     onDoubleClick={() => handleColumnHeaderDoubleClick(colIndex)}
                   >
@@ -134,15 +138,15 @@ export default function DataTable({ initialLabels = [], initialDatasets = [], on
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map((row) => (
+              {rows.map(row => (
                 <TableRow key={row.id}>
                   {row.columns.map((cell, colIndex) => (
                     <TableCell key={colIndex} className="min-w-[150px]">
                       <Input
                         value={cell}
-                        onChange={(e) =>
+                        onChange={e =>
                           handleInputChange(
-                            rows.findIndex((r) => r.id === row.id),
+                            rows.findIndex(r => r.id === row.id),
                             colIndex,
                             e.target.value
                           )
@@ -155,10 +159,7 @@ export default function DataTable({ initialLabels = [], initialDatasets = [], on
                     <button className="text-gray-500">
                       <Edit size={24} />
                     </button>
-                    <button
-                      onClick={() => deleteRow(row.id)}
-                      className="text-red-500"
-                    >
+                    <button onClick={() => deleteRow(row.id)} className="text-red-500">
                       <Trash2 size={24} />
                     </button>
                   </TableCell>

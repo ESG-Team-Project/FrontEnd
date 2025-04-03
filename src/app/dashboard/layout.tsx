@@ -8,17 +8,11 @@ export const metadata: Metadata = {
   description: 'ESG 성과 관리 대시보드',
 };
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute>
       <DashboardDataProvider>
-        <DashboardClientLayout>
-          {children}
-        </DashboardClientLayout>
+        <DashboardClientLayout>{children}</DashboardClientLayout>
       </DashboardDataProvider>
     </ProtectedRoute>
   );

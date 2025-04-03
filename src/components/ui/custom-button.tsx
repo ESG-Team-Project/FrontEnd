@@ -20,7 +20,7 @@ const CustomButton = forwardRef<HTMLButtonElement, CustomButtonProps>(
   ({ className, variant, size, children, ...props }, ref) => {
     // variant에 따른 색상 클래스 정의
     let colorClass = '';
-    
+
     switch (variant) {
       case 'default':
         // 프라이머리 버튼 - 짙은 파란색 배경에 흰색 텍스트
@@ -65,4 +65,4 @@ const CustomButton = forwardRef<HTMLButtonElement, CustomButtonProps>(
 
 CustomButton.displayName = 'CustomButton';
 
-export { CustomButton }; 
+export { CustomButton };

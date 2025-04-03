@@ -1,40 +1,40 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { 
-  BarChart as BarChartIcon, 
-  PieChart as PieChartIcon, 
-  LineChart as LineChartIcon, 
-  AreaChart as AreaChartIcon 
+import {
+  BarChart as BarChartIcon,
+  PieChart as PieChartIcon,
+  LineChart as LineChartIcon,
+  AreaChart as AreaChartIcon,
 } from 'lucide-react';
 import type { ChartData } from '@/types/chart';
-import { 
-  Chart as ChartJS, 
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
-  PointElement, 
-  LineElement, 
-  ArcElement, 
-  Title, 
-  Tooltip, 
-  Legend, 
-  Filler, 
-  type ChartOptions, 
-  type ChartData as ChartJSData 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  type ChartOptions,
+  type ChartData as ChartJSData,
 } from 'chart.js';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 
 // Chart.js에 필요한 모든 요소 등록 (컴포넌트 로드 시 한 번만 실행되도록)
 ChartJS.register(
-  CategoryScale, 
-  LinearScale, 
-  BarElement, 
-  PointElement, 
-  LineElement, 
-  ArcElement, 
-  Title, 
-  Tooltip, 
-  Legend, 
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
   Filler
 );
 
@@ -54,7 +54,7 @@ const getChartIcon = (type: string) => {
     case 'area':
       return <AreaChartIcon className="w-5 h-5 mr-2 text-purple-500" />;
     case 'donut': // 도넛 아이콘 추가
-        return <PieChartIcon className="w-5 h-5 mr-2 text-indigo-500" />; // 파이 아이콘 재활용 또는 다른 아이콘
+      return <PieChartIcon className="w-5 h-5 mr-2 text-indigo-500" />; // 파이 아이콘 재활용 또는 다른 아이콘
     default:
       return <BarChartIcon className="w-5 h-5 mr-2" />;
   }
@@ -73,15 +73,15 @@ const renderChartContent = (chart: ChartData) => {
       title: {
         display: false,
       },
-      tooltip: { 
+      tooltip: {
         enabled: true,
-      }
+      },
     },
     // scales 기본 설정 추가 (필요 시)
     scales: {
       x: { display: chart.type !== 'pie' && chart.type !== 'donut' }, // 파이/도넛 외 표시
-      y: { display: chart.type !== 'pie' && chart.type !== 'donut' }  // 파이/도넛 외 표시
-    }
+      y: { display: chart.type !== 'pie' && chart.type !== 'donut' }, // 파이/도넛 외 표시
+    },
   };
 
   const chartDataProp = {
@@ -90,7 +90,7 @@ const renderChartContent = (chart: ChartData) => {
   };
 
   // 높이를 고정하지 않고 aspect-ratio를 사용하거나, CardContent 크기에 맞춤
-  // const chartContainerStyle = { height: '200px', width: '100%' }; 
+  // const chartContainerStyle = { height: '200px', width: '100%' };
   const chartContainerStyle = { position: 'relative', width: '100%', height: '200px' };
 
   try {
@@ -105,11 +105,11 @@ const renderChartContent = (chart: ChartData) => {
         );
       }
       case 'pie': {
-        const options = { 
-          ...baseOptions, 
-          maintainAspectRatio: false, 
-          ...(chart.options || {}) 
-        } as ChartOptions<'pie'>; 
+        const options = {
+          ...baseOptions,
+          maintainAspectRatio: false,
+          ...(chart.options || {}),
+        } as ChartOptions<'pie'>;
         const data = chartDataProp as ChartJSData<'pie'>;
         return (
           <div style={chartContainerStyle}>
@@ -126,27 +126,29 @@ const renderChartContent = (chart: ChartData) => {
           </div>
         );
       }
-      case 'area': { // Area는 Line으로 렌더링
-        const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'line'>; 
+      case 'area': {
+        // Area는 Line으로 렌더링
+        const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'line'>;
         // Area 차트 데이터셋에는 fill: true가 필요
         const data = {
           ...chartDataProp,
-          datasets: chartDataProp.datasets.map(ds => ({...ds, fill: true})) // 명시적으로 fill: true 추가
-        } as ChartJSData<'line'>; 
+          datasets: chartDataProp.datasets.map(ds => ({ ...ds, fill: true })), // 명시적으로 fill: true 추가
+        } as ChartJSData<'line'>;
         return (
           <div style={chartContainerStyle}>
-            <Line options={options} data={data} /> 
+            <Line options={options} data={data} />
           </div>
         );
       }
-      case 'donut': { // Donut은 Pie로 렌더링
-         const options = {
+      case 'donut': {
+        // Donut은 Pie로 렌더링
+        const options = {
           ...baseOptions,
           maintainAspectRatio: false,
-          cutout: '50%', 
-          ...(chart.options || {})
-        } as ChartOptions<'pie'>; 
-        const data = chartDataProp as ChartJSData<'pie'>; 
+          cutout: '50%',
+          ...(chart.options || {}),
+        } as ChartOptions<'pie'>;
+        const data = chartDataProp as ChartJSData<'pie'>;
         return (
           <div style={chartContainerStyle}>
             <Pie options={options} data={data} />
@@ -203,4 +205,4 @@ const TotalCharts: React.FC<TotalChartsProps> = ({ chartData }) => {
   );
 };
 
-export default TotalCharts; 
+export default TotalCharts;

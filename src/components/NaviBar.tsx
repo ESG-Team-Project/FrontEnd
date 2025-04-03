@@ -1,7 +1,5 @@
 'use client';
-import {
-  NavigationMenu,
-} from '@/components/ui/navigation-menu';
+import { NavigationMenu } from '@/components/ui/navigation-menu';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
@@ -13,7 +11,7 @@ import { User, LogOut } from 'lucide-react';
 export default function NaviBar() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [, logout] = useAtom(logoutAtom);
-  
+
   const handleLogout = () => {
     // logoutAtom 액션을 호출하면 내부적으로 상태 초기화 및 localStorage 정리가 이루어질 것으로 기대
     logout();
@@ -45,12 +43,15 @@ export default function NaviBar() {
                   </PopoverTrigger>
                   <PopoverContent className="w-48 p-0">
                     <div className="flex flex-col">
-                      <Link href="/mypage/account" className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-100">
+                      <Link
+                        href="/mypage/account"
+                        className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-100"
+                      >
                         <User size={16} />
                         <span>마이페이지</span>
                       </Link>
-                      <button 
-                        onClick={handleLogout} 
+                      <button
+                        onClick={handleLogout}
                         className="flex items-center gap-2 px-4 py-3 text-left text-red-500 transition-colors hover:bg-gray-100"
                         type="button"
                       >

@@ -18,27 +18,27 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const redirectPath = searchParams.get('redirectTo') || '/dashboard';
-  
+
   const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [, login] = useAtom(loginAtom);
-  
+
   useEffect(() => {
     if (isLoggedIn) {
       router.push(redirectPath);
     }
   }, [isLoggedIn, redirectPath, router]);
-  
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
-    
+
     try {
       const response = await apiLogin({ email, password });
       console.log('로그인 API 응답:', response);
-      
+
       if (response.user && response.token) {
         const userData: User = {
           id: response.user.id,
@@ -47,19 +47,17 @@ export function LoginForm() {
           role: response.user.role,
           company: response.user.company,
         };
-        
+
         login({ user: userData, token: response.token });
-        
       } else {
         throw new Error('로그인 응답 형식이 올바르지 않습니다.');
       }
-      
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }, message?: string };
+      const error = err as { response?: { data?: { message?: string } }; message?: string };
       setError(
-        error.response?.data?.message || 
-        error.message ||
-        '로그인 실패. 이메일과 비밀번호를 확인해주세요.'
+        error.response?.data?.message ||
+          error.message ||
+          '로그인 실패. 이메일과 비밀번호를 확인해주세요.'
       );
       console.error('로그인 오류:', err);
     } finally {
@@ -96,13 +94,11 @@ export function LoginForm() {
         >
           ********
         </InputBox>
-        
-        {error && (
-          <div className="text-red-500 text-sm mt-2">{error}</div>
-        )}
-        
-        <Button 
-          type="submit" 
+
+        {error && <div className="text-red-500 text-sm mt-2">{error}</div>}
+
+        <Button
+          type="submit"
           className="w-full text-white bg-primary hover:bg-primary/90"
           disabled={isLoading}
         >

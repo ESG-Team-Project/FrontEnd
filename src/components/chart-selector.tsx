@@ -13,9 +13,9 @@ import {
   ChartSpline,
   ChartNoAxesCombined,
   ChartColumnStacked,
-  ChartBarStacked
+  ChartBarStacked,
 } from 'lucide-react';
-import { TbChartDonut } from "react-icons/tb";
+import { TbChartDonut } from 'react-icons/tb';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { SidebarGroupContent } from './ui/sidebar';
 import { ESGChartDialog } from '@/app/modal/chartinput-form';
@@ -35,19 +35,26 @@ export default function ChartSelector({ isLayoutLocked = false }: ChartSelectorP
       <div className="flex items-center justify-between py-2 border-b">
         <Collapsible className="w-full group/collapsible">
           <CollapsibleTrigger asChild>
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className={clsx(
-                "w-full py-1 h-auto", 
-                isLayoutLocked ? "justify-center" : "justify-start"
+                'w-full py-1 h-auto',
+                isLayoutLocked ? 'justify-center' : 'justify-start'
               )}
             >
-              <PieChart className={clsx("w-4 h-4", !isLayoutLocked && "mr-2")} />
-              <strong className={clsx("block my-1 text-sm", isLayoutLocked && "hidden")}>차트추가</strong>
-              <ChevronDown className={clsx("ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180", isLayoutLocked && "hidden")} />
+              <PieChart className={clsx('w-4 h-4', !isLayoutLocked && 'mr-2')} />
+              <strong className={clsx('block my-1 text-sm', isLayoutLocked && 'hidden')}>
+                차트추가
+              </strong>
+              <ChevronDown
+                className={clsx(
+                  'ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180',
+                  isLayoutLocked && 'hidden'
+                )}
+              />
             </Button>
           </CollapsibleTrigger>
-          <CollapsibleContent className={clsx(isLayoutLocked && "hidden")}>
+          <CollapsibleContent className={clsx(isLayoutLocked && 'hidden')}>
             <SidebarGroupContent>
               <strong className="block my-1 text-xs">선</strong>
               <div className="grid grid-cols-3 gap-2">
@@ -71,7 +78,7 @@ export default function ChartSelector({ isLayoutLocked = false }: ChartSelectorP
                 </button>
               </div>
             </SidebarGroupContent>
-            
+
             <SidebarGroupContent>
               <strong className="block my-1 text-xs">열</strong>
               <div className="grid grid-cols-3 gap-2">
@@ -83,7 +90,7 @@ export default function ChartSelector({ isLayoutLocked = false }: ChartSelectorP
                 </button>
               </div>
             </SidebarGroupContent>
-            
+
             <SidebarGroupContent>
               <strong className="block my-1 text-xs">막대</strong>
               <div className="grid grid-cols-3 gap-2">
@@ -95,7 +102,7 @@ export default function ChartSelector({ isLayoutLocked = false }: ChartSelectorP
                 </button>
               </div>
             </SidebarGroupContent>
-            
+
             <SidebarGroupContent>
               <strong className="block my-1 text-xs">원형</strong>
               <div className="grid grid-cols-3 gap-2">
@@ -114,4 +121,4 @@ export default function ChartSelector({ isLayoutLocked = false }: ChartSelectorP
       {isModalOpen && <ESGChartDialog open={isModalOpen} setOpen={setIsModalOpen} />}
     </>
   );
-} 
+}

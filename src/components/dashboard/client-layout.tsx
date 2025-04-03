@@ -25,4 +25,4 @@ export default function DashboardClientLayout({ children }: DashboardClientLayou
       <section className="w-full">{children}</section>
     </div>
   );
-} 
+}

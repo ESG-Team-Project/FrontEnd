@@ -12,10 +12,8 @@ export default function NotFound() {
         요청하신 페이지가 존재하지 않거나 이동되었을 수 있습니다.
       </p>
       <Link href="/dashboard">
-        <Button className="bg-primary hover:bg-primary/90">
-          홈으로 돌아가기
-        </Button>
+        <Button className="bg-primary hover:bg-primary/90">홈으로 돌아가기</Button>
       </Link>
     </div>
   );
-} 
+}

@@ -52,10 +52,7 @@ function ChartContainer({
       <div
         data-slot="chart"
         data-chart={chartId}
-        className={cn(
-          "flex aspect-video justify-center text-xs",
-          className
-        )}
+        className={cn('flex aspect-video justify-center text-xs', className)}
         {...props}
       >
         <ChartStyle id={chartId} config={config} />

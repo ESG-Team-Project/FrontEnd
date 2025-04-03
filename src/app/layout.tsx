@@ -56,12 +56,12 @@ export default function RootLayout({
         style={{ overflowX: 'hidden', maxWidth: '100vw' }}
       >
         <JotaiProvider>
-          <AuthInitializer /> {/* Provider 내부에 AuthInitializer 추가 */} 
+          <AuthInitializer /> {/* Provider 내부에 AuthInitializer 추가 */}
           {/* <RQProvider> */}
-            <div className="flex flex-col w-full min-h-full overflow-hidden">
-              <NaviBar />
-              <main className="w-full pt-16 overflow-hidden">{children}</main>
-            </div>
+          <div className="flex flex-col w-full min-h-full overflow-hidden">
+            <NaviBar />
+            <main className="w-full pt-16 overflow-hidden">{children}</main>
+          </div>
           {/* </RQProvider> */}
         </JotaiProvider>
       </body>

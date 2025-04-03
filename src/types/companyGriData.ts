@@ -27,4 +27,4 @@ export interface CompanyGRIData {
   companyId: string;
   // key: categoryId, value: 해당 카테고리의 데이터 값 객체
   griValues: Record<string, CompanyGRICategoryValue>;
-} 
+}

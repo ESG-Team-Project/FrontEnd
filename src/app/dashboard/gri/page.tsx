@@ -19,11 +19,11 @@ export default function DashboardGriEditPage() {
   // 페이지 특정 로딩 상태 (컨텍스트의 로딩 상태와 별개)
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [dataError, setDataError] = useState<string | null>(null);
-  
+
   // 데이터 로딩 함수
   const loadData = async () => {
     if (!companyId) return;
-    
+
     try {
       setIsLoadingData(true);
       setDataError(null);
@@ -36,16 +36,16 @@ export default function DashboardGriEditPage() {
       setIsLoadingData(false);
     }
   };
-  
+
   // 데이터 저장 함수
   const saveData = async () => {
     if (!companyData) return;
-    
+
     try {
       setIsSaving(true);
       setSaveMessage(null);
       const success = await saveCompanyGriData(companyData);
-      
+
       if (success) {
         setSaveMessage('변경사항이 성공적으로 저장되었습니다.');
         // 3초 후 메시지 제거
@@ -78,12 +78,14 @@ export default function DashboardGriEditPage() {
       rightMenuItems={
         <div className="flex items-center space-x-2">
           {saveMessage && (
-            <span className={`text-xs md:text-sm ${saveMessage.includes('성공') ? 'text-green-600' : 'text-red-600'}`}>
+            <span
+              className={`text-xs md:text-sm ${saveMessage.includes('성공') ? 'text-green-600' : 'text-red-600'}`}
+            >
               {saveMessage}
             </span>
           )}
-          <CustomButton 
-            variant="outline" 
+          <CustomButton
+            variant="outline"
             className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
             onClick={saveData}
             disabled={isSaving || !companyData}
@@ -95,7 +97,7 @@ export default function DashboardGriEditPage() {
     >
       {companyData && (
         <GriEditForm
-          initialData={companyData} 
+          initialData={companyData}
           griCategories={griCategories}
           griGroups={griGroups}
           onChange={setCompanyData}
@@ -103,4 +105,4 @@ export default function DashboardGriEditPage() {
       )}
     </DashboardShell>
   );
-} 
+}

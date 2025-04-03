@@ -15,18 +15,18 @@ export const getCurrentUser = async () => {
     const baseUrl = axiosInstance.defaults.baseURL;
     const endpoint = '/users/me';
     console.log(`[API] 요청 예정: ${baseUrl}${endpoint}`);
-    
+
     // 토큰 상태 확인 (Jotai 사용)
     const token = getTokenFromAtom();
-    
+
     // 토큰이 없으면 오류 발생
     if (!token) {
       console.error('[API] 사용자 정보 조회 실패: 인증 토큰이 없습니다');
       throw new Error('인증 토큰이 없습니다. 다시 로그인해주세요.');
     }
-    
+
     console.log(`[API] 현재 토큰: ${token.substring(0, 10)}...`);
-    
+
     // 브라우저 환경에서 localStorage 직접 확인 (추가 디버깅)
     if (typeof window !== 'undefined') {
       try {
@@ -36,7 +36,7 @@ export const getCurrentUser = async () => {
         console.error('[API] 로컬스토리지 접근 오류:', e);
       }
     }
-    
+
     // API 요청 실행
     console.log('[API] 사용자 정보 요청 시작');
     const response = await axiosInstance.get(endpoint);
@@ -44,12 +44,12 @@ export const getCurrentUser = async () => {
     return response.data;
   } catch (error: any) {
     console.error('[API] 사용자 정보 조회 실패:', error);
-    
+
     // 에러 세부 정보 로깅
     if (error.response) {
       console.error(`[API] 오류 상태: ${error.response.status}`);
       console.error('[API] 오류 데이터:', error.response.data);
-      
+
       // 401, 403 오류 시 추가 정보
       if (error.response.status === 401 || error.response.status === 403) {
         console.error('[API] 인증 관련 오류: 토큰이 유효하지 않거나 권한이 부족합니다');
@@ -62,12 +62,12 @@ export const getCurrentUser = async () => {
     } else {
       console.error(`[API] 오류 발생: ${error.message}`);
     }
-    
+
     // 오류 전파
     throw new Error(
-      error.response?.data?.message || 
-      error.message || 
-      '사용자 정보를 불러오는 중 오류가 발생했습니다.'
+      error.response?.data?.message ||
+        error.message ||
+        '사용자 정보를 불러오는 중 오류가 발생했습니다.'
     );
   }
 };
@@ -151,7 +151,7 @@ const apiService = {
   patch,
   delete: del,
   auth: authService,
-  getCurrentUser
+  getCurrentUser,
 };
 
 export default apiService;

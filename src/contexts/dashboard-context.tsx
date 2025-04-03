@@ -73,15 +73,11 @@ export function DashboardDataProvider({ children }: { children: ReactNode }) {
     clearError,
   };
 
-  return (
-    <DashboardContext.Provider value={contextValue}>
-      {children}
-    </DashboardContext.Provider>
-  );
+  return <DashboardContext.Provider value={contextValue}>{children}</DashboardContext.Provider>;
 }
 
 // 컨텍스트 사용을 위한 훅
 export const useDashboard = () => useContext(DashboardContext);
 
 // 기본 내보내기를 통한 호환성 확보
-export default DashboardDataProvider; 
+export default DashboardDataProvider;

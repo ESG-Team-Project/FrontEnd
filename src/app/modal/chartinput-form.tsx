@@ -53,17 +53,21 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   };
 
   // 데이터 테이블 변경 콜백 (DataTable에서 호출)
-  const handleDataChange = useCallback((newLabels: string[], newDatasets: ChartData['datasets']) => {
-    setLabels(newLabels);
-    setDatasets(newDatasets);
-  }, []);
+  const handleDataChange = useCallback(
+    (newLabels: string[], newDatasets: ChartData['datasets']) => {
+      setLabels(newLabels);
+      setDatasets(newDatasets);
+    },
+    []
+  );
 
   // ESG 항목 변경 콜백 (ESGCombobox에서 호출)
   const handleESGChange = useCallback((value: string | null) => {
     setSelectedESG(value);
   }, []);
 
-  const handleSave = async () => { // async 추가
+  const handleSave = async () => {
+    // async 추가
     if (!chartTitle) {
       alert('차트 제목을 입력해주세요');
       return;
@@ -73,7 +77,13 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       return;
     }
     // 데이터 유효성 검사 활성화
-    if (step === 'datatable' && (labels.length === 0 || datasets === undefined || datasets.length === 0 || datasets.some(ds => !ds || ds.data.length === 0))) {
+    if (
+      step === 'datatable' &&
+      (labels.length === 0 ||
+        datasets === undefined ||
+        datasets.length === 0 ||
+        datasets.some(ds => !ds || ds.data.length === 0))
+    ) {
       alert('차트 데이터를 입력해주세요.');
       return;
     }
@@ -88,10 +98,10 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       type: chartType,
       colSpan: colSpan,
       esg: selectedESG, // ESG 항목 추가 (null 아님을 위에서 확인)
-      labels: labels,     // 상태에서 가져온 labels 사용
+      labels: labels, // 상태에서 가져온 labels 사용
       datasets: datasets, // 상태에서 가져온 datasets 사용
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     try {
@@ -120,7 +130,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       // 폼 초기화 및 닫기
       resetForm();
       setOpen(false);
-
     } catch (error) {
       console.error('차트 저장 실패:', error);
       // 사용자에게 오류 알림 (예: alert 또는 toast 메시지)
@@ -136,8 +145,8 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setChartType('bar');
     setColSpan(1);
     setSelectedESG(null); // ESG 항목 초기화
-    setLabels([]);        // labels 초기화
-    setDatasets([]);      // datasets 초기화
+    setLabels([]); // labels 초기화
+    setDatasets([]); // datasets 초기화
   };
 
   // 차트 타입별 샘플 데이터 생성 함수 리팩토링 (더 이상 사용되지 않을 수 있으므로 주석 처리 또는 삭제 가능)
@@ -205,9 +214,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent 
-        className="flex flex-col p-6 bg-white rounded-lg shadow-lg dark:bg-gray-900 w-auto sm:min-w-[500px] sm:max-w-[80vw]" 
-      >
+      <DialogContent className="flex flex-col p-6 bg-white rounded-lg shadow-lg dark:bg-gray-900 w-auto sm:min-w-[500px] sm:max-w-[80vw]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">차트 추가</DialogTitle>
           <DialogClose
@@ -227,7 +234,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 <Input
                   id="chart-title"
                   value={chartTitle}
-                  onChange={(e) => setChartTitle(e.target.value)}
+                  onChange={e => setChartTitle(e.target.value)}
                   className="col-span-3"
                 />
               </div>
@@ -249,7 +256,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 <Input
                   id="chart-description"
                   value={chartDescription}
-                  onChange={(e) => setChartDescription(e.target.value)}
+                  onChange={e => setChartDescription(e.target.value)}
                   className="col-span-3"
                 />
               </div>
@@ -257,10 +264,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
               {/* 차트 유형 선택 */}
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label className="text-right">차트 유형</Label>
-                <Select
-                  value={chartType}
-                  onValueChange={(value) => setChartType(value as ChartType)}
-                >
+                <Select value={chartType} onValueChange={value => setChartType(value as ChartType)}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="차트 유형 선택" />
                   </SelectTrigger>
@@ -279,7 +283,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 <Label className="text-right">차트 크기</Label>
                 <Select
                   value={String(colSpan)}
-                  onValueChange={(value) => setColSpan(Number(value) as 1 | 2 | 3 | 4)}
+                  onValueChange={value => setColSpan(Number(value) as 1 | 2 | 3 | 4)}
                 >
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="차트 크기 선택" />
@@ -298,7 +302,11 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           {step === 'datatable' && (
             <div>
               {/* 데이터 입력 테이블에 콜백 및 초기값 전달 */}
-              <DataTable onDataChange={handleDataChange} initialLabels={labels} initialDatasets={datasets} />
+              <DataTable
+                onDataChange={handleDataChange}
+                initialLabels={labels}
+                initialDatasets={datasets}
+              />
             </div>
           )}
         </div>
@@ -319,7 +327,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             onClick={handleNext}
             disabled={isLoading} // 로딩 중 비활성화
           >
-            {isLoading ? '저장 중...' : (step === 'combobox' ? '다음' : '완료')} {/* 로딩 텍스트 */}
+            {isLoading ? '저장 중...' : step === 'combobox' ? '다음' : '완료'} {/* 로딩 텍스트 */}
           </Button>
         </div>
       </DialogContent>

@@ -34,8 +34,8 @@ interface DashboardShellProps {
   onRetry?: () => void;
 }
 
-export default function DashboardShell({ 
-  children, 
+export default function DashboardShell({
+  children,
   pageTitle = '대시보드',
   rightMenuItems,
   loadingMessage,
@@ -44,12 +44,12 @@ export default function DashboardShell({
   manualStateHandling = false,
   isLoading: manualLoading,
   error: manualError,
-  onRetry
+  onRetry,
 }: DashboardShellProps) {
   const [isLayoutLocked] = useAtom(layoutLockedAtom);
   const { loading: contextLoading, error: contextError, companyId, refreshData } = useDashboard();
   const pathname = usePathname();
-  
+
   // 로딩 및 에러 상태 결정 (수동 또는 컨텍스트에서)
   const isLoading = manualStateHandling ? manualLoading : contextLoading;
   const error = manualStateHandling ? manualError : contextError;
@@ -66,17 +66,17 @@ export default function DashboardShell({
     if (isLoading) {
       return <LoadingState message={loadingMessage} />;
     }
-    
+
     // 에러가 있을 때
     if (error) {
       return <ErrorState message={errorMessage || error} onRetry={retryHandler} />;
     }
-    
+
     // 인증이 안되었을 때 (companyId가 없음)
     if (!manualStateHandling && !companyId) {
       return <AuthRequired message={authRequiredMessage} />;
     }
-    
+
     // 정상 컨텐츠 표시
     return children;
   };
@@ -86,15 +86,17 @@ export default function DashboardShell({
       <NaviBar />
       <DashboardTopBar pageTitle={pageTitle} rightMenuItems={rightMenuItems} />
       <main className="flex-1 pt-16 px-4 md:px-6 max-w-[1600px] mx-auto w-full">
-        <div className={clsx(
-          "my-8 md:my-8 w-full transition-all duration-300 ease-in-out",
-          isLayoutLocked 
-            ? "md:ml-16 md:w-[calc(100%-theme(space.16))]"
-            : "md:ml-60 md:w-[calc(100%-theme(space.60))]"
-        )}>
+        <div
+          className={clsx(
+            'my-8 md:my-8 w-full transition-all duration-300 ease-in-out',
+            isLayoutLocked
+              ? 'md:ml-16 md:w-[calc(100%-theme(space.16))]'
+              : 'md:ml-60 md:w-[calc(100%-theme(space.60))]'
+          )}
+        >
           {renderContent()}
         </div>
       </main>
     </div>
   );
-} 
+}

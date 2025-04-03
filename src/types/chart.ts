@@ -38,8 +38,8 @@ export interface ChartData {
   esg: string; // ESG 항목 식별자 추가
   labels?: string[]; // labels 속성 추가 (선택적)
   // datasets와 options는 chart.js 핵심 타입을 사용하도록 수정
-  datasets?: ChartDataset<ChartTypeCore, number[]>[]; 
-  options?: ChartOptions<ChartTypeCore>; 
+  datasets?: ChartDataset<ChartTypeCore, number[]>[];
+  options?: ChartOptions<ChartTypeCore>;
   colSpan?: number;
   createdAt?: Date; // 기존 createdAt 속성 (가정)
   updatedAt?: Date; // 기존 updatedAt 속성 (가정)
@@ -52,4 +52,4 @@ export interface ChartCreateInput {
   type: ChartType;
   colSpan: 1 | 2 | 3 | 4;
   data: ChartDataType;
-} 
+}

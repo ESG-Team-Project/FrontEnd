@@ -12,4 +12,4 @@ function AuthInitializer() {
   return null;
 }
 
-export default AuthInitializer; 
+export default AuthInitializer;

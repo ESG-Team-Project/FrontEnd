@@ -17,7 +17,7 @@ export function SignupForm() {
   const [company, setCompany] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
+
   // jotai atom 사용
   const [auth, setAuth] = useAtom(authAtom);
 
@@ -46,16 +46,20 @@ export function SignupForm() {
       }
 
       const data = await response.json();
-      
+
       // 회원가입 성공 시 자동 로그인
-      loginAtom(setAuth, {
-        id: data.user.id,
-        name: data.user.name,
-        email: data.user.email,
-        role: data.user.role,
-        company: data.user.company
-      }, data.token);
-      
+      loginAtom(
+        setAuth,
+        {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+          company: data.user.company,
+        },
+        data.token
+      );
+
       router.push('/dashboard');
     } catch (err) {
       setError('회원가입 처리 중 오류가 발생했습니다');
@@ -85,7 +89,7 @@ export function SignupForm() {
         >
           you@example.com
         </InputBox>
-        
+
         <InputBox
           label="이름"
           type="text"
@@ -95,7 +99,7 @@ export function SignupForm() {
         >
           홍길동
         </InputBox>
-        
+
         <InputBox
           label="회사명"
           type="text"
@@ -104,7 +108,7 @@ export function SignupForm() {
         >
           그린다이나믹스
         </InputBox>
-        
+
         <InputBox
           label="비밀번호"
           type="password"
@@ -114,7 +118,7 @@ export function SignupForm() {
         >
           ********
         </InputBox>
-        
+
         <InputBox
           label="비밀번호 확인"
           type="password"
@@ -124,11 +128,9 @@ export function SignupForm() {
         >
           ********
         </InputBox>
-        
-        {error && (
-          <div className="text-red-500 text-sm">{error}</div>
-        )}
-        
+
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+
         <Button type="submit" className="w-full text-white bg-(--color-primary-foreground)">
           가입하기
         </Button>

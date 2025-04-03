@@ -15,4 +15,4 @@ export interface UserInfo {
   companyId?: number;
   createdAt?: string;
   updatedAt?: string;
-} 
+}

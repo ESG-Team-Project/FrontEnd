@@ -46,17 +46,17 @@ export function ChartAreaInteractive(props: ChartProps) {
 
   // Chart.js 데이터 형식으로 변환
   const data = {
-    labels: chartData.map((item) => item.month),
+    labels: chartData.map(item => item.month),
     datasets: [
       {
         label: chartConfig.desktop.label,
-        data: chartData.map((item) => item.desktop),
+        data: chartData.map(item => item.desktop),
         backgroundColor: chartConfig.desktop.color,
         borderRadius: 4,
       },
       {
         label: chartConfig.mobile.label,
-        data: chartData.map((item) => item.mobile),
+        data: chartData.map(item => item.mobile),
         backgroundColor: chartConfig.mobile.color,
         borderRadius: 4,
       },
@@ -104,7 +104,7 @@ export function ChartAreaInteractive(props: ChartProps) {
       </CardHeader>
       <CardContent className="z-0">
         <ChartContainer config={chartConfig} className="min-h-[200px] min-w-[300px]">
-          {/* @ts-ignore */}
+          {/* @ts-expect-error - Bar component from chartjs 타입 호환성 문제 */}
           <Bar options={options} data={data} />
         </ChartContainer>
       </CardContent>

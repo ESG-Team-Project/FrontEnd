@@ -176,7 +176,8 @@ interface ESGComboboxProps {
   onValueChange: (value: string | null) => void; // 값 변경 콜백
 }
 
-export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) { // Props 받도록 수정
+export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
+  // Props 받도록 수정
   const [openCategoryPopover, setOpenCategoryPopover] = React.useState(false);
   const [openIndicatorPopover, setOpenIndicatorPopover] = React.useState(false);
   const [category, setCategory] = React.useState<EsgCategory | ''>('');
