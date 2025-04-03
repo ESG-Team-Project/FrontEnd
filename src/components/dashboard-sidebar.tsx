@@ -74,7 +74,7 @@ export default function DashboardSidebar() {
     },
     {
       label: '보고서',
-      href: '/dashboard/reports',
+      href: '/dashboard/report',
       icon: <FileText className="w-5 h-5" />,
     },
     {
