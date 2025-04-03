@@ -1,7 +1,7 @@
-import axiosInstance from './axios';
+import axios from './axios';
 import type { AxiosResponse } from 'axios';
-import type { AuthState, User } from '@/lib/atoms/auth';
-import { login as loginJotai, logout as logoutJotai } from '@/lib/atoms/auth';
+import type { AuthState, User } from '@/lib/atoms';
+import type { SetStateAction } from 'react';
 
 // 로그인 응답 타입 정의
 interface LoginResponse {
@@ -23,82 +23,36 @@ interface LoginRequest {
 }
 
 /**
- * 로그인 함수
+ * 로그인 함수 (API 호출 전용)
  * @param {LoginRequest} credentials - 로그인 자격 증명
- * @param {Function} setAuth - jotai 상태 설정 함수
- * @returns {Promise<LoginResponse>} 로그인 응답
+ * @returns {Promise<LoginResponse>} 로그인 응답 (토큰 및 사용자 정보 포함)
  */
 export const login = async (
-  credentials: LoginRequest, 
-  setAuth: (update: AuthState) => void
+  credentials: LoginRequest
 ): Promise<LoginResponse> => {
   try {
-    console.log('[AUTH] 로그인 시도:', credentials.email);
+    console.log('[API Auth] 로그인 시도:', credentials.email);
     
-    // 실제 API 호출
-    const response: AxiosResponse<LoginResponse> = await axiosInstance.post(
-      '/users/login',
-      credentials
-    );
+    const response: AxiosResponse<LoginResponse> = await axios.post('/users/login', credentials);
 
-    // 응답에서 필요한 데이터 추출
-    const { token, user } = response.data;
+    console.log('[API Auth] 로그인 응답 받음:', response.status);
     
-    console.log('[AUTH] 로그인 응답 받음:', response.status);
-    
-    if (!token) {
-      console.error('[AUTH] 로그인 응답에 토큰이 없음');
-      throw new Error('로그인 응답에 토큰이 없습니다');
+    // 응답 데이터 유효성 검사 (토큰 필수)
+    if (!response.data?.token) {
+      console.error('[API Auth] 로그인 응답에 토큰이 없음');
+      throw new Error('로그인 응답에 토큰이 없습니다.');
     }
     
-    if (user) {
-      // 사용자 데이터 변환
-      const userData: User = {
-        id: user.id,
-        name: user.username,
-        email: user.email,
-        role: user.role,
-        company: user.company
-      };
-      
-      // 토큰에서 Bearer 접두사 제거 후 저장
-      let tokenValue = token;
-      if (token.startsWith('Bearer ')) {
-        tokenValue = token.substring(7);
-        console.log('[AUTH] Bearer 접두사 제거됨');
-      }
-      
-      // 디버깅용 로그
-      console.log('[AUTH] 원본 토큰:', `${token.substring(0, 10)}...`);
-      console.log('[AUTH] 저장할 토큰 값:', `${tokenValue.substring(0, 10)}...`);
-      
-      // 토큰과 사용자 데이터를 Jotai 상태에 저장
-      loginJotai(setAuth, userData, tokenValue);
-      
-      // 저장 확인 - 브라우저 환경에서만 실행
-      if (typeof window !== 'undefined') {
-        setTimeout(() => {
-          // 비동기적으로 저장 확인
-          const storedAuth = localStorage.getItem('auth');
-          console.log('[AUTH] 로그인 후 localStorage 상태:', storedAuth ? '저장됨' : '저장 안됨');
-          
-          try {
-            if (storedAuth) {
-              const parsedAuth = JSON.parse(storedAuth);
-              console.log('[AUTH] 저장된 토큰 확인:', parsedAuth.token ? `${parsedAuth.token.substring(0, 10)}...` : '없음');
-            }
-          } catch (e) {
-            console.error('[AUTH] localStorage 파싱 오류:', e);
-          }
-        }, 100);
-      }
-    } else {
-      console.error('[AUTH] 로그인 응답에 사용자 정보가 없음');
+    // user 정보는 선택적일 수 있음 (API 설계에 따라)
+    if (!response.data.user) {
+        console.warn('[API Auth] 로그인 응답에 사용자 정보가 없음 (토큰만 반환됨)');
     }
 
+    // API 응답 데이터를 그대로 반환
     return response.data;
   } catch (error) {
-    console.error('[AUTH] 로그인 오류:', error);
+    console.error('[API Auth] 로그인 오류:', error);
+    // 오류를 다시 throw하여 호출한 쪽(LoginForm)에서 처리하도록 함
     throw error;
   }
 };
@@ -107,13 +61,20 @@ export const login = async (
  * 로그아웃 함수
  * @param {Function} setAuth - jotai 상태 설정 함수
  */
-export const logout = (setAuth: (update: AuthState) => void): void => {
-  // jotai에서 로그아웃 (atomWithStorage를 사용하므로 자동으로 localStorage도 업데이트)
-  logoutJotai(setAuth);
-  
-  // 선택적: 로그아웃 후 리다이렉션
-  if (typeof window !== 'undefined') {
-    window.location.href = '/login';
+export const logout = (setAuth: (update: SetStateAction<string | null>) => void) => {
+  try {
+    // 로컬 스토리지에서 토큰 제거
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('token');
+    }
+    
+    // jotai 상태 초기화
+    setAuth(null);
+    
+    return { success: true };
+  } catch (error) {
+    console.error('Logout error:', error);
+    throw error;
   }
 };
 
@@ -132,7 +93,7 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
     console.log(`[AUTH] 토큰 검증 - 토큰 확인: ${auth.token.substring(0, 10)}...`);
     
     // axios 인터셉터가 자동으로 Bearer 접두사를 추가하므로 여기서는 별도로 설정하지 않음
-    const response = await axiosInstance.get('/auth/verify');
+    const response = await axios.get('/auth/verify');
     
     console.log(`[AUTH] 토큰 검증 결과: ${response.status === 200 ? '성공' : '실패'}`);
     return response.status === 200;

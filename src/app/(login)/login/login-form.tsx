@@ -6,9 +6,10 @@ import Link from 'next/link';
 import AuthContainer from '../AuthContainer';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { login } from '@/lib/api/auth';
+import { login as apiLogin } from '@/lib/api/auth';
 import { useAtom } from 'jotai';
-import { authAtom, isLoggedInAtom } from '@/lib/atoms/auth';
+import { authAtom, isLoggedInAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
+import type { User } from '@/lib/atoms/auth';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -18,14 +19,11 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
-  // 리다이렉트할 경로 가져오기 (URL에서 ?redirectTo=경로)
   const redirectPath = searchParams.get('redirectTo') || '/dashboard';
   
-  // jotai atom 사용
-  const [auth, setAuth] = useAtom(authAtom);
   const [isLoggedIn] = useAtom(isLoggedInAtom);
+  const [, login] = useAtom(loginAtom);
   
-  // 로그인 상태에 따른 리다이렉션
   useEffect(() => {
     if (isLoggedIn) {
       router.push(redirectPath);
@@ -38,15 +36,29 @@ export function LoginForm() {
     setIsLoading(true);
     
     try {
-      // 수정된 login 함수에 setAuth 전달
-      const response = await login({ email, password }, setAuth);
-      console.log('로그인 성공:', response);
+      const response = await apiLogin({ email, password });
+      console.log('로그인 API 응답:', response);
       
-      // 로그인 성공시 리다이렉션은 useEffect에서 처리
+      if (response.user && response.token) {
+        const userData: User = {
+          id: response.user.id,
+          name: response.user.username,
+          email: response.user.email,
+          role: response.user.role,
+          company: response.user.company,
+        };
+        
+        login({ user: userData, token: response.token });
+        
+      } else {
+        throw new Error('로그인 응답 형식이 올바르지 않습니다.');
+      }
+      
     } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } } };
+      const error = err as { response?: { data?: { message?: string } }, message?: string };
       setError(
         error.response?.data?.message || 
+        error.message ||
         '로그인 실패. 이메일과 비밀번호를 확인해주세요.'
       );
       console.error('로그인 오류:', err);
@@ -91,7 +103,7 @@ export function LoginForm() {
         
         <Button 
           type="submit" 
-          className="w-full text-white bg-(--color-primary-foreground)"
+          className="w-full text-white bg-primary hover:bg-primary/90"
           disabled={isLoading}
         >
           {isLoading ? '로그인 중...' : '로그인'}

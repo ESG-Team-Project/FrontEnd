@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   ChevronDown,
@@ -19,6 +18,8 @@ import {
   User,
   Building,
   Loader2,
+  Menu,
+  X
 } from 'lucide-react';
 import { TbChartDonut } from "react-icons/tb";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@radix-ui/react-collapsible';
@@ -26,15 +27,20 @@ import { SidebarGroupContent } from './ui/sidebar';
 import api from '@/lib/api';
 import { UserInfo } from '@/types/user';
 import { ESGChartDialog } from '@/app/modal/chartinput-form';
+import { useAtom } from 'jotai';
+import { mobileOpenAtom } from '@/lib/atoms';
+import MobileToggle from './MobileToggle';
 
 export default function DashboardSidebar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isMobileOpen, setIsMobileOpen] = useAtom(mobileOpenAtom);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+  const toggleMobileSidebar = () => setIsMobileOpen(prev => !prev);
 
   // 사용자 정보 조회
   useEffect(() => {
@@ -69,126 +75,121 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      <div className="w-[260px] h-[700px] flex flex-col bg-white p-4 min-h-full">
+      <MobileToggle />
+      
+      <div className={`
+        fixed md:top-16 top-14 left-0 
+        h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] 
+        bg-white p-2 md:p-3 overflow-y-auto z-30 border-r
+        transition-all duration-300
+        ${isMobileOpen ? 'w-[240px] opacity-100 translate-x-0' : 'w-0 md:w-[240px] opacity-0 md:opacity-100 -translate-x-full md:translate-x-0'}
+      `}>
         {/* 사용자 정보 영역 */}
-        <div className="flex flex-col items-center gap-2 pb-4 border-b">
+        <div className="flex flex-col items-center gap-1 pb-2 border-b">
           {loading ? (
-            <div className="flex flex-col items-center py-4">
-              <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-              <p className="mt-2 text-sm text-gray-500">정보 로딩 중...</p>
+            <div className="flex flex-col items-center py-2">
+              <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+              <p className="mt-1 text-xs text-gray-500">정보 로딩 중...</p>
             </div>
           ) : error ? (
-            <div className="text-center text-red-500 py-4">
-              <p className="text-sm">{error}</p>
+            <div className="text-center text-red-500 py-2">
+              <p className="text-xs">{error}</p>
             </div>
           ) : userInfo ? (
             <>
-              <Avatar className="w-16 h-16">
-                <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${userInfo.name}`} alt={userInfo.name} />
-                <AvatarFallback>{getUserInitials()}</AvatarFallback>
-              </Avatar>
-              <div className="text-center">
+              <div className="w-14 h-14 flex items-center justify-center">
+                <User className="w-8 h-8 text-gray-600" />
+              </div>
+              <div className="text-center mt-1">
                 {userInfo.companyName && (
-                  <div className="flex items-center justify-center mb-1">
+                  <div className="flex items-center justify-center mb-0.5">
                     <Building className="w-3 h-3 mr-1 text-gray-500" />
-                    <p className="text-sm text-gray-600">{userInfo.companyName}</p>
+                    <p className="text-xs text-gray-600">{userInfo.companyName}</p>
                   </div>
                 )}
                 <div className="flex items-center justify-center">
                   <User className="w-3 h-3 mr-1 text-gray-500" />
-                  <p className="text-base font-medium">{userInfo.name}</p>
+                  <p className="text-sm font-medium">{userInfo.name}</p>
                 </div>
                 {userInfo.department && (
-                  <p className="text-xs text-gray-500 mt-1">{userInfo.department}</p>
+                  <p className="text-2xs text-gray-500 mt-0.5">{userInfo.department}</p>
                 )}
               </div>
             </>
           ) : (
-            <div className="text-center py-4">
-              <p className="text-sm text-gray-500">로그인 정보가 없습니다</p>
+            <div className="text-center py-2">
+              <p className="text-xs text-gray-500">로그인 정보가 없습니다</p>
             </div>
           )}
         </div>
 
         {/* 차트추가 드롭다운 */}
-        <div className="flex items-center justify-between py-4 border-b">
+        <div className="flex items-center justify-between py-2 border-b">
           <Collapsible className="w-full group/collapsible">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="justify-start w-full ">
+              <Button variant="ghost" className="justify-start w-full py-1 h-auto">
                 <PieChart className="w-4 h-4 mr-2" />
-                <strong className="block my-2 text-base">차트추가</strong>
+                <strong className="block my-1 text-sm">차트추가</strong>
                 <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <SidebarGroupContent>
-                <strong className="block my-2 text-sm">선</strong>
-                <div className="grid grid-cols-3 gap-4">
-                  <button onClick={openModal}>
-                    <ChartLine className="w-10 h-10" />
+                <strong className="block my-1 text-xs">선</strong>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartLine className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
-                  <button onClick={openModal}>
-                    <ChartSpline className="w-10 h-10" />
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartSpline className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
-                  <button onClick={openModal}>
-                    <ChartNoAxesCombined className="w-10 h-10" />
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartNoAxesCombined className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
                 </div>
               </SidebarGroupContent>
 
               <SidebarGroupContent>
-                <strong className="block my-2 text-sm">영역</strong>
-                <div className="grid grid-cols-3 gap-4">
-                  <button onClick={openModal}>
-                    <ChartArea className="w-10 h-10" />
-                  </button>
-                  <button onClick={openModal}>
-                    <ChartArea className="w-10 h-10" />
-                  </button>
-                  <button onClick={openModal}>
-                    <ChartArea className="w-10 h-10" />
-                  </button>
-                  <button onClick={openModal}>
-                    <ChartArea className="w-10 h-10" />
-                  </button>
-                  <button onClick={openModal}>
-                    <ChartArea className="w-10 h-10" />
-                  </button>
-                  <button onClick={openModal}>
-                    <ChartArea className="w-10 h-10" />
+                <strong className="block my-1 text-xs">영역</strong>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartArea className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
                 </div>
               </SidebarGroupContent>
+              
               <SidebarGroupContent>
-                <strong className="block my-2 text-sm">열</strong>
-                <div className="grid grid-cols-3 gap-4">
-                  <button onClick={openModal}>
-                    <ChartColumnBig className="w-10 h-10" />
+                <strong className="block my-1 text-xs">열</strong>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartColumnBig className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
-                  <button onClick={openModal}>
-                    <ChartColumnStacked className="w-10 h-10" />
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartColumnStacked className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
                 </div>
               </SidebarGroupContent>
+              
               <SidebarGroupContent>
-                <strong className="block my-2 text-sm">막대</strong>
-                <div className="grid grid-cols-3 gap-4">
-                  <button onClick={openModal}>
-                    <ChartBarBig className="w-10 h-10" />
+                <strong className="block my-1 text-xs">막대</strong>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartBarBig className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
-                  <button onClick={openModal}>
-                    <ChartBarStacked className="w-10 h-10" />
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartBarStacked className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
                 </div>
               </SidebarGroupContent>
+              
               <SidebarGroupContent>
-                <strong className="block my-2 text-sm">원형</strong>
-                <div className="grid grid-cols-3 gap-4">
-                  <button onClick={openModal}>
-                    <ChartPie className="w-10 h-10" />
+                <strong className="block my-1 text-xs">원형</strong>
+                <div className="grid grid-cols-3 gap-2">
+                  <button type="button" onClick={openModal} className="group">
+                    <ChartPie className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
-                  <button onClick={openModal}>
-                    <ChartPie className="w-10 h-10" />
+                  <button type="button" onClick={openModal} className="group">
+                    <TbChartDonut className="w-8 h-8 group-hover:text-blue-500" />
                   </button>
                 </div>
               </SidebarGroupContent>
@@ -198,17 +199,16 @@ export default function DashboardSidebar() {
       </div>
 
       {/* 모달 */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="p-4 bg-white rounded shadow-lg">
-            <h2 className="text-lg font-bold">모달 제목</h2>
-            <p>모달 내용입니다.</p>
-            <button onClick={closeModal} className="px-4 py-2 mt-4 text-white bg-blue-500 rounded">
-              닫기
-            </button>
-          </div>
-        </div>
-      )}
+      {isModalOpen && <ESGChartDialog open={isModalOpen} setOpen={setIsModalOpen} />}
     </>
+  );
+}
+
+// 사이드바 그룹 내부 컨텐츠 스타일링 컴포넌트
+function SidebarGroupContent({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="ml-4 mr-2 my-2 p-2 rounded-md bg-gray-50">
+      {children}
+    </div>
   );
 }

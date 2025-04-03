@@ -4,15 +4,15 @@ import { useState, useEffect } from 'react';
 import LabeledInputBox from '@/components/labeled-inputbox';
 import { Button } from '@/components/ui/button';
 import { useAtom } from 'jotai';
-import { authAtom, userAtom } from '@/lib/atoms/auth';
-import { useRouter } from 'next/navigation';
+import { authAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
+import type { AuthState, User } from '@/lib/atoms/auth';
 
 export default function AccountForm() {
-  const router = useRouter();
-  const [auth, setAuth] = useAtom(authAtom);
-  const [user] = useAtom(userAtom);
+  const [auth] = useAtom(authAtom);
+  const [user, setUser] = useAtom(userAtom);
+  const [, login] = useAtom(loginAtom);
   
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<Partial<User & { password?: string, confirmPassword?: string }>>({
     name: '',
     email: '',
     password: '',
@@ -20,7 +20,6 @@ export default function AccountForm() {
     phone: '',
   });
   
-  // 사용자 정보가 있으면 폼에 미리 채워넣기
   useEffect(() => {
     if (user) {
       setFormData({
@@ -30,15 +29,12 @@ export default function AccountForm() {
         confirmPassword: '',
         phone: user.phone || '',
       });
-    } else {
-      // 로그인 상태가 아니면 로그인 페이지로 리다이렉트
-      router.push('/login');
     }
-  }, [user, router]);
+  }, [user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData: typeof formData) => ({
       ...prevData,
       [name]: value,
     }));
@@ -47,51 +43,68 @@ export default function AccountForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 비밀번호 변경 시 일치 여부 확인
     if (formData.password && formData.password !== formData.confirmPassword) {
       alert('비밀번호가 일치하지 않습니다.');
       return;
     }
     
+    const currentAuth = auth as AuthState | null;
+    if (!currentAuth || typeof currentAuth !== 'object' || !currentAuth.token) {
+        alert('인증 정보가 유효하지 않습니다. 다시 로그인해주세요.');
+        console.error('handleSubmit Error: Invalid auth state', currentAuth);
+        return; 
+    }
+    const token = currentAuth.token;
+
+    const updateData: Partial<User> & { password?: string } = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+    };
+    if (formData.password) {
+        updateData.password = formData.password;
+    }
+
     try {
-      // API 요청 예시 (실제 구현에 맞게 수정 필요)
       const response = await fetch('/api/user/update', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${auth.token}`,
+          'Authorization': `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password || undefined, // 비밀번호가 없으면 전송하지 않음
-          phone: formData.phone,
-        }),
+        body: JSON.stringify(updateData),
       });
       
       if (!response.ok) {
-        throw new Error('프로필 업데이트 실패');
+        const errorData = await response.json().catch(() => ({ message: '프로필 업데이트 실패' }));
+        throw new Error(errorData.message || '프로필 업데이트 실패');
       }
       
-      const result = await response.json();
+      const updatedUserData = await response.json();
       
-      // 업데이트된 사용자 정보로 jotai 상태 갱신
-      setAuth({
-        ...auth,
-        user: {
-          ...(auth.user || {}), // null 체크
-          name: formData.name,
-          email: formData.email,
-          role: auth.user?.role || '',
-          id: auth.user?.id || '',
-          phone: formData.phone,
-        }
-      });
-      
-      alert('프로필이 성공적으로 업데이트되었습니다.');
+      let finalUserData: User | null = null;
+      if (updatedUserData && typeof updatedUserData === 'object' && updatedUserData.id) {
+          finalUserData = updatedUserData as User;
+      } else if (user) {
+          finalUserData = {
+              ...user,
+              name: formData.name ?? user.name,
+              email: formData.email ?? user.email,
+              phone: formData.phone ?? user.phone,
+          };
+      } 
+
+      if (finalUserData) {
+          login({ user: finalUserData, token: token });
+          alert('프로필이 성공적으로 업데이트되었습니다.');
+      } else {
+          console.warn('Could not determine updated user data after successful API call.');
+          alert('프로필 업데이트는 성공했으나, 화면 갱신에 문제가 있을 수 있습니다.');
+      }
+
     } catch (error) {
       console.error('프로필 업데이트 오류:', error);
-      alert('프로필 업데이트 중 오류가 발생했습니다.');
+      alert(`프로필 업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
   };
 

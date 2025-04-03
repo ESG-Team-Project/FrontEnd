@@ -1,86 +1,85 @@
-import { atom } from 'jotai';
+import { atom, useAtom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
+// import type { User, AuthState } from './types'; // types.ts 사용 안 함
+import { useEffect } from 'react';
 
-// 사용자 정보 타입 정의
+// --- 타입 정의 (추가 및 export) --- 
 export interface User {
   id: string;
   name: string;
   email: string;
   role: string;
   company?: string;
-  phone?: string;
+  phone?: string; // phone 속성 추가
 }
 
-// 로그인 상태 타입
 export interface AuthState {
   isLoggedIn: boolean;
   user: User | null;
   token: string | null;
+  isLoading: boolean;
 }
+// --- End of 타입 정의 ---
 
 // 초기 상태
 const initialState: AuthState = {
   isLoggedIn: false,
   user: null,
   token: null,
+  isLoading: true, 
 };
 
 // localStorage에 저장/복원되는 인증 atom
 export const authAtom = atomWithStorage<AuthState>('auth', initialState);
 
-// 로그인 상태만 확인하는 파생 atom
+// --- 파생 상태 Atom --- 
 export const isLoggedInAtom = atom((get) => get(authAtom).isLoggedIn);
-
-// 사용자 정보만 확인하는 파생 atom
 export const userAtom = atom((get) => get(authAtom).user);
-
-// 토큰만 확인하는 파생 atom
 export const tokenAtom = atom((get) => get(authAtom).token);
+export const isLoadingAtom = atom((get) => get(authAtom).isLoading);
 
-// 로그인 함수
-export const login = (
-  setAuth: (update: AuthState) => void,
-  userData: User,
-  token: string
-) => {
-  // 토큰 저장하기 전 로그
-  console.log('[AUTH ATOM] 로그인 시작 - 토큰 저장 예정:', token ? `${token.substring(0, 10)}...` : '없음');
-  
-  // 인증 상태 업데이트
-  const authState: AuthState = {
-    isLoggedIn: true,
-    user: userData,
-    token,
-  };
-  
-  setAuth(authState);
-  
-  // 저장 확인 로그
-  console.log('[AUTH ATOM] 로그인 완료 - 사용자:', userData.name);
-  
-  // localStorage에 직접 저장 확인 (추가 안전장치)
-  if (typeof window !== 'undefined') {
-    try {
-      const storedAuth = localStorage.getItem('auth');
-      console.log('[AUTH ATOM] localStorage 확인:', storedAuth ? '저장됨' : '저장 안됨');
-    } catch (e) {
-      console.error('[AUTH ATOM] localStorage 접근 오류:', e);
+// --- 상태 초기화 완료 Atom --- 
+export const authInitializedAtom = atom(false);
+
+// --- 액션 Atom (Write-only) --- 
+export const loginAtom = atom(
+  null,
+  (get, set, { user, token }: { user: User; token: string }) => {
+    console.log('[Auth Atom Action] Login executed');
+    set(authAtom, { isLoggedIn: true, user, token, isLoading: false });
+    if (!get(authInitializedAtom)) {
+        set(authInitializedAtom, true); 
     }
   }
-};
+);
 
-// 로그아웃 함수
-export const logout = (setAuth: (update: AuthState) => void) => {
-  console.log('[AUTH ATOM] 로그아웃 실행');
-  setAuth(initialState);
-  
-  // localStorage에서 제거 확인
-  if (typeof window !== 'undefined') {
-    try {
-      const storedAuth = localStorage.getItem('auth');
-      console.log('[AUTH ATOM] 로그아웃 후 localStorage 확인:', storedAuth ? '아직 남아있음' : '제거됨');
-    } catch (e) {
-      console.error('[AUTH ATOM] localStorage 접근 오류:', e);
+export const logoutAtom = atom(
+  null,
+  (get, set) => {
+    console.log('[Auth Atom Action] Logout executed');
+    set(authAtom, { isLoggedIn: false, user: null, token: null, isLoading: false });
+    if (!get(authInitializedAtom)) {
+        set(authInitializedAtom, true); 
     }
   }
+);
+
+// --- 초기화 훅 --- 
+export const useInitializeAuth = () => {
+  const [isLoading] = useAtom(isLoadingAtom);
+  const [isInitialized, setInitialized] = useAtom(authInitializedAtom);
+  const [auth] = useAtom(authAtom);
+  const [, logout] = useAtom(logoutAtom);
+
+  useEffect(() => {
+    if (!isLoading && !isInitialized) {
+      console.log('[useInitializeAuth] Auth state loaded from storage.', auth);
+      if (auth.token && !auth.user && auth.isLoggedIn) {
+        console.warn('[useInitializeAuth] Token exists but user missing, forcing logout.');
+        logout();
+      } 
+      setInitialized(true);
+      console.log('[useInitializeAuth] Auth initialized.');
+    }
+  }, [isLoading, isInitialized, setInitialized, auth, logout]);
 }; 

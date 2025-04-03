@@ -7,7 +7,7 @@ import AuthContainer from '../AuthContainer';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
-import { authAtom, login as loginAtom } from '@/lib/atoms/auth';
+import { authAtom, login as loginAtom } from '@/lib/atoms';
 
 export function SignupForm() {
   const [email, setEmail] = useState('');
