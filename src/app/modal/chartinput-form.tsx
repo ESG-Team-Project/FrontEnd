@@ -1,6 +1,8 @@
 'use client';
 import { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
+import { Upload, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -21,6 +23,8 @@ import {
 } from '@/components/ui/select'; // Select 관련 컴포넌트 추가
 import { v4 as uuidv4 } from 'uuid';
 import { ChartType, ChartData } from '@/types/chart'; // ChartDataset 임포트 제거
+import { Value } from '@radix-ui/react-select';
+import { DialogDescription } from '@radix-ui/react-dialog';
 
 interface ESGChartDialogProps {
   open: boolean;
@@ -35,10 +39,11 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [chartDescription, setChartDescription] = useState('');
   const [colSpan, setColSpan] = useState<1 | 2 | 3 | 4>(1);
   const [selectedESG, setSelectedESG] = useState<string | null>(null); // ESG 항목 상태 추가
-  const [labels, setLabels] = useState<string[]>([]); // labels 상태 추가
+  const [labels, setLabels] = useState<string[]|number[]>([]); // labels 상태 추가
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]); // datasets 상태 타입 수정
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
-
+  const [file, setFile] = useState<File>();
+  
   const handleNext = () => {
     if (step === 'combobox') {
       setStep('datatable'); // 다음 단계로 전환
@@ -54,7 +59,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
   // 데이터 테이블 변경 콜백 (DataTable에서 호출)
   const handleDataChange = useCallback(
-    (newLabels: string[], newDatasets: ChartData['datasets']) => {
+    (newLabels: string[]|number[], newDatasets: ChartData['datasets']) => {
       setLabels(newLabels);
       setDatasets(newDatasets);
     },
@@ -148,6 +153,65 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setLabels([]); // labels 초기화
     setDatasets([]); // datasets 초기화
   };
+  const onDrop = (acceptedFiles: File[]) => {
+      const file = acceptedFiles[0];
+      setFile(file)
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        if(!event.target?.result) return;
+        const csvText = event.target.result as string;
+        const parsedData = parseCSV(csvText);
+
+        const dataset:ChartData['datasets'] = []
+        parsedData.data.forEach((val, index)=>{
+            dataset.push(
+            {
+              label:  `${index+1}`, // Provide a default string label
+              data: val, // Use the data array
+            })
+
+        })
+        setLabels(parsedData.labels)
+        setDatasets(dataset)
+
+        // let maxCols = 0;
+        // parsedData['data'].forEach(row => {
+        //   const colCount = Object.keys(row).length; // 열의 개수
+        //   if (colCount > maxCols) {
+        //     maxCols = colCount;
+        //   }
+        // });
+        // setMaxColumns(maxCols)
+        // console.log(parsedData, maxCols)
+      };
+      console.log(labels,datasets)
+      reader.readAsText(file, "UTF-8");
+      handleDataChange(labels, datasets) 
+    }
+    
+  };
+
+  const { getRootProps, getInputProps } = useDropzone({
+      onDrop,
+      accept: { 'text/csv': ['.csv'], },
+
+    });
+  const parseCSV = (csvText:string) =>{
+      const rows = csvText.split("\n").map(row => row.trim()).filter(row => row); // 줄바꿈 기준으로 분리
+      const labels= Array.from({ length: rows.length }, (_, i) => i);
+      const beforedata: number[][] = [];
+      for (let i = 0; i < rows.length; i++) {  // 첫 번째 줄은 헤더이므로 건너뜀
+          const value = rows[i].split(",").map(row=>parseValue(row));
+          beforedata.push(value); // 숫자로 변환
+      }
+      const data = beforedata[0].map((_, colIndex) =>
+        beforedata.map(row => row[colIndex])
+      );
+      return { labels, data };
+  }
+  const parseValue = (value:any) => isNaN(value) ? value : Number(value);
 
   // 차트 타입별 샘플 데이터 생성 함수 리팩토링 (더 이상 사용되지 않을 수 있으므로 주석 처리 또는 삭제 가능)
   /*
@@ -215,6 +279,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="flex flex-col p-6 bg-white rounded-lg shadow-lg dark:bg-gray-900 w-auto sm:min-w-[500px] sm:max-w-[80vw]">
+        <DialogDescription>test</DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">차트 추가</DialogTitle>
           <DialogClose
@@ -224,6 +289,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
         </DialogHeader>
 
         <div className="space-y-4">
+
           {step === 'combobox' && (
             <div>
               {/* 차트 제목 입력 */}
@@ -298,7 +364,20 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
               </div>
             </div>
           )}
-
+            {step === 'datatable' && (
+              <div
+                {...getRootProps()}
+                className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
+              >
+                <input {...getInputProps()} />
+                <div className="flex flex-col items-center w-full">
+                <Upload className="w-full h-10 text-gray-500 dark:text-gray-400" />
+                  <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
+                    CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
+                  </p>
+                </div>
+              </div>
+            )}
           {step === 'datatable' && (
             <div>
               {/* 데이터 입력 테이블에 콜백 및 초기값 전달 */}

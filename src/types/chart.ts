@@ -8,16 +8,16 @@ export type ChartType = ChartTypeCore | 'area' | 'donut';
 
 // 차트 유형별 데이터 인터페이스
 export interface BarChartData {
-  categories: string[];
+  categories: string[]|number[];
   values: number[];
   colors: string[];
 }
 
 export interface LineChartData {
-  labels: string[];
+  labels: string[]|number[];
   datasets: Array<{
     name: string;
-    values: number[];
+    values:string[]|number[];
   }>;
 }
 
@@ -36,9 +36,9 @@ export interface ChartData {
   type: ChartType; // 애플리케이션용 타입 사용
   description?: string;
   esg: string; // ESG 항목 식별자 추가
-  labels?: string[]; // labels 속성 추가 (선택적)
+  labels?: string[]|number[]; // labels 속성 추가 (선택적)
   // datasets와 options는 chart.js 핵심 타입을 사용하도록 수정
-  datasets?: ChartDataset<ChartTypeCore, number[]>[];
+  datasets?: ChartDataset<ChartTypeCore, number[]|string[]>[];
   options?: ChartOptions<ChartTypeCore>;
   colSpan?: number;
   createdAt?: Date; // 기존 createdAt 속성 (가정)
