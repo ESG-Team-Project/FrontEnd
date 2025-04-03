@@ -1,52 +1,23 @@
-import { useEffect } from 'react';
-import { useAtom } from 'jotai';
-import { Button } from '@/components/ui/button';
-import { Menu, X } from 'lucide-react';
-import { mobileOpenAtom } from '@/lib/atoms';
+'use client';
 
+// import { useAtom } from 'jotai';
+// import { mobileOpenAtom } from '@/lib/atoms';
+// import { Button } from './ui/button';
+// import { Menu, X } from 'lucide-react';
+
+// 이 컴포넌트는 dashboard-top-bar.tsx로 기능이 이전되었으므로 비활성화합니다.
 export default function MobileToggle() {
-  const [isMobileOpen, setIsMobileOpen] = useAtom(mobileOpenAtom);
+  // const [isOpen, setIsOpen] = useAtom(mobileOpenAtom);
+  // const toggle = () => setIsOpen(prev => !prev);
 
-  // ESC 키를 누르면 모바일 메뉴를 닫음
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileOpen) {
-        setIsMobileOpen(false);
-      }
-    };
+  return null; // 아무것도 렌더링하지 않음
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isMobileOpen, setIsMobileOpen]);
-
-  // 모바일 메뉴 바깥 클릭 시 메뉴 닫기
-  useEffect(() => {
-    if (!isMobileOpen) return;
-
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // 사이드바 요소와 토글 버튼 외 영역 클릭 시 닫기
-      if (!target.closest('.sidebar') && !target.closest('.mobile-toggle')) {
-        setIsMobileOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isMobileOpen, setIsMobileOpen]);
-
+  /* 기존 코드 (주석 처리)
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      className="md:hidden fixed top-[14px] right-4 z-50 mobile-toggle"
-      onClick={() => setIsMobileOpen(!isMobileOpen)}
-    >
-      {isMobileOpen ? (
-        <X className="h-5 w-5" />
-      ) : (
-        <Menu className="h-5 w-5" />
-      )}
+    <Button variant="ghost" size="icon" onClick={toggle} className="md:hidden mr-2">
+      {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+      <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
+  */
 } 

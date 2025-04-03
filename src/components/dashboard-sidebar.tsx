@@ -28,21 +28,20 @@ import api from '@/lib/api';
 import { UserInfo } from '@/types/user';
 import { ESGChartDialog } from '@/app/modal/chartinput-form';
 import { useAtom } from 'jotai';
-import { mobileOpenAtom } from '@/lib/atoms';
-import MobileToggle from './MobileToggle';
+import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
+import clsx from 'clsx';
 
 export default function DashboardSidebar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isMobileOpen, setIsMobileOpen] = useAtom(mobileOpenAtom);
+  
+  const [isLayoutLocked] = useAtom(layoutLockedAtom);
+  const [isMobileOpen] = useAtom(sidebarOpenAtom);
 
   const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  const toggleMobileSidebar = () => setIsMobileOpen(prev => !prev);
 
-  // 사용자 정보 조회
   useEffect(() => {
     const fetchUserInfo = async () => {
       try {
@@ -61,11 +60,9 @@ export default function DashboardSidebar() {
     fetchUserInfo();
   }, []);
 
-  // 사용자 이니셜 생성 (아바타 폴백용)
   const getUserInitials = () => {
     if (!userInfo?.name) return '?';
     
-    // 이름에서 첫 글자 또는 첫 두 글자 추출
     const nameParts = userInfo.name.split(' ');
     if (nameParts.length > 1) {
       return (nameParts[0].charAt(0) + nameParts[1].charAt(0)).toUpperCase();
@@ -75,65 +72,78 @@ export default function DashboardSidebar() {
 
   return (
     <>
-      <MobileToggle />
-      
-      <div className={`
-        fixed md:top-16 top-14 left-0 
-        h-[calc(100vh-56px)] md:h-[calc(100vh-64px)] 
-        bg-white p-2 md:p-3 overflow-y-auto z-30 border-r
-        transition-all duration-300
-        ${isMobileOpen ? 'w-[240px] opacity-100 translate-x-0' : 'w-0 md:w-[240px] opacity-0 md:opacity-100 -translate-x-full md:translate-x-0'}
-      `}>
-        {/* 사용자 정보 영역 */}
-        <div className="flex flex-col items-center gap-1 pb-2 border-b">
+      <aside 
+        className={clsx(
+          "fixed md:top-16 top-14 left-0",
+          "h-[calc(100vh-56px)] md:h-[calc(100vh-64px)]",
+          "bg-white p-2 md:p-3 overflow-y-auto z-30 border-r",
+          "transition-all duration-300 ease-in-out",
+          isLayoutLocked ? "md:w-16" : "md:w-60",
+          "md:translate-x-0 md:opacity-100",
+          isMobileOpen 
+            ? "w-60 translate-x-0 opacity-100" 
+            : "w-0 -translate-x-full opacity-0"
+        )}
+      >
+        <div className={clsx(
+          "flex items-center pb-2 border-b p-2",
+          isLayoutLocked ? "justify-center" : "justify-between"
+        )}>
           {loading ? (
-            <div className="flex flex-col items-center py-2">
+            <div className="flex items-center justify-center w-full py-2">
               <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
-              <p className="mt-1 text-xs text-gray-500">정보 로딩 중...</p>
             </div>
           ) : error ? (
-            <div className="text-center text-red-500 py-2">
+            <div className={clsx("py-2", isLayoutLocked ? "hidden" : "text-left text-red-500")}>
               <p className="text-xs">{error}</p>
             </div>
           ) : userInfo ? (
             <>
-              <div className="w-14 h-14 flex items-center justify-center">
-                <User className="w-8 h-8 text-gray-600" />
+              <div className={clsx(
+                  "flex-shrink-0 flex items-center justify-center",
+                  isLayoutLocked ? "w-full h-10" : "w-10 h-10"
+              )}>
+                <User className="w-6 h-6 text-gray-600" />
               </div>
-              <div className="text-center mt-1">
+              <div className={clsx("text-right overflow-hidden", isLayoutLocked && "hidden")}>
                 {userInfo.companyName && (
-                  <div className="flex items-center justify-center mb-0.5">
-                    <Building className="w-3 h-3 mr-1 text-gray-500" />
-                    <p className="text-xs text-gray-600">{userInfo.companyName}</p>
+                  <div className="flex items-center justify-end mb-0.5">
+                    <Building className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
+                    <p className="text-xs text-gray-600 truncate">{userInfo.companyName}</p>
                   </div>
                 )}
-                <div className="flex items-center justify-center">
-                  <User className="w-3 h-3 mr-1 text-gray-500" />
-                  <p className="text-sm font-medium">{userInfo.name}</p>
+                <div className="flex items-center justify-end">
+                  <User className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
+                  <p className="text-sm font-medium truncate">{userInfo.name}</p>
                 </div>
                 {userInfo.department && (
-                  <p className="text-2xs text-gray-500 mt-0.5">{userInfo.department}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate text-right">{userInfo.department}</p>
                 )}
               </div>
             </>
           ) : (
-            <div className="text-center py-2">
+            <div className={clsx("py-2", isLayoutLocked ? "hidden" : "text-left")}>
               <p className="text-xs text-gray-500">로그인 정보가 없습니다</p>
             </div>
           )}
         </div>
 
-        {/* 차트추가 드롭다운 */}
         <div className="flex items-center justify-between py-2 border-b">
           <Collapsible className="w-full group/collapsible">
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" className="justify-start w-full py-1 h-auto">
-                <PieChart className="w-4 h-4 mr-2" />
-                <strong className="block my-1 text-sm">차트추가</strong>
-                <ChevronDown className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+              <Button 
+                variant="ghost" 
+                className={clsx(
+                  "w-full py-1 h-auto", 
+                  isLayoutLocked ? "justify-center" : "justify-start"
+                )}
+              >
+                <PieChart className={clsx("w-4 h-4", !isLayoutLocked && "mr-2")} />
+                <strong className={clsx("block my-1 text-sm", isLayoutLocked && "hidden")}>차트추가</strong>
+                <ChevronDown className={clsx("ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180", isLayoutLocked && "hidden")} />
               </Button>
             </CollapsibleTrigger>
-            <CollapsibleContent>
+            <CollapsibleContent className={clsx(isLayoutLocked && "hidden")}>
               <SidebarGroupContent>
                 <strong className="block my-1 text-xs">선</strong>
                 <div className="grid grid-cols-3 gap-2">
@@ -196,19 +206,9 @@ export default function DashboardSidebar() {
             </CollapsibleContent>
           </Collapsible>
         </div>
-      </div>
+      </aside>
 
-      {/* 모달 */}
       {isModalOpen && <ESGChartDialog open={isModalOpen} setOpen={setIsModalOpen} />}
     </>
-  );
-}
-
-// 사이드바 그룹 내부 컨텐츠 스타일링 컴포넌트
-function SidebarGroupContent({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="ml-4 mr-2 my-2 p-2 rounded-md bg-gray-50">
-      {children}
-    </div>
   );
 }
