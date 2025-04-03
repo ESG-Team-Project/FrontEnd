@@ -1,19 +1,23 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-type LogoProps = {
-  srcURL: string;
-  children: React.ReactElement | string;
-};
 
-export default function Logo() {
+interface LogoProps {
+  width?: number;
+  height?: number;
+}
+
+export default function Logo({ width = 40, height = 40 }: LogoProps) {
   return (
     <svg
-      width="40"
-      height="40"
+      width={width}
+      height={height}
       viewBox="0 0 40 40"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      className="w-10 h-10"
+      className="h-auto"
+      aria-labelledby="logoTitle"
+      role="img"
     >
+      <title id="logoTitle">ESG 로고</title>
       {/* 배경 원 */}
       <circle cx="20" cy="20" r="19" fill="#10B981" />
 

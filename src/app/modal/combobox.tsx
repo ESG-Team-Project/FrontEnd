@@ -170,11 +170,29 @@ const esgIndicators = {
 type EsgCategory = 'environment' | 'social' | 'governance';
 type EsgIndicator = { id: string; label: string };
 
-export function ESGCombobox() {
+// Props 인터페이스 정의
+interface ESGComboboxProps {
+  value: string | null; // 외부에서 선택된 값
+  onValueChange: (value: string | null) => void; // 값 변경 콜백
+}
+
+export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
+  // Props 받도록 수정
   const [openCategoryPopover, setOpenCategoryPopover] = React.useState(false);
   const [openIndicatorPopover, setOpenIndicatorPopover] = React.useState(false);
   const [category, setCategory] = React.useState<EsgCategory | ''>('');
-  const [indicator, setIndicator] = React.useState<string>('');
+
+  // 초기 카테고리 설정 (value prop 기반)
+  React.useEffect(() => {
+    if (value) {
+      for (const cat in esgIndicators) {
+        if (esgIndicators[cat as EsgCategory].some(ind => ind.id === value)) {
+          setCategory(cat as EsgCategory);
+          break;
+        }
+      }
+    }
+  }, [value]);
 
   const categoryOptions = [
     { value: 'environment', label: '환경 (Environment)' },
@@ -196,8 +214,8 @@ export function ESGCombobox() {
             className="w-full max-w-[500px] justify-between bg-white"
             onClick={() => {
               if (category) {
-                setCategory(''); // Reset category and indicator
-                setIndicator(''); // Reset indicator
+                setCategory(''); // Reset category
+                onValueChange(null); // Reset indicator via callback
                 setOpenCategoryPopover(true); // Open the category popover
               }
             }}
@@ -217,9 +235,9 @@ export function ESGCombobox() {
                     <CommandItem
                       key={option.value}
                       value={option.value}
-                      onSelect={value => {
-                        setCategory(value as EsgCategory);
-                        setIndicator('');
+                      onSelect={selectedValue => {
+                        setCategory(selectedValue as EsgCategory);
+                        onValueChange(null); // 카테고리 변경 시 indicator 초기화 콜백 호출
                         setOpenCategoryPopover(false); // Close the category popover
                         setOpenIndicatorPopover(true); // Open the indicator popover
                       }}
@@ -234,8 +252,8 @@ export function ESGCombobox() {
                         <CommandItem
                           key={option.id}
                           value={option.id}
-                          onSelect={value => {
-                            setIndicator(value === indicator ? '' : value);
+                          onSelect={currentValue => {
+                            onValueChange(currentValue === value ? null : currentValue); // 콜백 호출 (토글)
                             setOpenIndicatorPopover(false); // Close the indicator popover
                           }}
                         >
@@ -243,7 +261,7 @@ export function ESGCombobox() {
                           <Check
                             className={cn(
                               'ml-auto',
-                              indicator === option.id ? 'opacity-100' : 'opacity-0'
+                              value === option.id ? 'opacity-100' : 'opacity-0'
                             )}
                           />
                         </CommandItem>
@@ -259,11 +277,7 @@ export function ESGCombobox() {
 
       {/* Indicator Selection */}
       {category && (
-        <Popover
-          open={openIndicatorPopover}
-          onOpenChange={setOpenIndicatorPopover}
-          modal={true}
-        >
+        <Popover open={openIndicatorPopover} onOpenChange={setOpenIndicatorPopover}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -271,46 +285,37 @@ export function ESGCombobox() {
               aria-expanded={openIndicatorPopover}
               className="w-full max-w-[500px] justify-between bg-white mt-2"
             >
-              {indicator
-                ? indicators.find((item) => item.label === indicator)?.label
-                : "지표 선택"}
+              {value ? indicators.find(item => item.id === value)?.label : '지표 선택'}
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="min-w-full  p-0 bg-white">
+          <PopoverContent className="w-full max-w-[500px] p-0 bg-white">
             <Command>
-              <CommandInput placeholder="Search Indicator..." />
+              <CommandInput placeholder="지표 검색" />
               <CommandList>
-                {indicators.length === 0 ? (
-                  <CommandEmpty>항목을 찾을 수 없습니다.</CommandEmpty>
-                ) : (
-                  <ScrollArea className="h-48 w-full overflow-auto">
-                    <CommandGroup>
-                      {indicators.map((option) => (
-                        <CommandItem
-                          key={option.id}
-                          value={option.label}
-                          onSelect={(currentValue) => {
-                            setIndicator(
-                              currentValue === indicator ? "" : currentValue
-                            );
-                            setOpenIndicatorPopover(false); // Close the popover
-                          }}
-                        >
-                          {option.label}
-                          <Check
-                            className={cn(
-                              "ml-auto",
-                              indicator === option.id
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </ScrollArea>
-                )}
+                <CommandEmpty>결과 없음</CommandEmpty>
+                <ScrollArea className="h-72 w-full overflow-auto rounded-md border">
+                  <CommandGroup>
+                    {indicators.map(option => (
+                      <CommandItem
+                        key={option.id}
+                        value={option.label}
+                        onSelect={() => {
+                          onValueChange(option.id === value ? null : option.id);
+                          setOpenIndicatorPopover(false);
+                        }}
+                      >
+                        {option.label}
+                        <Check
+                          className={cn(
+                            'ml-auto',
+                            value === option.id ? 'opacity-100' : 'opacity-0'
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </ScrollArea>
               </CommandList>
             </Command>
           </PopoverContent>

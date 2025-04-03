@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
 import NaviBar from '@/components/NaviBar';
+import { Provider as JotaiProvider } from 'jotai';
+// import RQProvider from '@/components/RQProvider'; // React Query 관련 제거
+import AuthInitializer from '@/components/AuthInitializer'; // AuthInitializer import
 
 const pretendard = localFont({
   src: [
@@ -52,10 +55,15 @@ export default function RootLayout({
         className={`${pretendard.variable} antialiased font-pretendard overflow-x-hidden w-full min-h-screen`}
         style={{ overflowX: 'hidden', maxWidth: '100vw' }}
       >
-        <div className="flex flex-col w-full min-h-full overflow-hidden">
-          <NaviBar />
-          <main className="w-full pt-16 overflow-hidden">{children}</main>
-        </div>
+        <JotaiProvider>
+          <AuthInitializer /> {/* Provider 내부에 AuthInitializer 추가 */}
+          {/* <RQProvider> */}
+          <div className="flex flex-col w-full min-h-full overflow-hidden">
+            <NaviBar />
+            <main className="w-full pt-16 overflow-hidden">{children}</main>
+          </div>
+          {/* </RQProvider> */}
+        </JotaiProvider>
       </body>
     </html>
   );

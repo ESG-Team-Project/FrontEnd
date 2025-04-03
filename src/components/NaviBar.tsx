@@ -1,31 +1,25 @@
 'use client';
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuList,
-} from '@/components/ui/navigation-menu';
+import { NavigationMenu } from '@/components/ui/navigation-menu';
 import Link from 'next/link';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
-import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { useAtom } from 'jotai';
+import { isLoggedInAtom, logoutAtom } from '@/lib/atoms/auth';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { User, LogOut } from 'lucide-react';
 
 export default function NaviBar() {
-  const location = usePathname();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  // const [userName, setUserName] = useState('');
+  const [isLoggedIn] = useAtom(isLoggedInAtom);
+  const [, logout] = useAtom(logoutAtom);
 
-  useEffect(() => {
-    // localStorage에서 로그인 상태 확인
-    const token = localStorage.getItem('auth_token');
-    // const user = localStorage.getItem('user');
-    // {/*&& user*/}
-    if (token) {
-      setIsLoggedIn(true);
-      // setUserName(JSON.parse(user).username);
-    }
-  }, []);
+  const handleLogout = () => {
+    // logoutAtom 액션을 호출하면 내부적으로 상태 초기화 및 localStorage 정리가 이루어질 것으로 기대
+    logout();
+    // 직접 localStorage를 건드리는 로직은 logoutAtom 구현에 따라 제거하거나 유지
+    // if (typeof window !== 'undefined') {
+    //   localStorage.removeItem('auth'); // authAtom이 사용하는 키
+    // }
+  };
 
   return (
     <NavigationMenu className="fixed top-0 left-0 right-0 z-50 min-w-full bg-white shadow-sm">
@@ -39,25 +33,35 @@ export default function NaviBar() {
           </NavigationMenu>
 
           <NavigationMenu className="flex items-center gap-2 sm:gap-4">
-            <Link href="/">
-              <Button
-                variant="ghost"
-                className={
-                  location === '/mypage/account'
-                    ? 'text-black bg-white whitespace-nowrap'
-                    : 'text-black hidden bg-white whitespace-nowrap'
-                }
-              >
-                로그아웃
-              </Button>
-            </Link>
             {isLoggedIn ? (
-              <Link href="/mypage/account">
-                <Avatar className="cursor-pointer">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=LDM`} />
-                  {/* <AvatarFallback>{userName.slice(0, 2).toUpperCase()}</AvatarFallback> */}
-                </Avatar>
-              </Link>
+              <>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="cursor-pointer p-1 hover:bg-gray-100 rounded-full">
+                      <User className="w-6 h-6 text-gray-600" />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-0">
+                    <div className="flex flex-col">
+                      <Link
+                        href="/mypage/account"
+                        className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-100"
+                      >
+                        <User size={16} />
+                        <span>마이페이지</span>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-2 px-4 py-3 text-left text-red-500 transition-colors hover:bg-gray-100"
+                        type="button"
+                      >
+                        <LogOut size={16} />
+                        <span>로그아웃</span>
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </>
             ) : (
               <Link href="/login">
                 <Button variant="outline" className="text-black bg-white whitespace-nowrap">

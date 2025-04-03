@@ -1,146 +1,139 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import LabeledInputBox from '@/components/labeled-inputbox';
+import InputBox from '@/components/labeled-inputbox';
 import Link from 'next/link';
 import AuthContainer from '../AuthContainer';
-import { signup } from '../../../lib/api/signup';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAtom } from 'jotai';
+import { authAtom, login as loginAtom } from '@/lib/atoms';
 
-export function SignUpForm() {
-  const [step, setStep] = useState(1);
+export function SignupForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [checkPassword, setCheckPassword] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [ceoName, setCeoName] = useState('');
-  const [companyCode, setCompanyCode] = useState('');
-  const [companyPhoneNumber, setCompanyPhoneNumber] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [company, setCompany] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const next = () => setStep(prev => prev + 1);
   const router = useRouter();
-  const handleSubmit = async (e: React.FormEvent) => {
+
+  // jotai atom 사용
+  const [auth, setAuth] = useAtom(authAtom);
+
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    // 비밀번호 확인
+    if (password !== confirmPassword) {
+      setError('비밀번호가 일치하지 않습니다');
+      return;
+    }
+
     try {
-      const response = await signup({
-        email,
-        password,
-        checkPassword,
-        companyName,
-        ceoName,
-        companyCode,
-        companyPhoneNumber,
-        name,
-        phoneNumber,
+      // API 호출 예시 (실제 구현에 맞게 수정 필요)
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password, name, company }),
       });
-      console.log(response);
-      router.push('/login');
+
+      if (!response.ok) {
+        throw new Error('회원가입 실패');
+      }
+
+      const data = await response.json();
+
+      // 회원가입 성공 시 자동 로그인
+      loginAtom(
+        setAuth,
+        {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+          company: data.user.company,
+        },
+        data.token
+      );
+
+      router.push('/dashboard');
     } catch (err) {
-      setError('회원가입 실패');
-      router.push('/signup');
-      console.log(email, password);
-      console.log(err);
+      setError('회원가입 처리 중 오류가 발생했습니다');
+      console.error(err);
     }
   };
 
   return (
     <AuthContainer
-      title="Sign Up"
+      title="회원가입"
       footerContent={
         <p className="w-full text-sm text-center">
-          이미 계정을 가지고 계신가요?{' '}
+          이미 계정이 있으신가요?{' '}
           <Link href="/login" className="text-blue-600 hover:underline">
             로그인
           </Link>
         </p>
       }
     >
-      <form className="space-y-4" onSubmit={handleSubmit}>
-        {step === 1 && (
-          <>
-            <LabeledInputBox
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              label="이메일"
-              type="email"
-            >
-              you@example.com
-            </LabeledInputBox>
-            <LabeledInputBox
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              label="비밀번호"
-              type="password"
-            />
-            <LabeledInputBox
-              value={checkPassword}
-              onChange={e => setCheckPassword(e.target.value)}
-              label="비밀번호 확인"
-              type="password"
-            />
-          </>
-        )}
+      <form className="space-y-4" onSubmit={handleSignup}>
+        <InputBox
+          label="이메일"
+          type="email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required={true}
+        >
+          you@example.com
+        </InputBox>
 
-        {step === 2 && (
-          <>
-            <LabeledInputBox
-              value={companyName}
-              onChange={e => setCompanyName(e.target.value)}
-              label="회사명"
-              type="string"
-            />
-            <LabeledInputBox
-              value={ceoName}
-              onChange={e => setCeoName(e.target.value)}
-              label="대표자명"
-              type="string"
-            />
-            <LabeledInputBox
-              value={companyCode}
-              onChange={e => setCompanyCode(e.target.value)}
-              label="사업자 등록번호"
-              type="string"
-            />
-            <LabeledInputBox
-              value={companyPhoneNumber}
-              onChange={e => setCompanyPhoneNumber(e.target.value)}
-              label="대표번호"
-              type="string"
-            />
-            <LabeledInputBox
-              value={name}
-              onChange={e => setName(e.target.value)}
-              label="담당자명"
-              type="string"
-            />
-            <LabeledInputBox
-              value={phoneNumber}
-              onChange={e => setPhoneNumber(e.target.value)}
-              label="전화번호"
-              type="string"
-            />
-          </>
-        )}
+        <InputBox
+          label="이름"
+          type="text"
+          value={name}
+          onChange={e => setName(e.target.value)}
+          required={true}
+        >
+          홍길동
+        </InputBox>
 
-        <div className="flex gap-2">
-          {step === 1 && (
-            <Button
-              type="button"
-              className="w-full text-white bg-emerald-600 hover:bg-emerald-700"
-              onClick={next}
-            >
-              다음
-            </Button>
-          )}
-          {step === 2 && (
-            <Button type="submit" className="w-full text-white bg-emerald-600 hover:bg-emerald-700">
-              회원가입
-            </Button>
-          )}
-        </div>
+        <InputBox
+          label="회사명"
+          type="text"
+          value={company}
+          onChange={e => setCompany(e.target.value)}
+        >
+          그린다이나믹스
+        </InputBox>
+
+        <InputBox
+          label="비밀번호"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required={true}
+        >
+          ********
+        </InputBox>
+
+        <InputBox
+          label="비밀번호 확인"
+          type="password"
+          value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)}
+          required={true}
+        >
+          ********
+        </InputBox>
+
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+
+        <Button type="submit" className="w-full text-white bg-(--color-primary-foreground)">
+          가입하기
+        </Button>
       </form>
     </AuthContainer>
   );
