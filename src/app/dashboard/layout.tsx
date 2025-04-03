@@ -1,7 +1,7 @@
-import DashboardSidebar from '@/components/dashboard-sidebar';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import type { Metadata } from 'next';
 import ProtectedRoute from '@/components/protected-route';
+import DashboardDataProvider from '@/contexts/dashboard-context';
+import DashboardClientLayout from '@/components/dashboard/client-layout';
 
 export const metadata: Metadata = {
   title: 'ESG 대시보드',
@@ -15,12 +15,11 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <div className="flex w-full h-full">
-        <SidebarProvider className="h-full">
-          <DashboardSidebar />
-        </SidebarProvider>
-        <section className="w-full">{children}</section>
-      </div>
+      <DashboardDataProvider>
+        <DashboardClientLayout>
+          {children}
+        </DashboardClientLayout>
+      </DashboardDataProvider>
     </ProtectedRoute>
   );
 }

@@ -11,11 +11,48 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Plus, Trash2, Edit } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChartData } from '@/types/chart';
 
-export default function DataTable() {
-  const [rows, setRows] = React.useState([{ id: 1, columns: ["", ""] }]);
-  const [columns, setColumns] = React.useState(["Key", "Value"]);
+interface DataTableProps {
+  initialLabels?: string[];
+  initialDatasets?: ChartData['datasets'];
+  onDataChange: (labels: string[], datasets: ChartData['datasets']) => void;
+}
+
+export default function DataTable({ initialLabels = [], initialDatasets = [], onDataChange }: DataTableProps) {
+  const [columns, setColumns] = React.useState<string[]>(() => {
+    if (initialLabels && initialLabels.length > 0) {
+      const datasetLabels = initialDatasets?.map(ds => ds?.label || '') || [];
+      return ['Label', ...datasetLabels];
+    } 
+    return ["Label", "Value"];
+  });
+
+  const [rows, setRows] = React.useState(() => {
+    if (initialLabels && initialLabels.length > 0) {
+      return initialLabels.map((label, index) => ({
+        id: Date.now() + index,
+        columns: [label, ...(initialDatasets?.map(ds => ds?.data?.[index] ?? '') || [])]
+      }));
+    }
+    return [{ id: Date.now(), columns: Array(columns.length).fill("") }];
+  });
+
+  const [editingColumnIndex, setEditingColumnIndex] = React.useState<number | null>(null);
+  const [tempColumnName, setTempColumnName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    const newLabels = rows.map(row => row.columns[0]);
+    const newDatasets: ChartData['datasets'] = columns.slice(1).map((colName, colIndex) => ({
+      label: colName,
+      data: rows.map(row => {
+        const value = row.columns[colIndex + 1];
+        const numericValue = Number(value);
+        return isNaN(numericValue) ? 0 : numericValue;
+      }),
+    }));
+    onDataChange(newLabels, newDatasets);
+  }, [rows, columns, onDataChange]);
 
   const handleInputChange = (rowIndex: number, colIndex: number, value: string) => {
     const updatedRows = [...rows];
@@ -32,41 +69,61 @@ export default function DataTable() {
   };
 
   const addColumn = () => {
-    const newColumnName = `Column ${columns.length + 1}`;
+    const newColumnName = `데이터셋 ${columns.length}`;
     setColumns([...columns, newColumnName]);
     setRows(rows.map((row) => ({ ...row, columns: [...row.columns, ""] })));
   };
 
+  const handleColumnHeaderDoubleClick = (index: number) => {
+    if (index === 0) return;
+    setEditingColumnIndex(index);
+    setTempColumnName(columns[index]);
+  };
+
+  const handleColumnNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTempColumnName(event.target.value);
+  };
+
+  const handleColumnNameBlur = () => {
+    if (editingColumnIndex !== null && editingColumnIndex > 0) {
+      const newColumns = [...columns];
+      newColumns[editingColumnIndex] = tempColumnName.trim() || columns[editingColumnIndex]; 
+      setColumns(newColumns);
+    }
+    setEditingColumnIndex(null);
+  };
+
+  const handleColumnNameKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      handleColumnNameBlur();
+    }
+  };
+
   return (
-    <div
-      className="p-4"
-      style={{
-        maxWidth: "100%", // 모달 내부에서 너비 제한
-        overflow: "hidden", // 모달 밖으로 삐져나오지 않도록 설정
-      }}
-    >
-      {/* Scrollable container for horizontal scrolling */}
-      <ScrollArea
-        className="w-full h-[400px] border border-gray-200 overflow-auto"
-        style={{
-          maxWidth: "100%", // 부모 요소의 너비를 초과하지 않도록 설정
-          overflowX: "auto", // 가로 스크롤 허용
-          overflowY: "hidden", // 세로 스크롤 비활성화
-        }}
-      >
-        <div
-          className="w-max" // 테이블의 너비를 내용에 맞게 설정
-          style={{
-            minWidth: "100%", // 최소 너비를 모달 너비에 맞춤
-            width: `${150 * columns.length}px`, // 컬럼 개수에 따라 동적으로 너비 설정
-          }}
-        >
+    <div className="p-4">
+      <div className="relative w-full h-[400px] border border-gray-200 overflow-y-auto overflow-x-auto">
+        <div className="w-max" style={{ minWidth: "100%" }}>
           <Table>
             <TableHeader>
               <TableRow>
                 {columns.map((col, colIndex) => (
-                  <TableHead key={colIndex} className="min-w-[150px]">
-                    {col}
+                  <TableHead 
+                    key={colIndex} 
+                    className={`min-w-[150px] ${colIndex > 0 ? 'cursor-pointer' : ''}`}
+                    onDoubleClick={() => handleColumnHeaderDoubleClick(colIndex)}
+                  >
+                    {editingColumnIndex === colIndex ? (
+                      <Input
+                        value={tempColumnName}
+                        onChange={handleColumnNameChange}
+                        onBlur={handleColumnNameBlur}
+                        onKeyDown={handleColumnNameKeyDown}
+                        autoFocus
+                        className="h-8 text-sm"
+                      />
+                    ) : (
+                      col
+                    )}
                   </TableHead>
                 ))}
                 <TableHead className="min-w-[100px]">
@@ -110,7 +167,7 @@ export default function DataTable() {
             </TableBody>
           </Table>
         </div>
-      </ScrollArea>
+      </div>
       <button
         onClick={addRow}
         className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-black-600"

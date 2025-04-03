@@ -32,6 +32,9 @@ import {
   type ChartData as ChartJSData 
 } from 'chart.js';
 import { Bar, Line, Pie } from 'react-chartjs-2';
+import { FileInputDialog } from '@/app/modal/fileinput-form';
+import { ESGChartDialog } from '@/app/modal/chartinput-form';//=!=
+import { CustomButton } from '@/components/ui/custom-button';
 
 // Chart.js에 필요한 모든 요소 등록
 ChartJS.register(
@@ -54,6 +57,7 @@ const sampleCharts: ChartData[] = [
     title: '부서별 ESG 준수도 현황',
     type: 'bar',
     description: '각 부서별 ESG 준수 현황을 표시합니다.',
+    esg: 'governance',
     labels: ['경영부', '개발부', '마케팅부', '인사부', '재무부', '고객서비스부'],
     datasets: [
       {
@@ -76,6 +80,7 @@ const sampleCharts: ChartData[] = [
     title: 'ESG 카테고리별 투자 비율',
     type: 'pie',
     description: 'ESG 각 영역별 투자 비율을 보여줍니다.',
+    esg: 'esg-overview',
     labels: ['환경', '사회', '거버넌스', '기타'],
     datasets: [
       {
@@ -96,6 +101,7 @@ const sampleCharts: ChartData[] = [
     title: '분기별 ESG 점수 추이',
     type: 'line',
     description: '최근 6분기 동안의 ESG 점수 변화 추이입니다.',
+    esg: 'esg-overview',
     labels: ['1Q 2023', '2Q 2023', '3Q 2023', '4Q 2023', '1Q 2024', '2Q 2024'],
     datasets: [
       {
@@ -115,6 +121,7 @@ const sampleCharts: ChartData[] = [
     title: '환경 지표 진행 상황',
     type: 'area',
     description: '최근 6개월 간 환경 지표 달성 추이입니다.',
+    esg: 'environment',
     labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
     datasets: [
       {
@@ -136,6 +143,7 @@ const sampleCharts: ChartData[] = [
 export default function Dashboard() {
   const [charts, setCharts] = useState<ChartData[]>(sampleCharts);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
+  const [fileModalOpen, setFileModalOpen] = useState(false);
 
   // 차트 추가 함수
   const addChart = (newChart: ChartData) => {
@@ -271,7 +279,27 @@ export default function Dashboard() {
   };
 
   return (
-    <DashboardShell>
+    <DashboardShell
+      pageTitle="ESG 대시보드"
+      rightMenuItems={
+        <>
+          <Button 
+            variant="outline" 
+            className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
+            onClick={() => setIsChartModalOpen(true)}
+          >
+            차트 추가
+          </Button>
+          <Button 
+            variant="outline" 
+            className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9 ml-2"
+            onClick={() => setFileModalOpen(true)}
+          >
+            파일 선택
+          </Button>
+        </>
+      }
+    >
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">ESG 대시보드</h1>
         <Button onClick={() => setIsChartModalOpen(true)}>
@@ -286,6 +314,10 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      
+      {/* 모달 */}
+      <ESGChartDialog open={isChartModalOpen} setOpen={setIsChartModalOpen} />
+      <FileInputDialog open={fileModalOpen} setOpen={setFileModalOpen} />
     </DashboardShell>
   );
 }
