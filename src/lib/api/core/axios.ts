@@ -1,6 +1,6 @@
 import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { getDefaultStore } from 'jotai';
-import { authAtom } from '@/lib/atoms/auth';
+import { authAtom } from '@/lib/atoms';
 
 /**
  * 백엔드 API의 기본 주소 설정

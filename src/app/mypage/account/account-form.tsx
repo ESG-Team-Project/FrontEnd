@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import LabeledInputBox from '@/components/labeled-inputbox';
 import { Button } from '@/components/ui/button';
 import { useAtom } from 'jotai';
-import { authAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
-import type { AuthState, User } from '@/lib/atoms/auth';
+import { authAtom, userAtom, loginAtom } from '@/lib/atoms';
+import type { AuthState, User } from '@/lib/atoms';
 import api from '@/lib/api';
 
 export default function AccountForm() {

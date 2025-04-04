@@ -1,6 +1,6 @@
 'use client';
 
-import { useInitializeAuth } from '@/lib/atoms/auth';
+import { useInitializeAuth } from '@/lib/atoms';
 
 /**
  * 앱 로드 시 인증 상태 초기화 로직을 실행하는 컴포넌트.

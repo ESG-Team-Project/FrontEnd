@@ -7,9 +7,9 @@ import AuthContainer from '../AuthContainer';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
-import { loginAtom } from '@/lib/atoms/auth';
+import { loginAtom } from '@/lib/atoms';
 import { authService } from '@/lib/api';
-import type { SignUpRequest } from '@/lib/api/auth';
+import type { SignUpRequest, SignUpResponse } from '@/types/auth';
 
 export function SignupForm() {
   const [step, setStep] = useState(1);
@@ -31,6 +31,18 @@ export function SignupForm() {
 
   // jotai atom 사용
   const [, login] = useAtom(loginAtom);
+
+  // SignUpResponse 타입인지 확인하는 타입 가드 함수
+  const isSignUpResponse = (data: any): data is SignUpResponse => {
+    return (
+      data !== null &&
+      typeof data === 'object' &&
+      typeof data.id === 'number' &&
+      typeof data.email === 'string' &&
+      typeof data.name === 'string' &&
+      typeof data.companyName === 'string'
+    );
+  };
 
   const handleUserInfoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,20 +77,26 @@ export function SignupForm() {
       };
       
       const response = await authService.signup(signupData);
+      
+      // 타입 가드를 통한 안전한 타입 처리
+      if (isSignUpResponse(response)) {
+        // 회원가입 성공 시 자동 로그인
+        login({
+          user: {
+            id: String(response.id),
+            name: response.name,
+            email: response.email,
+            role: 'user',
+            company: response.companyName,
+          },
+          token: response.token || ''
+        });
 
-      // 회원가입 성공 시 자동 로그인
-      login({
-        user: {
-          id: response.user.id,
-          name: response.user.name,
-          email: response.user.email,
-          role: response.user.role,
-          company: response.user.company,
-        },
-        token: response.token
-      });
-
-      router.push('/dashboard');
+        router.push('/dashboard');
+      } else {
+        console.error('예상과 다른 회원가입 응답 형식:', response);
+        throw new Error('서버에서 예상하지 않은 응답 형식이 반환되었습니다.');
+      }
     } catch (err: any) {
       // 오류 응답 처리
       if (err.response) {
@@ -96,7 +114,7 @@ export function SignupForm() {
           setError(err.response.data?.message || '회원가입 처리 중 오류가 발생했습니다');
         }
       } else {
-        setError('회원가입 처리 중 오류가 발생했습니다');
+        setError(err.message || '회원가입 처리 중 오류가 발생했습니다');
       }
       console.error(err);
     }

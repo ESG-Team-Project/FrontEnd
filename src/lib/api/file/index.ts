@@ -1,16 +1,6 @@
 import axiosInstance from '../core/axios';
 import type { AxiosResponse } from 'axios';
-
-/**
- * 파일 업로드 API 응답 형식
- * 서버에서 파일 업로드 요청 처리 후 반환하는 데이터 구조
- */
-interface FileUploadResponse {
-  success: boolean;       // 업로드 성공 여부
-  message?: string;       // 성공/실패 메시지
-  files?: string[];       // 업로드된 파일 이름 목록
-  data?: any;             // 추가 데이터 (파싱된 내용 등)
-}
+import type { FileUploadResponse } from '@/types/file';
 
 /**
  * CSV 파일 업로드 함수
@@ -155,4 +145,13 @@ export const getUploadedFiles = async (): Promise<string[]> => {
     console.error('[API File] 업로드된 파일 목록 조회 오류:', error);
     throw error;
   }
-}; 
+};
+
+// default export 추가
+const fileAPI = {
+  uploadCSV,
+  uploadExcel,
+  getUploadedFiles
+};
+
+export default fileAPI; 

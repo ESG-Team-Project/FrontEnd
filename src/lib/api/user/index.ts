@@ -1,17 +1,11 @@
 import axiosInstance from '../core/axios';
 import type { AxiosResponse } from 'axios';
-import type { User } from '@/lib/atoms/auth';
-
-/**
- * 사용자 정보 업데이트 요청 타입
- * 사용자 프로필 정보 수정 시 사용되는 데이터 구조
- */
-interface UserUpdateRequest {
-  name?: string;      // 사용자 이름 (선택적)
-  email?: string;     // 이메일 주소 (선택적)
-  phone?: string;     // 전화번호 (선택적)
-  password?: string;  // 새 비밀번호 (선택적)
-}
+import type { User } from '@/lib/atoms';
+import type { 
+  UserUpdateRequest, 
+  PasswordChangeResponse,
+  ProfileImageResponse 
+} from '@/types/user';
 
 /**
  * 현재 로그인한 사용자 정보를 가져오는 함수
@@ -84,7 +78,14 @@ export const updateUser = async (userData: UserUpdateRequest): Promise<User> => 
   try {
     console.log('[API User] 사용자 정보 업데이트 시도');
     
-    const response: AxiosResponse<User> = await axiosInstance.put<User>('/user/update', userData);
+    // 클라이언트의 phone 필드를 서버의 phoneNumber 필드로 매핑
+    const mappedData = {
+      ...userData,
+      phoneNumber: userData.phone,
+      phone: undefined // phone 필드 제거
+    };
+    
+    const response: AxiosResponse<User> = await axiosInstance.put<User>('/user/update', mappedData);
     
     console.log('[API User] 사용자 정보 업데이트 성공:', response.status);
     return response.data;
@@ -101,7 +102,7 @@ export const updateUser = async (userData: UserUpdateRequest): Promise<User> => 
  * 이미지는 FormData 형식으로 전송되어야 합니다.
  * 
  * @param {FormData} formData - 업로드할 이미지가 포함된 FormData 객체
- * @returns {Promise<{imageUrl: string}>} 업로드된 이미지의 URL이 포함된 객체
+ * @returns {Promise<ProfileImageResponse>} 업로드된 이미지의 URL이 포함된 객체
  * 
  * 사용 예시:
  * ```typescript
@@ -118,11 +119,11 @@ export const updateUser = async (userData: UserUpdateRequest): Promise<User> => 
  * };
  * ```
  */
-export const updateProfileImage = async (formData: FormData): Promise<{imageUrl: string}> => {
+export const updateProfileImage = async (formData: FormData): Promise<ProfileImageResponse> => {
   try {
     console.log('[API User] 프로필 이미지 업데이트 시도');
     
-    const response: AxiosResponse<{imageUrl: string}> = await axiosInstance.post<{imageUrl: string}>(
+    const response: AxiosResponse<ProfileImageResponse> = await axiosInstance.post<ProfileImageResponse>(
       '/user/profile-image', 
       formData,
       {
@@ -148,7 +149,7 @@ export const updateProfileImage = async (formData: FormData): Promise<{imageUrl:
  * 
  * @param {string} currentPassword - 현재 비밀번호 (확인용)
  * @param {string} newPassword - 새 비밀번호
- * @returns {Promise<{success: boolean, message: string}>} 비밀번호 변경 결과 및 메시지
+ * @returns {Promise<PasswordChangeResponse>} 비밀번호 변경 결과 및 메시지
  * 
  * 사용 예시:
  * ```typescript
@@ -167,12 +168,12 @@ export const updateProfileImage = async (formData: FormData): Promise<{imageUrl:
 export const changePassword = async (
   currentPassword: string, 
   newPassword: string
-): Promise<{success: boolean, message: string}> => {
+): Promise<PasswordChangeResponse> => {
   try {
     console.log('[API User] 비밀번호 변경 시도');
     
-    const response: AxiosResponse<{success: boolean, message: string}> = 
-      await axiosInstance.post<{success: boolean, message: string}>(
+    const response: AxiosResponse<PasswordChangeResponse> = 
+      await axiosInstance.post<PasswordChangeResponse>(
         '/user/change-password', 
         { currentPassword, newPassword }
       );
@@ -183,4 +184,14 @@ export const changePassword = async (
     console.error('[API User] 비밀번호 변경 오류:', error);
     throw error;
   }
-}; 
+};
+
+// default export 추가
+const userAPI = {
+  getCurrentUser,
+  updateUser,
+  updateProfileImage,
+  changePassword
+};
+
+export default userAPI; 

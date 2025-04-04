@@ -6,7 +6,38 @@ import * as fileService from './file';
 import * as userService from './user';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
+// 타입 재export
+export type { 
+  LoginRequest, 
+  LoginResponse, 
+  SignUpRequest, 
+  SignUpResponse 
+} from '@/types/auth';
+
+export type {
+  UserInfo,
+  UserUpdateRequest,
+  PasswordChangeRequest,
+  PasswordChangeResponse,
+  ProfileImageResponse
+} from '@/types/user';
+
+export type {
+  FileUploadResponse
+} from '@/types/file';
+
+export type {
+  ChartData
+} from '@/types/chart';
+
+// 서비스 모듈 재export
 export { authService, chartService, fileService, userService };
+
+// 각 서비스 모듈 개별 export
+export * from './auth';
+export * from './chart';
+export * from './file'; 
+export * from './user';
 
 // 직접 export 부분 제거
 export const getCurrentUser = userService.getCurrentUser;

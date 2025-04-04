@@ -7,9 +7,10 @@ import AuthContainer from '../AuthContainer';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { authService } from '@/lib/api';
+import type { LoginResponse } from '@/types/auth';
 import { useAtom } from 'jotai';
-import { authAtom, isLoggedInAtom, loginAtom } from '@/lib/atoms/auth';
-import type { User } from '@/lib/atoms/auth';
+import { isLoggedInAtom, loginAtom } from '@/lib/atoms';
+import type { User } from '@/lib/atoms';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -30,28 +31,56 @@ export function LoginForm() {
     }
   }, [isLoggedIn, redirectPath, router]);
 
+  // LoginResponse 타입인지 확인하는 타입 가드 함수
+  const isLoginResponse = (data: any): data is LoginResponse => {
+    return (
+      data !== null &&
+      typeof data === 'object' &&
+      typeof data.success === 'boolean' &&
+      typeof data.token === 'string' &&
+      data.user !== undefined &&
+      typeof data.user === 'object' &&
+      typeof data.user.id === 'number' &&
+      typeof data.user.name === 'string' &&
+      typeof data.user.email === 'string' &&
+      typeof data.user.companyName === 'string'
+    );
+  };
+
+  // API 응답에서 User 객체로 변환하는 함수
+  const mapApiResponseToUser = (apiResponse: LoginResponse): User => {
+    return {
+      id: String(apiResponse.user.id),
+      name: apiResponse.user.name,
+      email: apiResponse.user.email,
+      role: 'user',
+      phone: apiResponse.user.phoneNumber,
+      company: apiResponse.user.companyName
+    };
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsLoading(true);
 
     try {
+      // API 호출 결과
       const response = await authService.login({ email, password });
       console.log('로그인 API 응답:', response);
-
-      if (response.success && response.token && response.user) {
-        const userData: User = {
-          id: String(response.user.id),
-          name: response.user.name,
-          email: response.user.email,
-          role: 'user',
-          company: response.user.companyName
-        };
-
-        login({ user: userData, token: response.token });
-        router.push(redirectPath);
+      
+      // 타입 검사를 통한 안전한 타입 처리
+      if (isLoginResponse(response)) {
+        if (response.success && response.token && response.user) {
+          const userData = mapApiResponseToUser(response);
+          login({ user: userData, token: response.token });
+          router.push(redirectPath);
+        } else {
+          throw new Error(response.message || '로그인 응답 형식이 올바르지 않습니다.');
+        }
       } else {
-        throw new Error(response.message || '로그인 응답 형식이 올바르지 않습니다.');
+        console.error('예상과 다른 응답 형식:', response);
+        throw new Error('서버에서 예상하지 않은 응답 형식이 반환되었습니다.');
       }
     } catch (err: any) {
       if (err.response) {

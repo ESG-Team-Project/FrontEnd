@@ -200,4 +200,15 @@ export const deleteChart = async (chartId: string): Promise<void> => {
     console.error('[API Chart] 차트 삭제 오류:', error);
     throw error;
   }
-}; 
+};
+
+// default export 추가
+const chartAPI = {
+  createChart,
+  getCharts,
+  getChartById,
+  updateChart,
+  deleteChart
+};
+
+export default chartAPI; 

@@ -18,7 +18,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import api from '@/lib/api';
-import { User } from '@/lib/atoms/auth';
+import { User } from '@/lib/atoms';
 import { useAtom } from 'jotai';
 import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
 import clsx from 'clsx';

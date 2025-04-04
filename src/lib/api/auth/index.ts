@@ -2,60 +2,15 @@ import axiosInstance from '../core/axios';
 import type { AxiosResponse } from 'axios';
 import type { AuthState, User } from '@/lib/atoms';
 import type { SetStateAction } from 'react';
+import type { 
+  LoginRequest, 
+  LoginResponse, 
+  SignUpRequest, 
+  SignUpResponse 
+} from '@/types/auth';
 
-/**
- * 로그인 API 응답 형식
- */
-export interface LoginResponse {
-  success: boolean;
-  message: string;
-  token: string;
-  user: {
-    id: number;
-    email: string;
-    name: string;
-    department: string;
-    position: string;
-    companyName: string;
-    ceoName: string;
-    companyCode: string;
-    companyPhoneNumber: string;
-    phoneNumber: string;
-    companyId: number;
-    createdAt: string;
-    updatedAt: string;
-  };
-}
-
-/**
- * 로그인 API 요청 형식
- * 로그인 시 서버로 전송하는 데이터 구조
- */
-interface LoginRequest {
-  email: string;     // 사용자 이메일
-  password: string;  // 비밀번호
-}
-
-/**
- * 회원가입 API 요청 형식
- */
-export interface SignUpRequest {
-  email: string;             // 이메일 주소
-  password: string;          // 비밀번호
-  checkPassword: string;     // 비밀번호 확인용
-  name: string;              // 사용자 이름
-  companyName: string;       // 회사명
-  ceoName: string;           // 대표자명
-  companyCode: string;       // 사업자등록번호
-  companyPhoneNumber: string; // 회사 전화번호
-  phoneNumber: string;       // 사용자 전화번호
-}
-
-/**
- * 기본 회원가입 API 응답 형식
- * 회원가입 성공 시 서버에서 반환하는 데이터 구조
- */
-interface SignupResponse {
+// 내부 변환 용도로 사용하는 타입
+interface InternalSignupResponse {
   user: {           // 생성된 사용자 정보
     id: string;     // 사용자 고유 ID
     name: string;   // 사용자 이름
@@ -64,26 +19,6 @@ interface SignupResponse {
     company?: string; // 회사명 (선택적)
   };
   token: string;    // 자동 로그인을 위한 인증 토큰
-}
-
-/**
- * 회원가입 API 응답 형식
- */
-export interface SignUpResponse {
-  id: number;              // 사용자 고유 ID (숫자)
-  email: string;           // 이메일 주소
-  name: string;            // 사용자 이름
-  department?: string;     // 부서 (선택적)
-  position?: string;       // 직위 (선택적)
-  companyName: string;     // 회사명
-  ceoName: string;         // 대표자명
-  companyCode: string;     // 사업자등록번호
-  companyPhoneNumber: string; // 회사 전화번호
-  phoneNumber: string;     // 사용자 전화번호
-  companyId: number;       // 회사 ID
-  createdAt: string;      // 계정 생성 일시
-  updatedAt: string;      // 계정 정보 업데이트 일시
-  token?: string;          // 인증 토큰 (선택적)
 }
 
 /**
@@ -124,9 +59,9 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
  * 회원가입을 처리하고 결과를 반환합니다.
  * 
  * @param {SignUpRequest} userData - 회원가입 정보
- * @returns {Promise<SignupResponse>} 회원가입 결과
+ * @returns {Promise<InternalSignupResponse>} 회원가입 결과
  */
-export const signup = async (userData: SignUpRequest): Promise<SignupResponse> => {
+export const signup = async (userData: SignUpRequest): Promise<InternalSignupResponse> => {
   try {
     console.log('[API Auth] 회원가입 시도:', userData.email);
     
@@ -139,7 +74,7 @@ export const signup = async (userData: SignUpRequest): Promise<SignupResponse> =
     console.log('[API Auth] 회원가입 응답:', response.status);
     
     // 응답 형식 변환 (표준화)
-    const standardResponse: SignupResponse = {
+    const standardResponse: InternalSignupResponse = {
       user: {
         id: String(response.data.id),  // 숫자를 문자열로 변환
         name: response.data.name,
@@ -165,16 +100,6 @@ export const signup = async (userData: SignUpRequest): Promise<SignupResponse> =
  * 
  * @param {Function} setAuth - 인증 상태를 업데이트하는 함수 (jotai의 setState)
  * @returns {Object} 성공 여부 객체
- * 
- * 사용 예시:
- * ```typescript
- * const [, setAuth] = useAtom(authAtom);
- * 
- * const handleLogout = () => {
- *   logout(setAuth);
- *   router.push('/login');
- * };
- * ```
  */
 export const logout = (setAuth: (update: SetStateAction<string | null>) => void): object => {
   try {
@@ -201,21 +126,6 @@ export const logout = (setAuth: (update: SetStateAction<string | null>) => void)
  * 
  * @param {AuthState} auth - 현재 인증 상태 객체
  * @returns {Promise<boolean>} 토큰 유효 여부 (true: 유효, false: 유효하지 않음)
- * 
- * 사용 예시:
- * ```typescript
- * const [auth] = useAtom(authAtom);
- * 
- * useEffect(() => {
- *   const checkToken = async () => {
- *     const isValid = await verifyToken(auth);
- *     if (!isValid) {
- *       router.push('/login');
- *     }
- *   };
- *   checkToken();
- * }, []);
- * ```
  */
 export const verifyToken = async (auth: AuthState): Promise<boolean> => {
   try {
@@ -235,4 +145,14 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
     console.error('[AUTH] 토큰 검증 오류:', error);
     return false;
   }
-}; 
+};
+
+// default export 추가
+const authAPI = {
+  login,
+  signup,
+  logout,
+  verifyToken
+};
+
+export default authAPI;

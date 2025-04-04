@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import { useAtom } from 'jotai';
-import { isLoggedInAtom, logoutAtom } from '@/lib/atoms/auth';
+import { isLoggedInAtom, logoutAtom } from '@/lib/atoms';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { User, LogOut } from 'lucide-react';
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardTitle, CardHeader, CardDescription } from '@/components/ui/card';
 import {
   LineChart as LineChartIcon,
@@ -139,6 +139,8 @@ const sampleCharts: ChartData[] = [
     colSpan: 1,
   },
 ];
+
+
 
 export default function Dashboard() {
   const [charts, setCharts] = useState<ChartData[]>(sampleCharts);

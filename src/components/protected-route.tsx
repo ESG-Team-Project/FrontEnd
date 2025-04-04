@@ -3,7 +3,7 @@
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import React, { type ReactNode, useEffect } from 'react';
 import { useAtom } from 'jotai';
-import { isLoggedInAtom, authInitializedAtom } from '@/lib/atoms/auth';
+import { isLoggedInAtom, authInitializedAtom } from '@/lib/atoms';
 
 // --- Simple Error Boundary Component ---
 interface ErrorBoundaryState {
