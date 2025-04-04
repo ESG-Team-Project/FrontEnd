@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { v4 as uuidv4 } from 'uuid';
 import { ChartType, ChartData } from '@/types/chart';
+import api from '@/lib/api';
 
 interface ESGChartDialogProps {
   open: boolean;
@@ -123,19 +124,9 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     };
 
     try {
-      const response = await fetch('/api/charts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newChart),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API 오류: ${response.statusText}`);
-      }
-
-      const savedChart = await response.json();
+      // 차트 서비스를 사용하여 차트 생성
+      const savedChart = await api.chart.createChart(newChart);
+      
       console.log('차트 저장 성공:', savedChart);
 
       if (onChartAdd) {

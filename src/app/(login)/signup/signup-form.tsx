@@ -8,7 +8,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
 import { loginAtom } from '@/lib/atoms/auth';
-import { signup } from '@/lib/api/signup';
+import { authService } from '@/lib/api';
 
 export function SignupForm() {
   const [step, setStep] = useState(1);
@@ -51,7 +51,7 @@ export function SignupForm() {
 
     try {
       // API 호출
-      const response = await signup({
+      const response = await authService.signup({
         email: userInfo.email,
         password: userInfo.password,
         checkPassword: userInfo.confirmPassword,
@@ -63,8 +63,19 @@ export function SignupForm() {
         phoneNumber: companyInfo.phoneNumber
       });
 
-      // 회원가입 성공 시 로그인 페이지로 이동
-      router.push('/login');
+      // 회원가입 성공 시 자동 로그인
+      login({
+        user: {
+          id: response.user.id,
+          name: response.user.name,
+          email: response.user.email,
+          role: response.user.role,
+          company: response.user.company,
+        },
+        token: response.token
+      });
+
+      router.push('/dashboard');
     } catch (err) {
       setError('회원가입 처리 중 오류가 발생했습니다');
       console.error(err);

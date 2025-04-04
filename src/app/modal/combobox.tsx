@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -178,12 +178,12 @@ interface ESGComboboxProps {
 
 export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
   // Props 받도록 수정
-  const [openCategoryPopover, setOpenCategoryPopover] = React.useState(false);
-  const [openIndicatorPopover, setOpenIndicatorPopover] = React.useState(false);
-  const [category, setCategory] = React.useState<EsgCategory | ''>('');
+  const [openCategoryPopover, setOpenCategoryPopover] = useState(false);
+  const [openIndicatorPopover, setOpenIndicatorPopover] = useState(false);
+  const [category, setCategory] = useState<EsgCategory | ''>('');
 
   // 초기 카테고리 설정 (value prop 기반)
-  React.useEffect(() => {
+  useEffect(() => {
     if (value) {
       for (const cat in esgIndicators) {
         if (esgIndicators[cat as EsgCategory].some(ind => ind.id === value)) {

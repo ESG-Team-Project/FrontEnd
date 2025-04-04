@@ -6,7 +6,7 @@ import Link from 'next/link';
 import AuthContainer from '../AuthContainer';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { login as apiLogin } from '@/lib/api/auth';
+import { login as apiLogin } from '@/lib/api';
 import { useAtom } from 'jotai';
 import { authAtom, isLoggedInAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
 import type { User } from '@/lib/atoms/auth';

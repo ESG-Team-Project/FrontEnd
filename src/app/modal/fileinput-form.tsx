@@ -40,25 +40,10 @@ export function FileInputDialog({
     }
 
     try {
-      // 첫번째 방법: axios 인스턴스를 통한 요청
-      /* const response = await api.post('/data-import/csv', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      }); */
+      // 파일 서비스를 사용하여 CSV 파일 업로드
+      const response = await api.file.uploadCSV(formData);
 
-      // 두번째 방법: 기존 fetch 사용
-      const res = await fetch('/api/data-import/csv', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        throw new Error('파일 업로드 실패');
-      }
-
-      const result = await res.json();
-      console.log('[파일 업로드] 성공:', result);
+      console.log('[파일 업로드] 성공:', response);
       alert('파일이 성공적으로 업로드되었습니다!');
       setFiles([]); // 업로드 후 파일 목록 초기화
       setCsvData(new Map()); // 업로드 후 CSV 데이터 초기화

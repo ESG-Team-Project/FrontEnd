@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAtom } from 'jotai';
 import { authAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
 import type { AuthState, User } from '@/lib/atoms/auth';
+import api from '@/lib/api';
 
 export default function AccountForm() {
   const [auth] = useAtom(authAtom);
@@ -68,25 +69,11 @@ export default function AccountForm() {
     }
 
     try {
-      const response = await fetch('/api/user/update', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: '프로필 업데이트 실패' }));
-        throw new Error(errorData.message || '프로필 업데이트 실패');
-      }
-
-      const updatedUserData = await response.json();
+      const updatedUserData = await api.user.updateUser(updateData);
 
       let finalUserData: User | null = null;
       if (updatedUserData && typeof updatedUserData === 'object' && updatedUserData.id) {
-        finalUserData = updatedUserData as User;
+        finalUserData = updatedUserData;
       } else if (user) {
         finalUserData = {
           ...user,
