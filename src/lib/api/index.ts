@@ -8,11 +8,7 @@ import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 export { authService, chartService, fileService, userService };
 
-// 로그인 함수 직접 export
-export const login = authService.login;
-export const signup = authService.signup;
-export const logout = authService.logout;
-export const verifyToken = authService.verifyToken;
+// 직접 export 부분 제거
 export const getCurrentUser = userService.getCurrentUser;
 
 /**
@@ -148,7 +144,6 @@ const apiService = {
   chart: chartService,
   file: fileService,
   user: userService,
-  getCurrentUser,
 };
 
 export default apiService;

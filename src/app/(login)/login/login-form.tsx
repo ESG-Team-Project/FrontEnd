@@ -6,9 +6,9 @@ import Link from 'next/link';
 import AuthContainer from '../AuthContainer';
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { login as apiLogin } from '@/lib/api';
+import { authService } from '@/lib/api';
 import { useAtom } from 'jotai';
-import { authAtom, isLoggedInAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
+import { authAtom, isLoggedInAtom, loginAtom } from '@/lib/atoms/auth';
 import type { User } from '@/lib/atoms/auth';
 
 export function LoginForm() {
@@ -36,29 +36,36 @@ export function LoginForm() {
     setIsLoading(true);
 
     try {
-      const response = await apiLogin({ email, password });
+      const response = await authService.login({ email, password });
       console.log('로그인 API 응답:', response);
 
-      if (response.user && response.token) {
+      if (response.success && response.token && response.user) {
         const userData: User = {
-          id: response.user.id,
-          name: response.user.username,
+          id: String(response.user.id),
+          name: response.user.name,
           email: response.user.email,
-          role: response.user.role,
-          company: response.user.company,
+          role: 'user',
+          company: response.user.companyName
         };
 
         login({ user: userData, token: response.token });
+        router.push(redirectPath);
       } else {
-        throw new Error('로그인 응답 형식이 올바르지 않습니다.');
+        throw new Error(response.message || '로그인 응답 형식이 올바르지 않습니다.');
       }
-    } catch (err: unknown) {
-      const error = err as { response?: { data?: { message?: string } }; message?: string };
-      setError(
-        error.response?.data?.message ||
-          error.message ||
-          '로그인 실패. 이메일과 비밀번호를 확인해주세요.'
-      );
+    } catch (err: any) {
+      if (err.response) {
+        if (err.response.status === 401) {
+          setError('이메일 또는 비밀번호가 일치하지 않습니다.');
+        } else if (err.response.status === 400 && err.response.data?.errors) {
+          const validationErrors = Object.values(err.response.data.errors).join(', ');
+          setError(`입력값 유효성 검증에 실패했습니다: ${validationErrors}`);
+        } else {
+          setError(err.response.data?.message || '로그인 중 오류가 발생했습니다.');
+        }
+      } else {
+        setError(err.message || '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
       console.error('로그인 오류:', err);
     } finally {
       setIsLoading(false);

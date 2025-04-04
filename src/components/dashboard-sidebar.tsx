@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CustomButton } from '@/components/ui/custom-button';
 import {
-  User,
+  User as UserIcon,
   Building,
   Loader2,
   Menu,
@@ -18,7 +18,7 @@ import {
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import api from '@/lib/api';
-import { UserInfo } from '@/types/user';
+import { User } from '@/lib/atoms/auth';
 import { useAtom } from 'jotai';
 import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
 import clsx from 'clsx';
@@ -35,7 +35,7 @@ interface NavItem {
 
 export default function DashboardSidebar() {
   const pathname = usePathname();
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  const [userInfo, setUserInfo] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,8 +46,8 @@ export default function DashboardSidebar() {
     const fetchUserInfo = async () => {
       try {
         setLoading(true);
-        const data = await api.getCurrentUser();
-        setUserInfo(data);
+        const userData = await api.user.getCurrentUser();
+        setUserInfo(userData);
         setError(null);
       } catch (err) {
         console.error('사용자 정보 조회 실패:', err);
@@ -170,24 +170,19 @@ export default function DashboardSidebar() {
                 isLayoutLocked ? 'w-full h-10' : 'w-10 h-10'
               )}
             >
-              <User className="w-6 h-6 text-gray-600" />
+              <UserIcon className="w-6 h-6 text-gray-600" />
             </div>
             <div className={clsx('text-right overflow-hidden', isLayoutLocked && 'hidden')}>
-              {userInfo.companyName && (
+              {userInfo.company && (
                 <div className="flex items-center justify-end mb-0.5">
                   <Building className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
-                  <p className="text-xs text-gray-600 truncate">{userInfo.companyName}</p>
+                  <p className="text-xs text-gray-600 truncate">{userInfo.company}</p>
                 </div>
               )}
               <div className="flex items-center justify-end">
-                <User className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
+                <UserIcon className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
                 <p className="text-sm font-medium truncate">{userInfo.name}</p>
               </div>
-              {userInfo.department && (
-                <p className="text-xs text-gray-500 mt-0.5 truncate text-right">
-                  {userInfo.department}
-                </p>
-              )}
             </div>
           </>
         ) : (
