@@ -367,3 +367,4 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/nextjs,react,macos,windows,linux,visualstudiocode,intellij+all,node.cursor/
 .cursor/rules/*
+.env*

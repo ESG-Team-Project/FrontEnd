@@ -8,8 +8,8 @@ import {
   DialogTitle,
   DialogClose,
 } from '@/components/ui/dialog';
-import { ESGCombobox } from './combobox'; // ESG 항목 선택 컴포넌트
-import DataTable from './datatable'; // 데이터 입력 테이블 컴포넌트
+import { ESGCombobox } from './combobox';
+import DataTable from './datatable';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -18,42 +18,55 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'; // Select 관련 컴포넌트 추가
+} from '@/components/ui/select';
 import { v4 as uuidv4 } from 'uuid';
-import { ChartType, ChartData } from '@/types/chart'; // ChartDataset 임포트 제거
-import api from '@/lib/api'; // API 모듈 import 추가
+import { ChartType, ChartData } from '@/types/chart';
+import api from '@/lib/api';
 
 interface ESGChartDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  onChartAdd?: (chart: ChartData) => void; // 차트 추가 콜백
+  onChartAdd?: (chart: ChartData) => void;
 }
 
 export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProps) {
-  const [step, setStep] = useState<'combobox' | 'datatable'>('combobox'); // 현재 단계 상태
+  const [step, setStep] = useState<'combobox' | 'datatable'>('combobox');
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [chartTitle, setChartTitle] = useState('');
   const [chartDescription, setChartDescription] = useState('');
   const [colSpan, setColSpan] = useState<1 | 2 | 3 | 4>(1);
-  const [selectedESG, setSelectedESG] = useState<string | null>(null); // ESG 항목 상태 추가
-  const [labels, setLabels] = useState<string[]>([]); // labels 상태 추가
-  const [datasets, setDatasets] = useState<ChartData['datasets']>([]); // datasets 상태 타입 수정
-  const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
+  const [selectedESG, setSelectedESG] = useState<string | null>(null);
+  const [labels, setLabels] = useState<string[]>([]);
+  const [datasets, setDatasets] = useState<ChartData['datasets']>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
+  /**
+   * 다음 단계로 이동하는 함수
+   * 첫 번째 단계(combobox)에서는 데이터 입력 단계로 전환하고
+   * 두 번째 단계(datatable)에서는 저장 처리를 수행합니다.
+   */
   const handleNext = () => {
     if (step === 'combobox') {
-      setStep('datatable'); // 다음 단계로 전환
+      setStep('datatable');
     } else {
       handleSave();
     }
   };
 
-  // 이전 단계로 돌아가는 함수 추가
+  /**
+   * 이전 단계로 돌아가는 함수
+   * 데이터 입력 단계에서 ESG 항목 선택 단계로 돌아갑니다.
+   */
   const handleBack = () => {
     setStep('combobox');
   };
 
-  // 데이터 테이블 변경 콜백 (DataTable에서 호출)
+  /**
+   * 데이터 테이블 변경 콜백 함수
+   * DataTable 컴포넌트에서 데이터가 변경될 때 호출됩니다.
+   * @param newLabels 새로운 라벨 배열
+   * @param newDatasets 새로운 데이터셋 배열
+   */
   const handleDataChange = useCallback(
     (newLabels: string[], newDatasets: ChartData['datasets']) => {
       setLabels(newLabels);
@@ -62,13 +75,20 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     []
   );
 
-  // ESG 항목 변경 콜백 (ESGCombobox에서 호출)
+  /**
+   * ESG 항목 변경 콜백 함수
+   * ESGCombobox 컴포넌트에서 선택 항목이 변경될 때 호출됩니다.
+   * @param value 선택된 ESG 항목 값
+   */
   const handleESGChange = useCallback((value: string | null) => {
     setSelectedESG(value);
   }, []);
 
+  /**
+   * 차트 데이터 저장 함수
+   * 입력된 모든 데이터를 검증하고 API를 통해 저장합니다.
+   */
   const handleSave = async () => {
-    // async 추가
     if (!chartTitle) {
       alert('차트 제목을 입력해주세요');
       return;
@@ -77,7 +97,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       alert('ESG 항목을 선택해주세요.');
       return;
     }
-    // 데이터 유효성 검사 활성화
     if (
       step === 'datatable' &&
       (labels.length === 0 ||
@@ -89,18 +108,17 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       return;
     }
 
-    setIsLoading(true); // 로딩 시작
+    setIsLoading(true);
 
-    // 새 차트 객체 생성 시 상태 값 사용
     const newChart: ChartData = {
       id: uuidv4(),
       title: chartTitle,
       description: chartDescription,
       type: chartType,
       colSpan: colSpan,
-      esg: selectedESG, // ESG 항목 추가 (null 아님을 위에서 확인)
-      labels: labels, // 상태에서 가져온 labels 사용
-      datasets: datasets, // 상태에서 가져온 datasets 사용
+      esg: selectedESG,
+      labels: labels,
+      datasets: datasets,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -111,95 +129,33 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       
       console.log('차트 저장 성공:', savedChart);
 
-      // 부모 컴포넌트로 전달
       if (onChartAdd) {
-        onChartAdd(savedChart); // 저장된 데이터 전달 (백엔드 응답 사용)
+        onChartAdd(savedChart);
       }
 
-      // 폼 초기화 및 닫기
       resetForm();
       setOpen(false);
     } catch (error) {
       console.error('차트 저장 실패:', error);
-      // 사용자에게 오류 알림 (예: alert 또는 toast 메시지)
       alert('차트 저장 중 오류가 발생했습니다.');
     } finally {
-      setIsLoading(false); // 로딩 종료
+      setIsLoading(false);
     }
   };
 
+  /**
+   * 폼 초기화 함수
+   * 모든 입력 필드와 상태를 초기값으로 리셋합니다.
+   */
   const resetForm = () => {
     setChartTitle('');
     setChartDescription('');
     setChartType('bar');
     setColSpan(1);
-    setSelectedESG(null); // ESG 항목 초기화
-    setLabels([]); // labels 초기화
-    setDatasets([]); // datasets 초기화
+    setSelectedESG(null);
+    setLabels([]);
+    setDatasets([]);
   };
-
-  // 차트 타입별 샘플 데이터 생성 함수 리팩토링 (더 이상 사용되지 않을 수 있으므로 주석 처리 또는 삭제 가능)
-  /*
-  const getSampleData = (type: ChartType): { labels?: string[], datasets?: ChartData['datasets'] } => {
-    switch (type) {
-      case 'bar':
-        return {
-          labels: ['카테고리1', '카테고리2', '카테고리3'],
-          datasets: [
-            {
-              label: '샘플 데이터', // label 추가
-              data: [65, 78, 82],    // data로 변경
-              backgroundColor: ['blue', 'green', 'purple'] // backgroundColor로 변경
-            }
-          ]
-        };
-      case 'line':
-        return {
-          labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-          datasets: [
-            {
-              label: 'Dataset 1', // label로 변경
-              data: [65, 59, 80, 81, 56, 55] // data로 변경
-            },
-            {
-              label: 'Dataset 2', // label로 변경
-              data: [28, 48, 40, 19, 86, 27] // data로 변경
-            }
-          ]
-        };
-      case 'pie':
-      case 'donut': // donut 타입 추가
-        return {
-          labels: ['항목 1', '항목 2', '항목 3'], // labels 추가
-          datasets: [
-            {
-              label: '샘플 데이터', // label 추가
-              data: [45, 30, 25],    // data로 변경 (숫자형)
-              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] // 배경색 추가
-            }
-          ]
-        };
-      case 'area': // area 타입 추가
-        return {
-          labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-          datasets: [
-            {
-              label: '샘플 데이터', // label 추가
-              data: [30, 45, 40, 55, 60, 65], // data로 변경
-              borderColor: 'rgb(75, 192, 192)', // borderColor 추가
-              backgroundColor: 'rgba(75, 192, 192, 0.2)', // backgroundColor 추가
-              fill: true // fill 속성 추가
-            }
-          ]
-        };
-      default:
-        // 모든 타입에 대해 처리했는지 확인 (never 타입 활용)
-        const exhaustiveCheck: never = type;
-        console.error(`Unhandled chart type: ${exhaustiveCheck}`);
-        return {};
-    }
-  };
-  */
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -212,10 +168,16 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           ></DialogClose>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-6">
           {step === 'combobox' && (
-            <div>
-              {/* 차트 제목 입력 */}
+            <div className="space-y-6">
+              <div className="grid items-center grid-cols-4 gap-4">
+                <Label className="text-right">ESG 항목</Label>
+                <div className="col-span-3">
+                  <ESGCombobox value={selectedESG} onValueChange={handleESGChange} />
+                </div>
+              </div>
+
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label htmlFor="chart-title" className="text-right">
                   제목
@@ -228,16 +190,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 />
               </div>
 
-              {/* ESG 항목 선택 */}
-              <div className="grid items-center grid-cols-4 gap-4">
-                <Label className="text-right">ESG 항목</Label>
-                <div className="col-span-3">
-                  {/* ESGCombobox에 콜백 및 값 전달 */}
-                  <ESGCombobox value={selectedESG} onValueChange={handleESGChange} />
-                </div>
-              </div>
-
-              {/* 차트 설명 입력 */}
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label htmlFor="chart-description" className="text-right">
                   설명
@@ -250,7 +202,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 />
               </div>
 
-              {/* 차트 유형 선택 */}
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label className="text-right">차트 유형</Label>
                 <Select value={chartType} onValueChange={value => setChartType(value as ChartType)}>
@@ -267,7 +218,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 </Select>
               </div>
 
-              {/* 차트 크기 선택 */}
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label className="text-right">차트 크기</Label>
                 <Select
@@ -290,7 +240,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
           {step === 'datatable' && (
             <div>
-              {/* 데이터 입력 테이블에 콜백 및 초기값 전달 */}
               <DataTable
                 onDataChange={handleDataChange}
                 initialLabels={labels}
@@ -300,13 +249,12 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           )}
         </div>
 
-        {/* 버튼 컨테이너 스타일 수정 및 이전 버튼 추가 */}
         <div className="flex justify-end mt-4 space-x-2">
           {step === 'datatable' && (
             <Button
-              variant="outline" // 이전 버튼 스타일
+              variant="outline"
               onClick={handleBack}
-              disabled={isLoading} // 로딩 중 비활성화
+              disabled={isLoading}
             >
               이전
             </Button>
@@ -314,9 +262,9 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           <Button
             className="px-4 py-2 text-white bg-black border border-black rounded hover:bg-white hover:text-black"
             onClick={handleNext}
-            disabled={isLoading} // 로딩 중 비활성화
+            disabled={isLoading}
           >
-            {isLoading ? '저장 중...' : step === 'combobox' ? '다음' : '완료'} {/* 로딩 텍스트 */}
+            {isLoading ? '저장 중...' : step === 'combobox' ? '다음' : '완료'}
           </Button>
         </div>
       </DialogContent>
