@@ -37,10 +37,21 @@ export const getCurrentUser = async (): Promise<User> => {
   try {
     console.log('[API User] 현재 사용자 정보 조회 시도');
     
-    const response: AxiosResponse<User> = await axiosInstance.get<User>('/users/me');
+    const response = await axiosInstance.get('/users/me');
     
     console.log('[API User] 현재 사용자 정보 조회 성공:', response.status);
-    return response.data;
+    
+    // API 응답 데이터를 User 타입으로 변환
+    const user: User = {
+      id: String(response.data.id), // number -> string 변환
+      name: response.data.name,
+      email: response.data.email,
+      role: response.data.role || 'user', // role이 없으면 기본값 'user' 사용
+      company: response.data.companyName, // companyName -> company로 매핑
+      phone: response.data.phoneNumber // phoneNumber -> phone으로 매핑
+    };
+    
+    return user;
   } catch (error) {
     console.error('[API User] 현재 사용자 정보 조회 오류:', error);
     throw error;
