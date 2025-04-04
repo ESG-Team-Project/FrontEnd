@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { ESGCombobox } from './combobox'; // ESG 항목 선택 컴포넌트
 import DataTable from './datatable'; // 데이터 입력 테이블 컴포넌트
@@ -21,6 +22,8 @@ import {
 } from '@/components/ui/select'; // Select 관련 컴포넌트 추가
 import { v4 as uuidv4 } from 'uuid';
 import { ChartType, ChartData } from '@/types/chart'; // ChartDataset 임포트 제거
+import { useDropzone } from 'react-dropzone';
+import { Upload, X } from 'lucide-react';
 
 interface ESGChartDialogProps {
   open: boolean;
@@ -38,6 +41,30 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [labels, setLabels] = useState<string[]>([]); // labels 상태 추가
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]); // datasets 상태 타입 수정
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
+  const [csvData, setCsvData] = useState<any[]>([]);
+  const [worker, setWorker] = useState<Worker | null>(null);
+  useEffect(() => {
+    // Web Worker 초기화
+    const csvWorker = new Worker(new URL('../../worker/csvWorker.ts', import.meta.url), {
+      type: 'module',
+    });
+    csvWorker.onmessage = event => {
+      setCsvData(event.data); // CSV 데이터 업데이트
+    };
+    setWorker(csvWorker);
+
+    return () => {
+      csvWorker.terminate(); // 컴포넌트 언마운트 시 종료
+    };
+  }, []);
+  const handleFile = (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file && worker) {
+      worker.postMessage(file); // Web Worker로 파일 전송
+    }
+    const dataset: ChartData['datasets'] = [];
+    console.log(csvData);
+  };
 
   const handleNext = () => {
     if (step === 'combobox') {
@@ -148,7 +175,10 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setLabels([]); // labels 초기화
     setDatasets([]); // datasets 초기화
   };
-
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop: acceptedFiles => handleFile(acceptedFiles),
+    accept: { 'text/csv': ['.csv'] },
+  });
   // 차트 타입별 샘플 데이터 생성 함수 리팩토링 (더 이상 사용되지 않을 수 있으므로 주석 처리 또는 삭제 가능)
   /*
   const getSampleData = (type: ChartType): { labels?: string[], datasets?: ChartData['datasets'] } => {
@@ -215,6 +245,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="flex flex-col p-6 bg-white rounded-lg shadow-lg dark:bg-gray-900 w-auto sm:min-w-[500px] sm:max-w-[80vw]">
+        <DialogDescription>test</DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">차트 추가</DialogTitle>
           <DialogClose
@@ -299,6 +330,20 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
+          {step === 'datatable' && (
+            <div
+              {...getRootProps()}
+              className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
+            >
+              <input {...getInputProps()} />
+              <div className="flex flex-col items-center w-full">
+                <Upload className="w-full h-10 text-gray-500 dark:text-gray-400" />
+                <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
+                  CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
+                </p>
+              </div>
+            </div>
+          )}
           {step === 'datatable' && (
             <div>
               {/* 데이터 입력 테이블에 콜백 및 초기값 전달 */}
