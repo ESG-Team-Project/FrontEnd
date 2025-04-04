@@ -1,27 +1,24 @@
 import axiosInstance from './axios';
 import { AxiosResponse } from 'axios';
 
-// 로그인 응답 타입 정의
-
+// 회원가입 응답 타입 정의
 interface SignUpResponse {
-  success?: boolean;
-  message?: string;
-  error?: string;
   id: number;
   email: string;
   name: string;
-  department?: string;
-  position?: string;
+  department: string | null;
+  position: string | null;
   companyName: string;
   ceoName: string;
   companyCode: string;
   companyPhoneNumber: string;
   phoneNumber: string;
-  createdAt?: string;
-  updatedAt?: string;
+  companyId: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
-// 로그인 요청 타입 정의
+// 회원가입 요청 타입 정의
 interface SignUpRequest {
   email: string;
   password: string;
@@ -45,7 +42,6 @@ export const signup = async (credentials: SignUpRequest): Promise<SignUpResponse
       '/users/signup',
       credentials
     );
-    console.log(response.data);
     return response.data;
   } catch (error) {
     throw error;
