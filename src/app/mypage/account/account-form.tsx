@@ -20,7 +20,7 @@ export default function AccountForm() {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: '',
+    phoneNumber: '',
   });
 
   useEffect(() => {
@@ -30,7 +30,7 @@ export default function AccountForm() {
         email: user.email || '',
         password: '',
         confirmPassword: '',
-        phone: user.phone || '',
+        phoneNumber: user.phoneNumber || '',
       });
     }
   }, [user]);
@@ -62,7 +62,7 @@ export default function AccountForm() {
     const updateData: Partial<User> & { password?: string } = {
       name: formData.name,
       email: formData.email,
-      phone: formData.phone,
+      phoneNumber: formData.phoneNumber,
     };
     if (formData.password) {
       updateData.password = formData.password;
@@ -79,7 +79,7 @@ export default function AccountForm() {
           ...user,
           name: formData.name ?? user.name,
           email: formData.email ?? user.email,
-          phone: formData.phone ?? user.phone,
+          phoneNumber: formData.phoneNumber ?? user.phoneNumber,
         };
       }
 
@@ -99,7 +99,7 @@ export default function AccountForm() {
   };
 
   return (
-    <form className="space-y-6 w-full max-w-4xl" onSubmit={handleSubmit}>
+    <form className="w-full max-w-4xl space-y-6" onSubmit={handleSubmit}>
       <LabeledInputBox
         label="담당자 이름"
         name="name"
@@ -154,9 +154,9 @@ export default function AccountForm() {
       </LabeledInputBox>
       <LabeledInputBox
         label="휴대전화"
-        name="phone"
+        name="phoneNumber"
         type="tel"
-        value={formData.phone}
+        value={formData.phoneNumber}
         onChange={handleChange}
         direction="row"
         width="w-[400px]"

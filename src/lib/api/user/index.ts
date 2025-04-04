@@ -48,7 +48,7 @@ export const getCurrentUser = async (): Promise<User> => {
       email: response.data.email,
       role: response.data.role || 'user', // role이 없으면 기본값 'user' 사용
       company: response.data.companyName, // companyName -> company로 매핑
-      phone: response.data.phoneNumber // phoneNumber -> phone으로 매핑
+      phoneNumber: response.data.phoneNumber // phoneNumber -> phone으로 매핑
     };
     
     return user;
@@ -84,7 +84,7 @@ export const updateUser = async (userData: UserUpdateRequest): Promise<User> => 
   try {
     console.log('[API User] 사용자 정보 업데이트 시도');
     
-    const response: AxiosResponse<User> = await axiosInstance.put<User>('/user/update', userData);
+    const response: AxiosResponse<User> = await axiosInstance.put<User>('/users/update', userData);
     
     console.log('[API User] 사용자 정보 업데이트 성공:', response.status);
     return response.data;

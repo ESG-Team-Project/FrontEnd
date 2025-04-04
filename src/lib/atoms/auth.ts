@@ -10,7 +10,7 @@ export interface User {
   email: string;
   role: string;
   company?: string;
-  phone?: string; // phone 속성 추가
+  phoneNumber?: string; // phone 속성 추가
 }
 
 export interface AuthState {
