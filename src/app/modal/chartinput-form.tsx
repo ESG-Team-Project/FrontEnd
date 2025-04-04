@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select'; // Select 관련 컴포넌트 추가
 import { v4 as uuidv4 } from 'uuid';
 import { ChartType, ChartData } from '@/types/chart'; // ChartDataset 임포트 제거
+import api from '@/lib/api'; // API 모듈 import 추가
 
 interface ESGChartDialogProps {
   open: boolean;
@@ -105,21 +106,9 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     };
 
     try {
-      // 백엔드 API 호출 (엔드포인트는 예시)
-      const response = await fetch('/api/charts', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newChart),
-      });
-
-      if (!response.ok) {
-        // 오류 처리 (예: 사용자에게 알림)
-        throw new Error(`API 오류: ${response.statusText}`);
-      }
-
-      const savedChart = await response.json(); // 저장된 차트 데이터 (선택적)
+      // 차트 서비스를 사용하여 차트 생성
+      const savedChart = await api.chart.createChart(newChart);
+      
       console.log('차트 저장 성공:', savedChart);
 
       // 부모 컴포넌트로 전달

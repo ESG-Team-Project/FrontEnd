@@ -7,7 +7,9 @@ import AuthContainer from '../AuthContainer';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
-import { authAtom, login as loginAtom } from '@/lib/atoms';
+import { authAtom } from '@/lib/atoms';
+import { loginAtom } from '@/lib/atoms/auth';
+import { authService } from '@/lib/api';
 
 export function SignupForm() {
   const [email, setEmail] = useState('');
@@ -19,7 +21,7 @@ export function SignupForm() {
   const router = useRouter();
 
   // jotai atom 사용
-  const [auth, setAuth] = useAtom(authAtom);
+  const [, login] = useAtom(loginAtom);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,33 +34,25 @@ export function SignupForm() {
     }
 
     try {
-      // API 호출 예시 (실제 구현에 맞게 수정 필요)
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password, name, company }),
+      // auth.ts의 signup 함수 사용
+      const response = await authService.signup({ 
+        email, 
+        password, 
+        name, 
+        company 
       });
 
-      if (!response.ok) {
-        throw new Error('회원가입 실패');
-      }
-
-      const data = await response.json();
-
       // 회원가입 성공 시 자동 로그인
-      loginAtom(
-        setAuth,
-        {
-          id: data.user.id,
-          name: data.user.name,
-          email: data.user.email,
-          role: data.user.role,
-          company: data.user.company,
+      login({
+        user: {
+          id: response.user.id,
+          name: response.user.name,
+          email: response.user.email,
+          role: response.user.role,
+          company: response.user.company,
         },
-        data.token
-      );
+        token: response.token
+      });
 
       router.push('/dashboard');
     } catch (err) {
