@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect,useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button } from '@/components/ui/button';
 import { Upload, X } from 'lucide-react';
@@ -43,7 +43,20 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]); // datasets 상태 타입 수정
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
   const [file, setFile] = useState<File>();
-  
+  const [tableKey, setTableKey] = useState(0);
+  const prevDataLength = useRef({ labels: labels?.length, datasets: datasets?.length });
+
+useEffect(() => {
+  if(!datasets||!labels)return;
+  if (
+    prevDataLength.current.labels !== labels.length ||
+    prevDataLength.current.datasets !== datasets.length
+  ) {
+    setTableKey(prevKey => prevKey + 1);
+    prevDataLength.current = { labels: labels.length, datasets: datasets.length };
+  }
+}, [labels, datasets]);
+
   const handleNext = () => {
     if (step === 'combobox') {
       setStep('datatable'); // 다음 단계로 전환
@@ -153,7 +166,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setLabels([]); // labels 초기화
     setDatasets([]); // datasets 초기화
   };
-  const onDrop = (acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles:File[]) => {
       const file = acceptedFiles[0];
       setFile(file)
     if (file) {
@@ -175,7 +188,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
         })
         setLabels(parsedData.labels)
         setDatasets(dataset)
-
+      
         // let maxCols = 0;
         // parsedData['data'].forEach(row => {
         //   const colCount = Object.keys(row).length; // 열의 개수
@@ -188,11 +201,11 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       };
       console.log(labels,datasets)
       reader.readAsText(file, "UTF-8");
-      handleDataChange(labels, datasets) 
+      handleDataChange(labels, datasets)
     }
     
-  };
-
+  },[labels, datasets]);
+  
   const { getRootProps, getInputProps } = useDropzone({
       onDrop,
       accept: { 'text/csv': ['.csv'], },
@@ -382,6 +395,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             <div>
               {/* 데이터 입력 테이블에 콜백 및 초기값 전달 */}
               <DataTable
+                key={tableKey} 
                 onDataChange={handleDataChange}
                 initialLabels={labels}
                 initialDatasets={datasets}
