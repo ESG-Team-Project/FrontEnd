@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { useAtom } from 'jotai';
 import { loginAtom } from '@/lib/atoms/auth';
 import { authService } from '@/lib/api';
+import type { SignUpRequest } from '@/lib/api/auth';
 
 export function SignupForm() {
   const [step, setStep] = useState(1);
@@ -51,7 +52,7 @@ export function SignupForm() {
 
     try {
       // API 호출
-      const response = await authService.signup({
+      const signupData: SignUpRequest = {
         email: userInfo.email,
         password: userInfo.password,
         checkPassword: userInfo.confirmPassword,
@@ -61,7 +62,9 @@ export function SignupForm() {
         companyCode: companyInfo.companyCode,
         companyPhoneNumber: companyInfo.companyPhoneNumber,
         phoneNumber: companyInfo.phoneNumber
-      });
+      };
+      
+      const response = await authService.signup(signupData);
 
       // 회원가입 성공 시 자동 로그인
       login({
@@ -76,8 +79,25 @@ export function SignupForm() {
       });
 
       router.push('/dashboard');
-    } catch (err) {
-      setError('회원가입 처리 중 오류가 발생했습니다');
+    } catch (err: any) {
+      // 오류 응답 처리
+      if (err.response) {
+        // 409 오류: 이미 존재하는 이메일
+        if (err.response.status === 409) {
+          setError('이미 사용 중인 이메일입니다');
+        } 
+        // 400 오류: 유효성 검증 실패
+        else if (err.response.status === 400 && err.response.data?.errors) {
+          const validationErrors = Object.values(err.response.data.errors).join(', ');
+          setError(`입력값 유효성 검증에 실패했습니다: ${validationErrors}`);
+        } 
+        // 그 외 서버 오류
+        else {
+          setError(err.response.data?.message || '회원가입 처리 중 오류가 발생했습니다');
+        }
+      } else {
+        setError('회원가입 처리 중 오류가 발생했습니다');
+      }
       console.error(err);
     }
   };

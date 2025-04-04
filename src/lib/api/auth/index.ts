@@ -5,16 +5,25 @@ import type { SetStateAction } from 'react';
 
 /**
  * 로그인 API 응답 형식
- * 서버에서 로그인 성공 시 반환하는 데이터 구조
  */
-interface LoginResponse {
-  token: string;  // 사용자 인증 토큰 (JWT)
-  user?: {        // 사용자 정보 (선택적)
-    id: string;   // 사용자 고유 ID
-    username: string;  // 사용자 이름
-    email: string;     // 이메일 주소
-    role: string;      // 권한 (admin, user 등)
-    company?: string;  // 회사명 (선택적)
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  token: string;
+  user: {
+    id: number;
+    email: string;
+    name: string;
+    department: string;
+    position: string;
+    companyName: string;
+    ceoName: string;
+    companyCode: string;
+    companyPhoneNumber: string;
+    phoneNumber: string;
+    companyId: number;
+    createdAt: string;
+    updatedAt: string;
   };
 }
 
@@ -28,14 +37,18 @@ interface LoginRequest {
 }
 
 /**
- * 기본 회원가입 API 요청 형식
- * 간단한 회원가입 시 서버로 전송하는 데이터 구조
+ * 회원가입 API 요청 형식
  */
-interface SignupRequest {
-  email: string;     // 사용자 이메일
-  password: string;  // 비밀번호
-  name: string;      // 사용자 이름
-  company?: string;  // 회사명 (선택적)
+export interface SignUpRequest {
+  email: string;             // 이메일 주소
+  password: string;          // 비밀번호
+  checkPassword: string;     // 비밀번호 확인용
+  name: string;              // 사용자 이름
+  companyName: string;       // 회사명
+  ceoName: string;           // 대표자명
+  companyCode: string;       // 사업자등록번호
+  companyPhoneNumber: string; // 회사 전화번호
+  phoneNumber: string;       // 사용자 전화번호
 }
 
 /**
@@ -54,29 +67,9 @@ interface SignupResponse {
 }
 
 /**
- * 상세 회원가입 API 요청 형식
- * 회사 정보를 포함한 상세 회원가입 시 필요한 데이터 구조
- */
-export interface SignUpRequest {
-  email: string;             // 이메일 주소
-  password: string;          // 비밀번호
-  checkPassword: string;     // 비밀번호 확인용
-  companyName: string;       // 회사명
-  ceoName: string;           // 대표자명
-  companyCode: string;       // 사업자등록번호
-  companyPhoneNumber: string; // 회사 전화번호
-  name: string;              // 사용자 이름
-  phoneNumber: string;       // 사용자 전화번호
-}
-
-/**
- * 상세 회원가입 API 응답 형식
- * 상세 회원가입 성공 시 서버에서 반환하는 데이터 구조
+ * 회원가입 API 응답 형식
  */
 export interface SignUpResponse {
-  success?: boolean;       // 성공 여부
-  message?: string;        // 응답 메시지
-  error?: string;          // 오류 메시지
   id: number;              // 사용자 고유 ID (숫자)
   email: string;           // 이메일 주소
   name: string;            // 사용자 이름
@@ -87,8 +80,9 @@ export interface SignUpResponse {
   companyCode: string;     // 사업자등록번호
   companyPhoneNumber: string; // 회사 전화번호
   phoneNumber: string;     // 사용자 전화번호
-  createdAt?: string;      // 계정 생성 일시
-  updatedAt?: string;      // 계정 정보 업데이트 일시
+  companyId: number;       // 회사 ID
+  createdAt: string;      // 계정 생성 일시
+  updatedAt: string;      // 계정 정보 업데이트 일시
   token?: string;          // 인증 토큰 (선택적)
 }
 
@@ -99,16 +93,6 @@ export interface SignUpResponse {
  * 
  * @param {LoginRequest} credentials - 이메일과 비밀번호 객체
  * @returns {Promise<LoginResponse>} 토큰과 사용자 정보가 포함된 응답
- * 
- * 사용 예시:
- * ```typescript
- * try {
- *   const response = await login({ email: 'user@example.com', password: '1234' });
- *   console.log('로그인 성공:', response.token);
- * } catch (error) {
- *   console.error('로그인 실패:', error);
- * }
- * ```
  */
 export const login = async (credentials: LoginRequest): Promise<LoginResponse> => {
   try {
@@ -125,11 +109,6 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
       throw new Error('로그인 응답에 토큰이 없습니다.');
     }
 
-    // 사용자 정보가 없는 경우 경고 로그
-    if (!response.data.user) {
-      console.warn('[API Auth] 로그인 응답에 사용자 정보가 없음 (토큰만 반환됨)');
-    }
-
     // 응답 데이터 반환
     return response.data;
   } catch (error) {
@@ -140,85 +119,35 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 };
 
 /**
- * 상세 회원가입 기능 (내부 사용)
+ * 회원가입 기능
  * 
- * 회사 정보를 포함한 상세 정보로 회원가입을 처리합니다.
- * 이 함수는 주로 signup 함수 내부에서 호출됩니다.
+ * 회원가입을 처리하고 결과를 반환합니다.
  * 
- * @param {SignUpRequest} credentials - 상세 회원가입 정보
- * @returns {Promise<SignUpResponse>} 회원가입 결과
+ * @param {SignUpRequest} userData - 회원가입 정보
+ * @returns {Promise<SignupResponse>} 회원가입 결과
  */
-export const signupDetailed = async (credentials: SignUpRequest): Promise<SignUpResponse> => {
+export const signup = async (userData: SignUpRequest): Promise<SignupResponse> => {
   try {
-    console.log('[API Auth] 상세 회원가입 시도:', credentials.email);
+    console.log('[API Auth] 회원가입 시도:', userData.email);
     
     // API 요청 - POST /users/signup
     const response: AxiosResponse<SignUpResponse> = await axiosInstance.post(
       '/users/signup',
-      credentials
+      userData
     );
     
-    console.log('[API Auth] 상세 회원가입 응답:', response.status);
-    return response.data;
-  } catch (error) {
-    console.error('[API Auth] 상세 회원가입 오류:', error);
-    throw error;
-  }
-};
-
-/**
- * 회원가입 기능
- * 
- * 간단한 정보로 회원가입을 처리하고, 내부적으로 상세 정보를 기본값으로 채워 처리합니다.
- * 
- * @param {SignupRequest} userData - 기본 회원가입 정보 (이메일, 비밀번호, 이름, 회사명)
- * @returns {Promise<SignupResponse>} 회원가입 결과
- * 
- * 사용 예시:
- * ```typescript
- * try {
- *   const response = await signup({
- *     email: 'user@example.com',
- *     password: 'secure123',
- *     name: '홍길동',
- *     company: '그린다이나믹스'
- *   });
- *   console.log('회원가입 성공:', response.user);
- * } catch (error) {
- *   console.error('회원가입 실패:', error);
- * }
- * ```
- */
-export const signup = async (userData: SignupRequest): Promise<SignupResponse> => {
-  try {
-    console.log('[API Auth] 회원가입 시도:', userData.email);
-
-    // 기본 정보를 상세 회원가입 형식으로 변환
-    const detailedRequest: SignUpRequest = {
-      email: userData.email,
-      password: userData.password,
-      checkPassword: userData.password, // 폼에서 이미 확인된 비밀번호
-      name: userData.name,
-      companyName: userData.company || '', // 회사명이 없으면 빈 문자열
-      ceoName: '',                 // 기본값 - 빈 문자열
-      companyCode: '',             // 기본값 - 빈 문자열
-      companyPhoneNumber: '',      // 기본값 - 빈 문자열
-      phoneNumber: ''              // 기본값 - 빈 문자열
-    };
-
-    // 상세 회원가입 API 호출
-    const detailedResponse = await signupDetailed(detailedRequest);
+    console.log('[API Auth] 회원가입 응답:', response.status);
     
     // 응답 형식 변환 (표준화)
     const standardResponse: SignupResponse = {
       user: {
-        id: String(detailedResponse.id),  // 숫자를 문자열로 변환
-        name: detailedResponse.name,
-        email: detailedResponse.email,
-        role: 'user',                      // 기본 권한: 'user'
-        company: detailedResponse.companyName
+        id: String(response.data.id),  // 숫자를 문자열로 변환
+        name: response.data.name,
+        email: response.data.email,
+        role: 'user',                   // 기본 권한: 'user'
+        company: response.data.companyName
       },
-      token: detailedResponse.token || 'temporary-token' // 토큰이 없으면 임시 토큰 사용
+      token: response.data.token || 'temporary-token' // 토큰이 없으면 임시 토큰 사용
     };
 
     return standardResponse;
