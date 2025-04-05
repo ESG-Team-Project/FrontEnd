@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { chartService } from '@/lib/api';
 import { Card, CardContent, CardTitle, CardHeader, CardDescription } from '@/components/ui/card';
 import {
   LineChart as LineChartIcon,
@@ -12,7 +13,7 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
-import type { ChartData } from '@/types/chart';
+import type { ChartData, DrawChartData } from '@/types/chart';
 import DashboardShell from '@/components/dashboard-shell';
 import TotalCharts from '@/components/dashboards/TotalCharts';
 import { Button } from '@/components/ui/button';
@@ -141,9 +142,55 @@ const sampleCharts: ChartData[] = [
 ];
 
 export default function Dashboard() {
-  const [charts, setCharts] = useState<ChartData[]>(sampleCharts);
+  const [charts, setCharts] = useState<ChartData[]>([]);
+  const [drawCharts, setDrawCharts] = useState<DrawChartData[]>([]);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
   const [fileModalOpen, setFileModalOpen] = useState(false);
+
+  useEffect(() => {
+    console.log('대시보드 컴포넌트가 마운트되었습니다.');
+
+    const fetchCharts = async () => {
+      console.log('차트 데이터를 불러오는 중...');
+      try {
+        const charts = await chartService.getCharts();
+        console.log(`총 ${charts.length}개의 차트를 불러왔습니다.`);
+
+        const transformedCharts = charts.map(
+          chart =>
+            ({
+              id: chart.id, // userId를 id로 변환
+              title: chart.title,
+              type: chart.chartType.toLowerCase(), // chartType을 소문자로 변환
+              description: chart.description,
+              esg: chart.category.toLowerCase(), // category를 소문자로 변환
+              labels: chart.data.map(item => item.label), // data에서 labels 추출
+              datasets: [
+                {
+                  label: chart.indicator,
+                  data: chart.data.map(item => item.key), // data에서 key를 추출
+                  backgroundColor: chart.data.map(() => '#3498db'),
+                  borderColor: chart.data.map(() => '#2980b9'),
+                  borderWidth: 1,
+                },
+              ],
+              options: {
+                plugins: { legend: { display: true } },
+                scales: { x: { beginAtZero: true } },
+              },
+              colSpan: chart.chartGrid || 1, // chartGrid를 colSpan으로 매핑
+            }) as DrawChartData
+        );
+
+        setDrawCharts(transformedCharts);
+      } catch (error) {
+        console.error('차트 데이터를 불러오는 중 오류 발생:', error);
+        setCharts(sampleCharts); // 오류 발생 시 샘플 데이터 사용
+      }
+    };
+
+    fetchCharts(); // 함수 호출
+  }, []);
 
   // 차트 추가 함수
   const addChart = (newChart: ChartData) => {
@@ -195,7 +242,7 @@ export default function Dashboard() {
     const chartContainerStyle = { height: '250px', width: '100%' };
 
     try {
-      switch (chart.type) {
+      switch (chart.chartType) {
         case 'bar': {
           const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'bar'>;
           const data = chartDataProp as ChartJSData<'bar'>;
@@ -255,18 +302,18 @@ export default function Dashboard() {
         }
         default: {
           // 컴파일 타임에 모든 케이스를 처리했는지 확인 (never 타입 활용)
-          const exhaustiveCheck: never = chart.type;
+          const exhaustiveCheck: never = chart.chartType;
           return (
-            <p className="text-sm text-gray-600 flex items-center justify-center h-full">
+            <p className="flex items-center justify-center h-full text-sm text-gray-600">
               지원되지 않는 차트 유형입니다: {exhaustiveCheck}
             </p>
           );
         }
       }
     } catch (error) {
-      console.error('Error rendering chart:', chart.id, chart.type, error);
+      console.error('Error rendering chart:', chart.id, chart.chartType, error);
       return (
-        <p className="text-sm text-red-600 flex items-center justify-center h-full">
+        <p className="flex items-center justify-center h-full text-sm text-red-600">
           차트를 렌더링하는 중 오류가 발생했습니다.
         </p>
       );
@@ -296,14 +343,14 @@ export default function Dashboard() {
         <>
           <Button
             variant="outline"
-            className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
+            className="h-8 px-2 text-xs bg-white md:text-sm md:px-4 md:h-9"
             onClick={() => setIsChartModalOpen(true)}
           >
             차트 추가
           </Button>
           <Button
             variant="outline"
-            className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9 ml-2"
+            className="h-8 px-2 ml-2 text-xs bg-white md:text-sm md:px-4 md:h-9"
             onClick={() => setFileModalOpen(true)}
           >
             파일 선택
@@ -311,15 +358,15 @@ export default function Dashboard() {
         </>
       }
     >
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">ESG 대시보드</h1>
         <Button onClick={() => setIsChartModalOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> 차트 추가
+          <PlusCircle className="w-4 h-4 mr-2" /> 차트 추가
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {charts.map(chart => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+        {drawCharts.map(chart => (
           <div key={chart.id} className={getColumnClass(chart.colSpan)}>
             <TotalCharts chartData={chart} />
           </div>

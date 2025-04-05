@@ -31,9 +31,10 @@ export interface PieChartData {
 export type ChartDataType = BarChartData | LineChartData | PieChartData | Record<string, unknown>;
 
 export interface ChartData {
+  userId: number; //방금수정
   id: string;
   title: string;
-  type: ChartType; // 애플리케이션용 타입 사용
+  chartType: ChartType; // 애플리케이션용 타입 사용 //방금수정
   description?: string;
   esg: string; // ESG 항목 식별자 추가
   labels?: string[]; // labels 속성 추가 (선택적)
@@ -43,6 +44,26 @@ export interface ChartData {
   colSpan?: number;
   createdAt?: Date; // 기존 createdAt 속성 (가정)
   updatedAt?: Date; // 기존 updatedAt 속성 (가정)
+  chartGrid: number; //방금수정
+  data: Array<{
+    label: string; // 데이터 항목의 레이블
+    key: number; // 데이터 값
+    unit?: string; // 데이터 단위 (선택적)
+  }>; // 데이터 배열
+  indicator: string; //방금수정
+  category: string; //방금수정
+}
+
+export interface DrawChartData {
+  id: string;
+  title: string;
+  type: ChartType; // 애플리케이션용 타입 사용
+  description?: string;
+  esg: string; // ESG 항목 식별자 추가
+  labels?: string[]; // labels 속성 추가 (선택적)
+  datasets?: ChartDataset<ChartTypeCore, number[]>[];
+  options?: ChartOptions<ChartTypeCore>;
+  colSpan?: number;
 }
 
 // 차트 생성을 위한 인터페이스
