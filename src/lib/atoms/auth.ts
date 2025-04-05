@@ -11,7 +11,11 @@ export interface User {
   role: string;
   company?: string;
   phoneNumber?: string; // phone 속성 추가
-}
+  companyName?: string; // companyName 속성 추가
+  ceoName?: string; // ceoName 속성 추가
+  companyCode?: string; // companyCode 속성 추가
+  companyPhoneNumber?: string; // companyPhoneNumber 속성 추가
+} 
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -44,7 +48,9 @@ export const authInitializedAtom = atom(false);
 // --- 액션 Atom (Write-only) ---
 export const loginAtom = atom(null, (get, set, { user, token }: { user: User; token: string }) => {
   console.log('[Auth Atom Action] Login executed');
+  // 인증 상태 갱신
   set(authAtom, { isLoggedIn: true, user, token, isLoading: false });
+  // 초기화 플래그 설정
   if (!get(authInitializedAtom)) {
     set(authInitializedAtom, true);
   }
@@ -60,10 +66,10 @@ export const logoutAtom = atom(null, (get, set) => {
 
 // --- 초기화 훅 ---
 export const useInitializeAuth = () => {
-  const [isLoading] = useAtom(isLoadingAtom);
-  const [isInitialized, setInitialized] = useAtom(authInitializedAtom);
-  const [auth] = useAtom(authAtom);
-  const [, logout] = useAtom(logoutAtom);
+  const [isLoading] = useAtom(isLoadingAtom);     // 상태 복원 중 여부
+  const [isInitialized, setInitialized] = useAtom (authInitializedAtom);  // 초기화 여부
+  const [auth] = useAtom(authAtom);          // 전체 인증 상태
+  const [, logout] = useAtom(logoutAtom);     // 로그아웃 액션
 
   useEffect(() => {
     if (!isLoading && !isInitialized) {
