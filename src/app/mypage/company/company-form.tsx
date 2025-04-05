@@ -10,7 +10,7 @@ import api from '@/lib/api';
 
 export default function AccountForm() {
     const [auth] = useAtom(authAtom);
-    const [user, setUser] = useAtom(userAtom);
+    const [user, setUser] = useState<User | null>(null);
     const [, login] = useAtom(loginAtom);
   const [formData, setFormData] = useState<
       Partial<User & { password?: string; confirmPassword?: string }>
@@ -26,14 +26,33 @@ export default function AccountForm() {
       setFormData({
         companyName: user.companyName || '',
         ceoName: user.ceoName || '',
-        companyCode: user.ceoName ||'',
+        companyCode: user.companyCode ||'',
         companyPhoneNumber: user.companyPhoneNumber || '',
       });
     }
   }, [user]); // user 값이 변경될 때마다 실행
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const userData = await api.user.getCurrentUser();
+        console.log('사용자 정보:', userData);
+        setUser(userData); // 사용자 정보를 상태에 저장
+      } catch (err) {
+        console.error('사용자 정보 조회 실패:', err);
+      }
+    };
+
+    fetchUserInfo();
+  }, [])
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prevData: typeof formData) => ({
+      ...prevData,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,15 +102,15 @@ export default function AccountForm() {
   
         if (finalUserData) {
           login({ user: finalUserData, token: token });
-          alert('프로필이 성공적으로 업데이트되었습니다.');
+          alert('회사정보가 성공적으로 업데이트되었습니다.');
         } else {
           console.warn('Could not determine updated user data after successful API call.');
-          alert('프로필 업데이트는 성공했으나, 화면 갱신에 문제가 있을 수 있습니다.');
+          alert('회사정보가 업데이트는 성공했으나, 화면 갱신에 문제가 있을 수 있습니다.');
         }
       } catch (error) {
-        console.error('프로필 업데이트 오류:', error);
+        console.error('회사정보 업데이트 오류:', error);
         alert(
-          `프로필 업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+          `회사정보 업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
         );
       }
     };
@@ -107,7 +126,7 @@ export default function AccountForm() {
         onChange={handleChange}
         direction="row"
         width="w-[400px]"
-        labelWidth="w-[100px]"
+        labelWidth="w-[120px]"
         className="gap-4"
       />
       <LabeledInputBox
@@ -118,7 +137,7 @@ export default function AccountForm() {
         onChange={handleChange}
         direction="row"
         width="w-[400px]"
-        labelWidth="w-[100px]"
+        labelWidth="w-[120px]"
         className="gap-4"
       />
       <LabeledInputBox
@@ -129,7 +148,7 @@ export default function AccountForm() {
         onChange={handleChange}
         direction="row"
         width="w-[400px]"
-        labelWidth="w-[100px]"
+        labelWidth="w-[120px]"
         className="gap-4"
       />
       <LabeledInputBox
@@ -140,14 +159,14 @@ export default function AccountForm() {
         onChange={handleChange}
         direction="row"
         width="w-[400px]"
-        labelWidth="w-[100px]"
+        labelWidth="w-[120px]"
         className="gap-4"
       />
 
       <div className="flex justify-end">
         <Button
           type="submit"
-          className="mt-4 text-white bg-black border border-black w-1/8 hover:bg-white hover:text-black"
+          className="w-[100px] mt-4 text-white bg-black border border-black hover:bg-white hover:text-black"
         >
           저장
         </Button>
