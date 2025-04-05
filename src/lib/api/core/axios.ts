@@ -1,4 +1,6 @@
-import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
+'use client';
+
+import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { getDefaultStore } from 'jotai';
 import { authAtom } from '@/lib/atoms';
 
@@ -116,20 +118,14 @@ axiosInstance.interceptors.response.use(
   
   // 오류 응답 처리
   (error: AxiosError) => {
-    // 401 Unauthorized 오류 처리
+    // API 요청이 401 (Unauthorized) 오류일 경우 처리
     if (error.response?.status === 401) {
       console.error(
         '[AXIOS] 401 인증 오류 발생. 토큰이 만료되었거나 유효하지 않습니다.',
         error
       );
       
-      // 주석 처리된 리다이렉션 로직 (필요시 활성화 가능)
-      // 현재는 ProtectedRoute 컴포넌트에서 처리하도록 설계됨
-      // if (typeof window !== 'undefined') {
-      //   const currentPath = window.location.pathname;
-      //   const redirectPath = encodeURIComponent(currentPath);
-      //   window.location.href = `/login?redirectTo=${redirectPath}`;
-      // }
+      window.location.href = '/login';
     }
     
     // 모든 오류는 호출한 컴포넌트에서 처리할 수 있도록 전파

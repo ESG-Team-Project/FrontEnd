@@ -22,8 +22,6 @@ import { User } from '@/lib/atoms';
 import { useAtom } from 'jotai';
 import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
 import clsx from 'clsx';
-// 선택적으로 차트 선택기 임포트 (지금은 사용하지 않음)
-// import ChartSelector from './chart-selector';
 
 // 네비게이션 아이템 정의
 interface NavItem {
@@ -196,9 +194,6 @@ export default function DashboardSidebar() {
       <nav>
         <ul className="space-y-1">{navItems.map(renderNavItem)}</ul>
       </nav>
-
-      {/* ChartSelector 컴포넌트는 보존하지만 지금은 사용하지 않음 */}
-      {/* <ChartSelector isLayoutLocked={isLayoutLocked} /> */}
     </aside>
   );
 }

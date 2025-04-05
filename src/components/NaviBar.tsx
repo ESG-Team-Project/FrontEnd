@@ -7,10 +7,13 @@ import { useAtom } from 'jotai';
 import { isLoggedInAtom, logoutAtom } from '@/lib/atoms';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { User, LogOut } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function NaviBar() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [, logout] = useAtom(logoutAtom);
+  const pathname = usePathname();
+  const isMainPage = pathname === '/';
 
   const handleLogout = () => {
     // logoutAtom 액션을 호출하면 내부적으로 상태 초기화 및 localStorage 정리가 이루어질 것으로 기대
@@ -74,8 +77,10 @@ export default function NaviBar() {
                 variant="default"
                 className="text-xs text-white bg-black sm:text-sm whitespace-nowrap"
               >
-                <span className="hidden sm:inline">대시보드 시작하기</span>
-                <span className="sm:hidden">시작하기</span>
+                <span className="hidden sm:inline">
+                  {isMainPage ? '대시보드 시작하기' : '대시보드'}
+                </span>
+                <span className="sm:hidden">{isMainPage ? '시작하기' : '대시보드'}</span>
               </Button>
             </Link>
           </NavigationMenu>

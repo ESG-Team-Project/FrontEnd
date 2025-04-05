@@ -10,15 +10,8 @@ import type {
 } from '@/types/auth';
 
 // 내부 변환 용도로 사용하는 타입
-interface InternalSignupResponse {
-  user: {           // 생성된 사용자 정보
-    id: string;     // 사용자 고유 ID
-    name: string;   // 사용자 이름
-    email: string;  // 이메일 주소
-    role: string;   // 권한 (일반적으로 'user')
-    company?: string; // 회사명 (선택적)
-  };
-  token: string;    // 자동 로그인을 위한 인증 토큰
+interface InternalSignupResponse extends SignUpResponse {
+  token?: string;
 }
 
 /**
@@ -59,7 +52,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
  * 회원가입을 처리하고 결과를 반환합니다.
  * 
  * @param {SignUpRequest} userData - 회원가입 정보
- * @returns {Promise<InternalSignupResponse>} 회원가입 결과
+ * @returns {Promise<SignUpResponse>} 회원가입 결과
  */
 export const signup = async (userData: SignUpRequest): Promise<InternalSignupResponse> => {
   try {
@@ -73,19 +66,19 @@ export const signup = async (userData: SignUpRequest): Promise<InternalSignupRes
     
     console.log('[API Auth] 회원가입 응답:', response.status);
     
-    // 응답 형식 변환 (표준화)
-    const standardResponse: InternalSignupResponse = {
-      user: {
-        id: String(response.data.id),  // 숫자를 문자열로 변환
-        name: response.data.name,
-        email: response.data.email,
-        role: 'user',                   // 기본 권한: 'user'
-        company: response.data.companyName
-      },
-      token: response.data.token || 'temporary-token' // 토큰이 없으면 임시 토큰 사용
+    // 응답이 빈 객체인지 확인
+    if (!response.data || Object.keys(response.data).length === 0) {
+      console.error('[API Auth] 회원가입 응답이 비어있음');
+      throw new Error(`예상과 다른 회원가입 응답 형식: ${JSON.stringify(response.data)}`);
+    }
+    
+    // API 응답 그대로 반환 (token 필드 추가)
+    const responseWithToken: InternalSignupResponse = {
+      ...response.data,
+      token: 'temporary-token' // 토큰이 없으면 임시 토큰 사용
     };
 
-    return standardResponse;
+    return responseWithToken;
   } catch (error) {
     console.error('[API Auth] 회원가입 오류:', error);
     // 오류를 그대로 전파 (컴포넌트에서 처리)

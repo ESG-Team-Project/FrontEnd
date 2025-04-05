@@ -33,14 +33,13 @@ export function SignupForm() {
   const [, login] = useAtom(loginAtom);
 
   // SignUpResponse 타입인지 확인하는 타입 가드 함수
-  const isSignUpResponse = (data: any): data is SignUpResponse => {
+  const isSignUpResponse = (data: unknown): data is SignUpResponse => {
+    if (data === null || typeof data !== 'object') return false;
+    const obj = data as Record<string, unknown>;
     return (
-      data !== null &&
-      typeof data === 'object' &&
-      typeof data.id === 'number' &&
-      typeof data.email === 'string' &&
-      typeof data.name === 'string' &&
-      typeof data.companyName === 'string'
+      typeof obj.id === 'number' &&
+      typeof obj.email === 'string' &&
+      typeof obj.name === 'string'
     );
   };
 
@@ -78,6 +77,9 @@ export function SignupForm() {
       
       const response = await authService.signup(signupData);
       
+      // 응답 확인
+      console.log('회원가입 응답:', response);
+      
       // 타입 가드를 통한 안전한 타입 처리
       if (isSignUpResponse(response)) {
         // 회원가입 성공 시 자동 로그인
@@ -87,18 +89,19 @@ export function SignupForm() {
             name: response.name,
             email: response.email,
             role: 'user',
-            company: response.companyName,
+            company: response.companyName || '',
           },
           token: response.token || ''
         });
 
         router.push('/dashboard');
       } else {
-        console.error('예상과 다른 회원가입 응답 형식:', response);
-        throw new Error('서버에서 예상하지 않은 응답 형식이 반환되었습니다.');
+        console.error(`예상과 다른 회원가입 응답 형식: ${JSON.stringify(response)}`);
+        throw new Error(`예상과 다른 회원가입 응답 형식: ${JSON.stringify(response)}`);
       }
-    } catch (err: any) {
+    } catch (error: unknown) {
       // 오류 응답 처리
+      const err = error as { response?: { status: number; data?: { errors?: Record<string, string>; message?: string } } };
       if (err.response) {
         // 409 오류: 이미 존재하는 이메일
         if (err.response.status === 409) {
@@ -114,9 +117,9 @@ export function SignupForm() {
           setError(err.response.data?.message || '회원가입 처리 중 오류가 발생했습니다');
         }
       } else {
-        setError(err.message || '회원가입 처리 중 오류가 발생했습니다');
+        setError((error as Error).message || '회원가입 처리 중 오류가 발생했습니다');
       }
-      console.error(err);
+      console.error(error);
     }
   };
 

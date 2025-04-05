@@ -1,18 +1,9 @@
 import { atom, useAtom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
-// import type { User, AuthState } from './types'; // types.ts 사용 안 함
+import type { User } from '@/types/user';
 import { useEffect } from 'react';
 
 // --- 타입 정의 (추가 및 export) ---
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  company?: string;
-  phone?: string; // phone 속성 추가
-}
-
 export interface AuthState {
   isLoggedIn: boolean;
   user: User | null;

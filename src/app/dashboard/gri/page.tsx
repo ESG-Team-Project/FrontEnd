@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import GriEditForm from '@/components/gri-edit-form';
 import { griCategories } from '@/data/griCategories';
 import { griGroups } from '@/data/griGroups';
-import { CompanyGRIData } from '@/types/companyGriData';
+import type { CompanyGRIData } from '@/types/companyGriData';
 import DashboardShell from '@/components/dashboard-shell';
 import { useDashboard } from '@/contexts/dashboard-context';
 import { CustomButton } from '@/components/ui/custom-button';
@@ -21,7 +21,7 @@ export default function DashboardGriEditPage() {
   const [dataError, setDataError] = useState<string | null>(null);
 
   // 데이터 로딩 함수
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!companyId) return;
 
     try {
@@ -35,7 +35,7 @@ export default function DashboardGriEditPage() {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [companyId]);
 
   // 데이터 저장 함수
   const saveData = async () => {
@@ -66,7 +66,7 @@ export default function DashboardGriEditPage() {
     if (companyId) {
       loadData();
     }
-  }, [companyId]);
+  }, [companyId, loadData]);
 
   return (
     <DashboardShell

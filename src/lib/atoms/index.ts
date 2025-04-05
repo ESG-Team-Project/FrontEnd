@@ -1,5 +1,4 @@
 // 모든 atoms 파일을 여기서 내보냅니다
-// import { mobileOpenAtom } from './mobile'; // mobile.ts 의존성 제거
 import { atom } from 'jotai';
 
 // auth 모듈에서 내보내기

@@ -89,8 +89,6 @@ const renderChartContent = (chart: ChartData) => {
     datasets: chart.datasets || [],
   };
 
-  // 높이를 고정하지 않고 aspect-ratio를 사용하거나, CardContent 크기에 맞춤
-  // const chartContainerStyle = { height: '200px', width: '100%' };
   const chartContainerStyle = { position: 'relative', width: '100%', height: '200px' };
 
   try {

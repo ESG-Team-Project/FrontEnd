@@ -4,6 +4,7 @@ import * as authService from './auth';
 import * as chartService from './chart';
 import * as fileService from './file';
 import * as userService from './user';
+import * as griService from './gri';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // 타입 재export
@@ -30,14 +31,19 @@ export type {
   ChartData
 } from '@/types/chart';
 
+export type {
+  GriDataItem
+} from './gri';
+
 // 서비스 모듈 재export
-export { authService, chartService, fileService, userService };
+export { authService, chartService, fileService, userService, griService };
 
 // 각 서비스 모듈 개별 export
 export * from './auth';
 export * from './chart';
 export * from './file'; 
 export * from './user';
+export * from './gri';
 
 // 직접 export 부분 제거
 export const getCurrentUser = userService.getCurrentUser;
@@ -175,6 +181,7 @@ const apiService = {
   chart: chartService,
   file: fileService,
   user: userService,
+  gri: griService,
 };
 
 export default apiService;

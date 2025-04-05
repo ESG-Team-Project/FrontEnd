@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-// import * as RechartsPrimitive from 'recharts'; // recharts import 제거
 
 import { cn } from '@/lib/utils';
 
@@ -92,28 +91,11 @@ ${colorConfig
   );
 };
 
-// recharts 기반 Tooltip 및 Legend 관련 컴포넌트 제거 또는 주석 처리
-// const ChartTooltip = RechartsPrimitive.Tooltip;
-// ... (ChartTooltipContent 구현 제거)
-// const ChartLegend = RechartsPrimitive.Legend;
-// ... (ChartLegendContent 구현 제거)
-
-// Helper to extract item config from a payload.
-// 이 함수는 recharts 페이로드 구조에 의존하므로 제거하거나 Chart.js 데이터 구조에 맞게 수정 필요
-// function getPayloadConfigFromPayload(config: ChartConfig, payload: unknown, key: string) {
-//   // ... (구현 제거)
-// }
-
 export {
   ChartContainer,
-  // ChartTooltip, // 제거
-  // ChartTooltipContent, // 제거
-  // ChartLegend, // 제거
-  // ChartLegendContent, // 제거
   ChartStyle,
-  useChart, // useChart export 추가
-  ChartContext, // ChartContext export 추가
-  // type ChartConfig, // Remove duplicate type export
-}; // Export ChartConfig type separately if needed, but it's already exported above
+  useChart,
+  ChartContext,
+};
 
-export type { ChartConfig }; // Export type separately if needed by consumers
+export type { ChartConfig };
