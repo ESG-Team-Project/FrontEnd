@@ -84,7 +84,7 @@ export default function ReportPage() {
         blob = await api.documents.downloadCompanyReport(frameworkId, format as 'pdf' | 'docx');
         
         // 파일명 얻기 위한 헤더 정보 요청
-        const response = await fetch(`/api/documents/company/${frameworkId}?format=${format}`, {
+        const response = await fetch(`/api/documents/${frameworkId}?format=${format}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`

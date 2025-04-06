@@ -34,9 +34,9 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
     // 요청 데이터 및 헤더 확인을 위한 로깅
     console.log('[API Auth] 로그인 요청 데이터:', JSON.stringify(credentials));
 
-    // API 요청 - POST /api/auth/login (최신 백엔드 엔드포인트)
+    // API 요청 - POST /auth/login (최신 백엔드 엔드포인트)
     const response: AxiosResponse<LoginResponse> = await axiosInstance.post(
-      '/api/auth/login',
+      '/auth/login',
       credentials,
       {
         headers: {
@@ -68,7 +68,7 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
       console.warn('[API Auth] 로그인 응답에 사용자 정보가 없음, 기본값 생성');
       // 사용자 정보가 없는 경우 기본 사용자 객체 생성
       response.data.user = {
-        id: "0", // User 인터페이스는 id가 string 타입
+        id: 0, // number 타입으로 설정
         name: '사용자',
         email: credentials.email,
         role: 'user', // role은 필수 필드
@@ -117,9 +117,9 @@ export const signup = async (userData: SignUpRequest): Promise<SignUpResponse> =
   try {
     console.log('[API Auth] 회원가입 시도:', userData.email);
 
-    // API 요청 - POST /api/auth/signup (최신 백엔드 엔드포인트)
+    // API 요청 - POST /auth/signup (최신 백엔드 엔드포인트)
     const response: AxiosResponse<SignUpResponse> = await axiosInstance.post(
-      '/api/auth/signup',
+      '/auth/signup',
       userData
     );
 
@@ -183,7 +183,7 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
     console.log(`[AUTH] 토큰 검증 - 토큰 확인: ${auth.token.substring(0, 10)}...`);
 
     // 토큰 검증 API 호출 (axios 인스턴스가 자동으로 토큰을 헤더에 추가)
-    const response = await axiosInstance.get('/api/auth/verify');
+    const response = await axiosInstance.get('/auth/verify');
 
     console.log(`[AUTH] 토큰 검증 결과: ${response.status === 200 ? '성공' : '실패'}`);
     return response.status === 200;

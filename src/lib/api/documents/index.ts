@@ -18,7 +18,7 @@ export const downloadFrameworkDocument = async (
     console.log(`[API Documents] ${frameworkId} 문서 다운로드 시도 (${format})`);
 
     const response: AxiosResponse<Blob> = await axiosInstance.get(
-      `/api/documents/${frameworkId}?format=${format}`,
+      `/documents/${frameworkId}?format=${format}`,
       {
         responseType: 'blob',
       }
@@ -49,7 +49,7 @@ export const downloadCompanyReport = async (
     console.log(`[API Documents] ${frameworkId} 회사 보고서 다운로드 시도 (${format})`);
 
     const response: AxiosResponse<Blob> = await axiosInstance.get(
-      `/api/documents/report/${frameworkId}?format=${format}`,
+      `/documents/report/${frameworkId}?format=${format}`,
       {
         responseType: 'blob',
       }

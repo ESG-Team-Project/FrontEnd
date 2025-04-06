@@ -24,7 +24,7 @@ export const generateCompanyReport = async (
     console.log(`[API Reports] ${frameworkId} 보고서 생성 시도 (${format})`);
 
     const response: AxiosResponse<{ reportId: string }> = await axiosInstance.post(
-      `/api/documents/report/${frameworkId}`,
+      `/documents/report/${frameworkId}`,
       {
         format,
         ...options
@@ -54,7 +54,7 @@ export const getReportStatus = async (
     console.log(`[API Reports] 보고서 상태 확인: ${reportId}`);
 
     const response: AxiosResponse<{ status: 'pending' | 'processing' | 'completed' | 'failed', progress?: number, url?: string }> = 
-      await axiosInstance.get(`/api/documents/report/status/${reportId}`);
+      await axiosInstance.get(`/documents/report/status/${reportId}`);
 
     console.log('[API Reports] 보고서 상태:', response.data);
     return response.data;
