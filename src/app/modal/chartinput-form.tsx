@@ -1,11 +1,13 @@
 'use client';
 import { Button } from '@/components/ui/button';
+import { Upload, X } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,28 +17,30 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'; // Select 관련 컴포넌트 추가
-import { useDashboard } from '@/contexts/dashboard-context'; // 대시보드 컨텍스트 추가
-import { griCategories } from '@/data/griCategories'; // GRI 카테고리 데이터 추가
-import api from '@/lib/api'; // API 호출을 위한 라이브러리
-import { getCompanyGriData } from '@/services/api/gri-service'; // GRI 데이터 가져오는 함수 추가
+} from '@/components/ui/select';
+import { v4 as uuidv4 } from 'uuid';
+import { Value } from '@radix-ui/react-select';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { ESGCombobox, esgIndicators } from './combobox';
+import DataTable from './datatable';
+import { useDashboard } from '@/contexts/dashboard-context';
+import { griCategories } from '@/data/griCategories';
+import api from '@/lib/api';
+import { getCompanyGriData } from '@/services/api/gri-service';
 import type {
   ApiChartData,
   ApiChartDataItem,
   ApiChartStyle,
   ChartData,
   ChartType,
-} from '@/types/chart'; // 타입 임포트를 type으로 변경
-import type { CompanyGRICategoryValue, CompanyGRIData } from '@/types/companyGriData'; // GRI 데이터 타입 추가
-import { useCallback, useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { ESGCombobox, esgIndicators } from './combobox'; // ESG 항목 선택 컴포넌트
-import DataTable from './datatable'; // 데이터 입력 테이블 컴포넌트
+} from '@/types/chart';
+import type { CompanyGRICategoryValue, CompanyGRIData } from '@/types/companyGriData';
 
 interface ESGChartDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  onChartAdd?: (chart: ChartData) => void; // 차트 추가 콜백
+  onChartAdd?: (chart: ChartData) => void;
 }
 
 export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProps) {
@@ -49,10 +53,14 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [chartDescription, setChartDescription] = useState('');
   const [colSpan, setColSpan] = useState<1 | 2 | 3 | 4>(1);
   const [selectedESG, setSelectedESG] = useState<string | null>(null);
-  const [labels, setLabels] = useState<string[]>([]);
+  const [labels, setLabels] = useState<string[] | number[]>([]);
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<{ label: string; key: number; unit?: string }[]>([]);
+  const [file, setFile] = useState<File>();
+  const [tableKey, setTableKey] = useState(0);
+  const prevDataLength = useRef({ labels: 0, datasets: 0 });
+  const [worker, setWorker] = useState<Worker | null>(null);
 
   // 데이터 소스 선택을 위한 상태 추가
   const [dataSource, setDataSource] = useState<'gri' | 'direct' | 'csv'>('direct');
@@ -71,6 +79,38 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       category.defaultDataType === 'numeric' ||
       category.defaultDataType === 'timeSeries'
   );
+
+  // Web Worker 초기화
+  useEffect(() => {
+    if (dataSource === 'csv') {
+      const csvWorker = new Worker(new URL('../../worker/csvWorker.ts', import.meta.url), {
+        type: 'module',
+      });
+
+      csvWorker.onmessage = event => {
+        const { labels, datasets } = event.data;
+        setLabels(labels);
+        setDatasets(datasets);
+      };
+
+      setWorker(csvWorker);
+
+      return () => {
+        csvWorker.terminate();
+      };
+    }
+  }, [dataSource]);
+
+  useEffect(() => {
+    if (!datasets || !labels) return;
+    if (
+      prevDataLength.current.labels !== labels.length ||
+      prevDataLength.current.datasets !== datasets.length
+    ) {
+      setTableKey(prevKey => prevKey + 1);
+      prevDataLength.current = { labels: labels.length, datasets: datasets.length };
+    }
+  }, [labels, datasets]);
 
   // GRI 데이터 로드 함수
   const loadGriData = useCallback(async () => {
@@ -96,6 +136,13 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   }, [open, dataSource, griData, loadGriData]);
 
+  const handleFile = (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (file && worker) {
+      worker.postMessage(file);
+    }
+  };
+
   const handleNext = () => {
     if (step === 'info') {
       // 기본 정보 입력 후 데이터 소스 선택 단계로
@@ -105,8 +152,11 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       if (dataSource === 'gri') {
         // GRI 데이터는 GRI 카테고리 선택 단계로
         setStep('griSelect');
+      } else if (dataSource === 'csv') {
+        // CSV 업로드는 ESG 항목 선택 단계로
+        setStep('esgSelect');
       } else {
-        // 직접 추가나 CSV는 ESG 항목 선택 단계로
+        // 직접 추가는 ESG 항목 선택 단계로
         setStep('esgSelect');
       }
     } else if (step === 'esgSelect') {
@@ -127,7 +177,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   };
 
-  // 이전 단계로 돌아가는 함수 수정
   const handleBack = () => {
     if (step === 'dataSource') {
       setStep('info');
@@ -203,16 +252,14 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   };
 
-  // 데이터 테이블 변경 콜백 (DataTable에서 호출)
   const handleDataChange = useCallback(
-    (newLabels: string[], newDatasets: ChartData['datasets']) => {
+    (newLabels: string[] | number[], newDatasets: ChartData['datasets']) => {
       setLabels(newLabels);
       setDatasets(newDatasets);
     },
     []
   );
 
-  // ESG 항목 변경 콜백 (ESGCombobox에서 호출)
   const handleESGChange = useCallback((value: string | null) => {
     setSelectedESG(value);
   }, []);
@@ -243,19 +290,16 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   }
 
   const handleSave = async () => {
-    // 유효성 검사 - 차트 제목
     if (!chartTitle) {
       alert('차트 제목을 입력해주세요');
       return;
     }
 
-    // GRI가 아니라면 ESG 항목 필요
     if (dataSource !== 'gri' && !selectedESG) {
       alert('ESG 항목을 선택해주세요.');
       return;
     }
 
-    // 데이터 유효성 검사
     if (
       step === 'datatable' &&
       (labels.length === 0 ||
@@ -267,93 +311,46 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       return;
     }
 
-    setIsLoading(true); // 로딩 시작
+    setIsLoading(true);
 
-    // 서버 API 형식에 맞게 데이터 준비
-    const category =
-      dataSource === 'gri'
-        ? 'G'
-        : (findESGCategoryByLabel(selectedESG as string)
-            ?.charAt(0)
-            .toUpperCase() ?? 'E');
-
-    // labels와 datasets.data를 API 형식으로 변환
-    const formattedData: ApiChartDataItem[] = labels.map((label, index) => {
-      const value = datasets?.[0]?.data?.[index] || 0;
-      return {
-        label,
-        value,
-        unit: '', // 필요에 따라 단위 추가
-        timestamp: new Date().toISOString(), // 현재 시간으로 설정
-      };
-    });
-
-    // 스타일 속성 설정
-    const style: ApiChartStyle = {
-      backgroundColor: datasets?.[0]?.backgroundColor || '#3b82f6',
-      borderColor: datasets?.[0]?.borderColor || '#1d4ed8',
-      borderWidth: datasets?.[0]?.borderWidth || 1,
-      tension: datasets?.[0]?.tension || 0.4,
+    const newChart: ChartData = {
+      id: uuidv4(),
+      title: chartTitle,
+      description: chartDescription,
+      type: chartType,
+      colSpan: colSpan,
+      esg: selectedESG,
+      labels: labels,
+      datasets: datasets,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     try {
-      // 백엔드 API 호출 - API 스웨거 형식에 맞게 수정
-      const chartData: Partial<ApiChartData> = {
-        title: chartTitle,
-        description: chartDescription,
-        category,
-        indicator: selectedESG,
-        chartGrid: colSpan,
-        data: formattedData,
-        chartType: chartType,
-        style,
-      };
+      const response = await fetch('/api/charts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newChart),
+      });
 
-      const response = await api.chart.createChart(chartData);
-
-      if (!response || !response.id) {
-        // 오류 처리
-        throw new Error('API 응답 오류: 차트 ID가 반환되지 않았습니다.');
+      if (!response.ok) {
+        throw new Error(`API 오류: ${response.statusText}`);
       }
 
-      console.log('차트 저장 성공:', response);
-
-      // 부모 컴포넌트로 전달
+      const savedChart = await response.json();
       if (onChartAdd) {
-        // 반환된 API 데이터를 ChartData 형식으로 변환
-        const transformedChart: ChartData = {
-          id: String(response.id),
-          title: response.title,
-          description: response.description,
-          chartType: response.chartType.toLowerCase() as ChartType,
-          category: response.category,
-          labels: response.data.map((item) => item.label),
-          datasets: [
-            {
-              label: response.indicator,
-              data: response.data.map((item) => item.value),
-              backgroundColor: response.style?.backgroundColor,
-              borderColor: response.style?.borderColor,
-              borderWidth: response.style?.borderWidth,
-              fill: response.chartType.toLowerCase() === 'area',
-              tension: response.style?.tension,
-            },
-          ],
-          colSpan: response.chartGrid || 1,
-        };
-
-        onChartAdd(transformedChart);
+        onChartAdd(savedChart);
       }
 
-      // 폼 초기화 및 닫기
       resetForm();
       setOpen(false);
     } catch (error) {
       console.error('차트 저장 실패:', error);
-      // 사용자에게 오류 알림
       alert('차트 저장 중 오류가 발생했습니다.');
     } finally {
-      setIsLoading(false); // 로딩 종료
+      setIsLoading(false);
     }
   };
 
@@ -362,77 +359,65 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setChartDescription('');
     setChartType('bar');
     setColSpan(1);
-    setSelectedESG(null); // ESG 항목 초기화
-    setLabels([]); // labels 초기화
-    setDatasets([]); // datasets 초기화
+    setSelectedESG(null);
+    setLabels([]);
+    setDatasets([]);
   };
 
-  // 차트 타입별 샘플 데이터 생성 함수 리팩토링 (더 이상 사용되지 않을 수 있으므로 주석 처리 또는 삭제 가능)
-  /*
-  const getSampleData = (type: ChartType): { labels?: string[], datasets?: ChartData['datasets'] } => {
-    switch (type) {
-      case 'bar':
-        return {
-          labels: ['카테고리1', '카테고리2', '카테고리3'],
-          datasets: [
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    setFile(file);
+    if (file) {
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        if (!event.target?.result) return;
+        const csvText = event.target.result as string;
+        const parsedData = parseCSV(csvText);
+
+        const dataset: ChartData['datasets'] = [];
+        parsedData.data.forEach((val, index) => {
+          dataset.push(
             {
-              label: '샘플 데이터', // label 추가
-              data: [65, 78, 82],    // data로 변경
-              backgroundColor: ['blue', 'green', 'purple'] // backgroundColor로 변경
+              label: `${index + 1}`, // Provide a default string label
+              data: val, // Use the data array
             }
-          ]
-        };
-      case 'line':
-        return {
-          labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-          datasets: [
-            {
-              label: 'Dataset 1', // label로 변경
-              data: [65, 59, 80, 81, 56, 55] // data로 변경
-            },
-            {
-              label: 'Dataset 2', // label로 변경
-              data: [28, 48, 40, 19, 86, 27] // data로 변경
-            }
-          ]
-        };
-      case 'pie':
-      case 'donut': // donut 타입 추가
-        return {
-          labels: ['항목 1', '항목 2', '항목 3'], // labels 추가
-          datasets: [
-            {
-              label: '샘플 데이터', // label 추가
-              data: [45, 30, 25],    // data로 변경 (숫자형)
-              backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56'] // 배경색 추가
-            }
-          ]
-        };
-      case 'area': // area 타입 추가
-        return {
-          labels: ['1월', '2월', '3월', '4월', '5월', '6월'],
-          datasets: [
-            {
-              label: '샘플 데이터', // label 추가
-              data: [30, 45, 40, 55, 60, 65], // data로 변경
-              borderColor: 'rgb(75, 192, 192)', // borderColor 추가
-              backgroundColor: 'rgba(75, 192, 192, 0.2)', // backgroundColor 추가
-              fill: true // fill 속성 추가
-            }
-          ]
-        };
-      default:
-        // 모든 타입에 대해 처리했는지 확인 (never 타입 활용)
-        const exhaustiveCheck: never = type;
-        console.error(`Unhandled chart type: ${exhaustiveCheck}`);
-        return {};
+          );
+        });
+        setLabels(parsedData.labels);
+        setDatasets(dataset);
+      };
+      console.log(labels, datasets);
+      reader.readAsText(file, "UTF-8");
+      handleDataChange(labels, datasets);
     }
+  }, [labels, datasets]);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: { 'text/csv': ['.csv'], },
+  });
+
+  const parseCSV = (csvText: string) => {
+    const rows = csvText.split("\n").map(row => row.trim()).filter(row => row); // 줄바꿈 기준으로 분리
+    const labels = Array.from({ length: rows.length }, (_, i) => i);
+    const beforedata: number[][] = [];
+    for (let i = 0; i < rows.length; i++) {  // 첫 번째 줄은 헤더이므로 건너뜀
+      const value = rows[i].split(",").map(row => parseValue(row));
+      beforedata.push(value); // 숫자로 변환
+    }
+    const data = beforedata[0].map((_, colIndex) =>
+      beforedata.map(row => row[colIndex])
+    );
+    return { labels, data };
   };
-  */
+
+  const parseValue = (value: any) => isNaN(value) ? value : Number(value);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="flex flex-col p-6 bg-white rounded-lg shadow-lg dark:bg-gray-900 w-auto sm:min-w-[500px] sm:max-w-[80vw]">
+        <DialogDescription>CSV 업로드 후 차트를 설정하세요</DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">차트 추가</DialogTitle>
           <DialogClose
@@ -442,14 +427,10 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* 차트 기본 정보 입력 단계 */}
           {step === 'info' && (
             <div>
-              {/* 차트 제목 입력 */}
               <div className="grid items-center grid-cols-4 gap-4">
-                <Label htmlFor="chart-title" className="text-right">
-                  제목
-                </Label>
+                <Label htmlFor="chart-title" className="text-right">제목</Label>
                 <Input
                   id="chart-title"
                   value={chartTitle}
@@ -458,11 +439,8 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 />
               </div>
 
-              {/* 차트 설명 입력 */}
               <div className="grid items-center grid-cols-4 gap-4">
-                <Label htmlFor="chart-description" className="text-right">
-                  설명
-                </Label>
+                <Label htmlFor="chart-description" className="text-right">설명</Label>
                 <Input
                   id="chart-description"
                   value={chartDescription}
@@ -471,7 +449,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 />
               </div>
 
-              {/* 차트 유형 선택 */}
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label className="text-right">차트 유형</Label>
                 <Select
@@ -491,7 +468,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 </Select>
               </div>
 
-              {/* 차트 크기 선택 */}
               <div className="grid items-center grid-cols-4 gap-4">
                 <Label className="text-right">차트 크기</Label>
                 <Select
@@ -512,7 +488,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
-          {/* 데이터 소스 선택 단계 */}
           {step === 'dataSource' && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-center">데이터 소스 선택</h3>
@@ -545,7 +520,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
-          {/* GRI 카테고리 선택 단계 */}
           {step === 'griSelect' && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-center">GRI 카테고리 선택</h3>
@@ -589,7 +563,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
-          {/* ESG 항목 선택 단계 (GRI 데이터가 아닐 경우에만) */}
           {step === 'esgSelect' && (
             <div>
               <div className="grid items-center grid-cols-4 gap-4">
@@ -601,34 +574,30 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
-          {/* 데이터 테이블 단계 */}
           {step === 'datatable' && (
-            <div>
-              <DataTable
-                onDataChange={handleDataChange}
-                initialLabels={labels}
-                initialDatasets={datasets}
-              />
+            <div
+              {...getRootProps()}
+              className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
+            >
+              <input {...getInputProps()} />
+              <div className="flex flex-col items-center w-full">
+                <Upload className="w-full h-10 text-gray-500 dark:text-gray-400" />
+                <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
+                  CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
+                </p>
+              </div>
             </div>
           )}
         </div>
 
-        {/* 버튼 컨테이너 */}
-        <div className="flex justify-between mt-4 space-x-2">
-          {step !== 'info' && (
-            <Button variant="outline" onClick={handleBack} disabled={isLoading || isLoadingGriData}>
+        <div className="flex justify-between mt-6">
+          {step === 'datatable' && (
+            <Button variant="outline" onClick={handleBack}>
               이전
             </Button>
           )}
-          <div className="flex-1" />
-          <Button
-            className="px-4 py-2 text-white bg-black border border-black rounded hover:bg-white hover:text-black"
-            onClick={handleNext}
-            disabled={
-              isLoading || isLoadingGriData || (step === 'griSelect' && !selectedGriCategory)
-            }
-          >
-            {isLoading ? '저장 중...' : step === 'datatable' ? '완료' : '다음'}
+          <Button onClick={handleNext} disabled={isLoading}>
+            {step === 'combobox' ? '다음' : '저장'}
           </Button>
         </div>
       </DialogContent>

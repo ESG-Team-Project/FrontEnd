@@ -1,5 +1,5 @@
 'use client';
-
+import * as React from 'react';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -8,15 +8,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter
 } from '@/components/ui/table';
 import type { ChartData } from '@/types/chart';
 import { Edit, Plus, Trash2 } from 'lucide-react';
-import * as React from 'react';
 
 interface DataTableProps {
-  initialLabels?: string[];
+  initialLabels?: string[] | number[];
   initialDatasets?: ChartData['datasets'];
-  onDataChange: (labels: string[], datasets: ChartData['datasets']) => void;
+  onDataChange: (labels: string[] | number[], datasets: ChartData['datasets']) => void;
 }
 
 export default function DataTable({
@@ -24,6 +24,8 @@ export default function DataTable({
   initialDatasets = [],
   onDataChange,
 }: DataTableProps) {
+
+  
   const [columns, setColumns] = React.useState<string[]>(() => {
     if (initialLabels && initialLabels.length > 0) {
       const datasetLabels = initialDatasets?.map((ds) => ds?.label || '') || [];
@@ -33,7 +35,7 @@ export default function DataTable({
   });
 
   const [rows, setRows] = React.useState(() => {
-    if (initialLabels && initialLabels.length > 0) {
+    if (initialLabels.length > 0) {
       return initialLabels.map((label, index) => ({
         id: Date.now() + index,
         columns: [label, ...(initialDatasets?.map((ds) => ds?.data?.[index] ?? '') || [])],
@@ -44,6 +46,43 @@ export default function DataTable({
 
   const [editingColumnIndex, setEditingColumnIndex] = React.useState<number | null>(null);
   const [tempColumnName, setTempColumnName] = React.useState<string>('');
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const rowHeight = 48;
+  const [scrollTop, setScrollTop] = React.useState(0);
+  const visibleRowCount = 13;
+
+  const totalHeight = rows.length * rowHeight;
+  const startIndex = Math.floor(scrollTop / rowHeight);
+  const endIndex = Math.min(rows.length, startIndex + visibleRowCount);
+  const visibleRows = rows.slice(startIndex, endIndex);
+  const topPadding = startIndex * rowHeight;
+  const bottomPadding = totalHeight - (endIndex * rowHeight);
+  const MAX_WHEEL_DELTA = 100;
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+  
+    const wheelHandler = (e: WheelEvent) => {
+      e.preventDefault();
+  
+      const limitedDelta = Math.max(-MAX_WHEEL_DELTA, Math.min(MAX_WHEEL_DELTA, e.deltaY));
+      const newScrollTop = Math.max(
+        0,
+        Math.min(container.scrollHeight, container.scrollTop + limitedDelta)
+      );
+  
+      container.scrollTop = newScrollTop;
+    };
+  
+    container.addEventListener('wheel', wheelHandler, { passive: false });
+  
+    return () => {
+      container.removeEventListener('wheel', wheelHandler);
+    };
+  }, []);
+  
 
   React.useEffect(() => {
     const newLabels = rows.map((row) => row.columns[0]);
@@ -58,10 +97,21 @@ export default function DataTable({
     onDataChange(newLabels, newDatasets);
   }, [rows, columns, onDataChange]);
 
+  React.useEffect(() => {
+    if (editingColumnIndex !== null && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingColumnIndex]);
+
   const handleInputChange = (rowIndex: number, colIndex: number, value: string) => {
-    const updatedRows = [...rows];
-    updatedRows[rowIndex].columns[colIndex] = value;
-    setRows(updatedRows);
+    setRows(prevRows => {
+      const updated = [...prevRows];
+      const row = { ...updated[rowIndex] };
+      row.columns = [...row.columns];
+      row.columns[colIndex] = value;
+      updated[rowIndex] = row;
+      return updated;
+    });
   };
 
   const addRow = () => {
@@ -80,8 +130,8 @@ export default function DataTable({
 
   const handleColumnHeaderDoubleClick = (index: number) => {
     if (index === 0) return;
-    setEditingColumnIndex(index);
     setTempColumnName(columns[index]);
+    setEditingColumnIndex(index);
   };
 
   const handleColumnNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +152,44 @@ export default function DataTable({
       handleColumnNameBlur();
     }
   };
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  };
+
+  const EditableCell = React.memo(
+    ({
+      value,
+      onChange,
+      placeholder,
+    }: {
+      value: string;
+      onChange: (value: string) => void;
+      placeholder: string;
+    }) => {
+      const [localValue, setLocalValue] = React.useState(value);
+
+      React.useEffect(() => {
+        setLocalValue(value);
+      }, [value]);
+
+      const handleBlur = () => {
+        if (localValue !== value) {
+          onChange(localValue);
+        }
+      };
+
+      return (
+        <Input
+          value={localValue}
+          onChange={e => {setLocalValue(e.target.value);}}
+          onBlur={handleBlur}
+          placeholder={placeholder}
+          className="text-sm h-8 min-w-full"
+        />
+      );
+    }
+  );
 
   return (
     <div className="p-4">

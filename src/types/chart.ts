@@ -8,16 +8,16 @@ export type ChartType = ChartTypeCore | 'area' | 'donut';
 
 // 차트 유형별 데이터 인터페이스
 export interface BarChartData {
-  categories: string[];
+  categories: string[]|number[];
   values: number[];
   colors: string[];
 }
 
 export interface LineChartData {
-  labels: string[];
+  labels: string[]|number[];
   datasets: Array<{
     name: string;
-    values: number[];
+    values:string[]|number[];
   }>;
 }
 
@@ -71,19 +71,20 @@ export interface ChartData {
   title: string;
   chartType: ChartType; // 모든 곳에서 chartType으로 통일
   description?: string;
-  category: string; // ESG 카테고리
+  category?: string; // ESG 카테고리
   indicator?: string;
-  labels?: string[]; // x축 라벨 배열
-  datasets: ChartDataset<ChartTypeCore, number[]>[]; // Chart.js 데이터셋
+  esg?: string; // ESG 항목 식별자
+  labels?: string[] | number[]; // x축 라벨 배열 (문자열 또는 숫자 허용)
+  // Chart.js 데이터셋 (문자열 또는 숫자 데이터 허용)
+  datasets: ChartDataset<ChartTypeCore, number[] | string[]>[];
   options?: ChartOptions<ChartTypeCore>; // Chart.js 옵션
   colSpan: number; // 그리드 크기 (1-4)
-  esg?: string; // ESG 항목 식별자 추가
   data?: Array<{
     label: string; // 데이터 항목의 레이블
     key: number; // 데이터 값
     unit?: string; // 데이터 단위 (선택적)
   }>; // 데이터 배열 (선택적)
-  chartGrid?: number;
+  chartGrid?: number; // 레거시 지원
   createdAt?: Date; // 생성 날짜
   updatedAt?: Date; // 업데이트 날짜
 }
