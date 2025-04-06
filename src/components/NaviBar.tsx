@@ -2,9 +2,10 @@
 import { Button } from '@/components/ui/button';
 import { NavigationMenu } from '@/components/ui/navigation-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { isLoggedInAtom, logoutAtom } from '@/lib/atoms';
+import { Separator } from '@/components/ui/separator';
+import { isLoggedInAtom, logoutAtom, userAtom } from '@/lib/atoms';
 import { useAtom } from 'jotai';
-import { LogOut, User } from 'lucide-react';
+import { Building, LogOut, Mail, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Logo from './Logo';
@@ -12,6 +13,7 @@ import Logo from './Logo';
 export default function NaviBar() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [, logout] = useAtom(logoutAtom);
+  const [currentUser] = useAtom(userAtom);
   const pathname = usePathname();
   const isMainPage = pathname === '/';
 
@@ -44,8 +46,30 @@ export default function NaviBar() {
                       <User className="w-6 h-6 text-gray-600" />
                     </div>
                   </PopoverTrigger>
-                  <PopoverContent className="w-48 p-0">
+                  <PopoverContent className="w-60 p-0">
                     <div className="flex flex-col">
+                      {/* 사용자 정보 섹션 */}
+                      <div className="p-4 bg-gray-50">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                            <User className="w-5 h-5 text-gray-600" />
+                          </div>
+                          <div>
+                            <h3 className="font-medium">{currentUser?.name || '사용자'}</h3>
+                            <p className="text-xs text-gray-500">{currentUser?.email || '이메일 정보 없음'}</p>
+                          </div>
+                        </div>
+                        {currentUser?.company && (
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                            <Building className="w-3 h-3" />
+                            <span>{currentUser.company}</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <Separator />
+                      
+                      {/* 메뉴 섹션 */}
                       <Link
                         href="/mypage/account"
                         className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-100"
