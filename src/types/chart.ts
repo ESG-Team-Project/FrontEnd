@@ -31,12 +31,12 @@ export interface PieChartData {
 export type ChartDataType = BarChartData | LineChartData | PieChartData | Record<string, unknown>;
 
 export interface ChartData {
-  userId: number; //방금수정
-  id: string;
+  userId?: number; //방금수정
+  id?: string;
   title: string;
   chartType: ChartType; // 애플리케이션용 타입 사용 //방금수정
   description?: string;
-  esg: string; // ESG 항목 식별자 추가
+  esg?: string; // ESG 항목 식별자 추가
   labels?: string[]; // labels 속성 추가 (선택적)
   // datasets와 options는 chart.js 핵심 타입을 사용하도록 수정
   datasets?: ChartDataset<ChartTypeCore, number[]>[];

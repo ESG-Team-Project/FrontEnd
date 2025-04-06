@@ -161,9 +161,9 @@ export default function Dashboard() {
             ({
               id: chart.id, // userId를 id로 변환
               title: chart.title,
-              type: chart.chartType.toLowerCase(), // chartType을 소문자로 변환
+              type: chart.chartType.toLowerCase(),
               description: chart.description,
-              esg: chart.category.toLowerCase(), // category를 소문자로 변환
+              esg: chart.category.toLowerCase(),
               labels: chart.data.map(item => item.label), // data에서 labels 추출
               datasets: [
                 {

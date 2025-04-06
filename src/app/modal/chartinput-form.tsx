@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogClose,
 } from '@/components/ui/dialog';
-import { ESGCombobox } from './combobox'; // ESG 항목 선택 컴포넌트
+import { ESGCombobox, esgIndicators } from './combobox'; // ESG 항목 선택 컴포넌트
 import DataTable from './datatable'; // 데이터 입력 테이블 컴포넌트
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -39,6 +39,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [labels, setLabels] = useState<string[]>([]); // labels 상태 추가
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]); // datasets 상태 타입 수정
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
+  const [data, setData] = useState<{ label: string; key: number; unit?: string }[]>([]);
 
   const handleNext = () => {
     if (step === 'combobox') {
@@ -66,6 +67,16 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const handleESGChange = useCallback((value: string | null) => {
     setSelectedESG(value);
   }, []);
+
+  function findESGCategoryByLabel(id: string): 'environment' | 'social' | 'governance' | null {
+    for (const category in esgIndicators) {
+      const indicators = esgIndicators[category as keyof typeof esgIndicators];
+      if (indicators.some(indicator => indicator.id === id)) {
+        return category as 'environment' | 'social' | 'governance';
+      }
+    }
+    return null; // 못 찾은 경우
+  }
 
   const handleSave = async () => {
     // async 추가
@@ -106,14 +117,21 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     };
 
     try {
-      // 백엔드 API 호출 (엔드포인트는 예시)
-      const response = await api.post('/charts', {
-        chart: newChart,
+      // 백엔드 API 호출 (엔드포인트는 예시)   //고정...
+      const response = await api.chart.createChart({
+        title: chartTitle,
+        chartType: chartType,
+        description: chartDescription,
+        labels: labels,
+        chartGrid: colSpan,
+        data: data,
+        indicator: selectedESG,
+        category: findESGCategoryByLabel(selectedESG)?.charAt(0).toUpperCase() ?? 'E',
       });
 
-      if (!response.data) {
+      if (!response.title) {
         // 오류 처리 (예: 사용자에게 알림)
-        throw new Error(`API 오류: ${response.statusText}`);
+        throw new Error(`API 오류: ${response.data}`);
       }
 
       const savedChart = await response.data; // 저장된 차트 데이터 (선택적)
