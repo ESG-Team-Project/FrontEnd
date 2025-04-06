@@ -1,11 +1,10 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { NavigationMenu } from '@/components/ui/navigation-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { isLoggedInAtom, logoutAtom, userAtom } from '@/lib/atoms';
 import { useAtom } from 'jotai';
-import { Building, LogOut, Mail, User } from 'lucide-react';
+import { Building, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Logo from './Logo';
@@ -27,17 +26,17 @@ export default function NaviBar() {
   };
 
   return (
-    <NavigationMenu className="fixed top-0 left-0 right-0 z-50 min-w-full bg-white shadow-sm">
+    <div className="fixed top-0 left-0 right-0 z-50 min-w-full bg-white shadow-sm">
       <div className="w-full max-w-screen-xl px-4 mx-auto">
         <div className="flex items-center justify-between w-full h-16">
-          <NavigationMenu>
+          <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2 shrink-0">
               <Logo />
               <span className="text-xl font-bold sm:text-2xl">Green Dynamics</span>
             </Link>
-          </NavigationMenu>
+          </div>
 
-          <NavigationMenu className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             {isLoggedIn ? (
               <>
                 <Popover>
@@ -107,9 +106,9 @@ export default function NaviBar() {
                 <span className="sm:hidden">{isMainPage ? '시작하기' : '대시보드'}</span>
               </Button>
             </Link>
-          </NavigationMenu>
+          </div>
         </div>
       </div>
-    </NavigationMenu>
+    </div>
   );
 }
