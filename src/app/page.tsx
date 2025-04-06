@@ -52,12 +52,6 @@ export default function Page() {
             </Link>
           ) : (
             <>
-              <Link href="/login">
-                <Button variant="outline" className="text-white bg-black shadow-md" size="lg">
-                  <span className="whitespace-nowrap">로그인하기</span>
-                  <UserCircle2 className="ml-2" />
-                </Button>
-              </Link>
               <Link href="/signup">
                 <Button variant="outline" className="shadow-md bg-emerald-600 text-white" size="lg">
                   <span className="whitespace-nowrap">회원가입</span>
@@ -304,15 +298,6 @@ export default function Page() {
                 <Link href="/signup">
                   <Button size="lg" className="bg-white text-emerald-700 hover:bg-emerald-100">
                     회원가입
-                  </Button>
-                </Link>
-                <Link href="/login">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="text-white border-white hover:bg-emerald-600 bg-emerald-800"
-                  >
-                    로그인하기
                   </Button>
                 </Link>
               </>

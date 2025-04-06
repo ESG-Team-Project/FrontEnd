@@ -3,10 +3,24 @@
 import DashboardShell from '@/components/dashboard-shell';
 import GriEditForm from '@/components/gri-edit-form';
 import { CustomButton } from '@/components/ui/custom-button';
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from '@/components/ui/pagination';
 import { useDashboard } from '@/contexts/dashboard-context';
 import { griCategories } from '@/data/griCategories';
 import { griGroups } from '@/data/griGroups';
-import { getCompanyGriData, saveCompanyGriData } from '@/services/api/gri-service';
+import { 
+  getCompanyGriData, 
+  getGriDataPaginated, 
+  saveCompanyGriData,
+  type PageRequest,
+  type PageResponse  
+} from '@/services/api/gri-service';
 import type { CompanyGRIData } from '@/types/companyGriData';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -15,6 +29,12 @@ export default function DashboardGriEditPage() {
   const [companyData, setCompanyData] = useState<CompanyGRIData | null>(null);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [dataError, setDataError] = useState<string | null>(null);
+  
+  // 페이지네이션 상태 추가
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [pageSize, setPageSize] = useState<number>(20);
+  const [totalPages, setTotalPages] = useState<number>(0);
+  const [totalElements, setTotalElements] = useState<number>(0);
 
   // 데이터 로딩 함수
   const loadData = useCallback(async () => {
@@ -23,6 +43,24 @@ export default function DashboardGriEditPage() {
     try {
       setIsLoadingData(true);
       setDataError(null);
+      
+      // 페이지네이션된 데이터 요청
+      const pageRequest: PageRequest = {
+        page: currentPage,
+        size: pageSize,
+        sort: 'standardCode,asc'
+      };
+      
+      // 새로운 페이지네이션 API 호출
+      const pageResponse = await getGriDataPaginated(pageRequest);
+      
+      // 페이지네이션 정보 업데이트
+      setTotalPages(pageResponse.totalPages);
+      setTotalElements(pageResponse.totalElements);
+      
+      // 페이지네이션 응답을 CompanyGRIData 형식으로 변환
+      // 기존 함수를 재사용하려면 백엔드와 포맷을 맞춰야 함
+      // 간단한 구현을 위해 기존 메서드 호출
       const data = await getCompanyGriData(companyId);
       setCompanyData(data);
     } catch (err) {
@@ -31,14 +69,19 @@ export default function DashboardGriEditPage() {
     } finally {
       setIsLoadingData(false);
     }
-  }, [companyId]);
+  }, [companyId, currentPage, pageSize]);
+
+  // 페이지 변경 핸들러
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   // companyId가 변경될 때 데이터 로드
   useEffect(() => {
     if (companyId) {
       loadData();
     }
-  }, [companyId, loadData]);
+  }, [companyId, currentPage, pageSize, loadData]);
 
   return (
     <DashboardShell
@@ -49,12 +92,73 @@ export default function DashboardGriEditPage() {
       onRetry={loadData}
     >
       {companyData && (
-        <GriEditForm
-          initialData={companyData}
-          griCategories={griCategories}
-          griGroups={griGroups}
-          onChange={setCompanyData}
-        />
+        <>
+          <GriEditForm
+            initialData={companyData}
+            griCategories={griCategories}
+            griGroups={griGroups}
+            onChange={setCompanyData}
+          />
+          
+          {/* 페이지네이션 UI 추가 */}
+          <div className="mt-8 flex justify-center">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    href="#" 
+                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                      e.preventDefault();
+                      if (currentPage > 0) handlePageChange(currentPage - 1);
+                    }}
+                    className={currentPage === 0 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+                
+                {/* 페이지 번호 표시 - 최대 5개 페이지만 표시 */}
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  // 현재 페이지를 중심으로 페이지 번호 계산
+                  const pageNum = Math.max(0, Math.min(
+                    currentPage - 2 + i, 
+                    totalPages - 1
+                  ));
+                  
+                  return (
+                    <PaginationItem key={pageNum}>
+                      <PaginationLink 
+                        href="#" 
+                        onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                          e.preventDefault();
+                          handlePageChange(pageNum);
+                        }}
+                        isActive={currentPage === pageNum}
+                      >
+                        {pageNum + 1}
+                      </PaginationLink>
+                    </PaginationItem>
+                  );
+                })}
+                
+                <PaginationItem>
+                  <PaginationNext 
+                    href="#" 
+                    onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+                      e.preventDefault();
+                      if (currentPage < totalPages - 1) handlePageChange(currentPage + 1);
+                    }}
+                    className={currentPage >= totalPages - 1 ? 'pointer-events-none opacity-50' : ''}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+          
+          {/* 페이지 정보 표시 */}
+          <div className="mt-2 text-center text-sm text-gray-500">
+            전체 {totalElements}개 항목 중 {currentPage * pageSize + 1}-
+            {Math.min((currentPage + 1) * pageSize, totalElements)}개 표시
+          </div>
+        </>
       )}
     </DashboardShell>
   );

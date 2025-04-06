@@ -6,6 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CustomButton } from '@/components/ui/custom-button';
 import { Download, FileText, Plus } from 'lucide-react';
 import React, { useState } from 'react';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 // 프레임워크 타입 정의
 type Framework = {
@@ -29,23 +34,23 @@ export default function ReportPage() {
   const [selectedFramework, setSelectedFramework] = useState<Framework | null>(frameworks[0]);
   const [downloadStatus, setDownloadStatus] = useState<string | null>(null);
 
-  const handleDownload = (framework: Framework) => {
+  const handleDownload = (framework: Framework, format: 'pdf' | 'docx') => {
     // 실제 환경에서는 프레임워크 문서 다운로드 로직 구현
-    console.log(`Downloading ${framework.name} document from ${framework.documentUrl}`);
-    setDownloadStatus(`${framework.name} 문서를 다운로드 중입니다...`);
+    console.log(`Downloading ${framework.name} document in ${format.toUpperCase()} format`);
+    setDownloadStatus(`${framework.name} 문서를 ${format.toUpperCase()} 형식으로 다운로드 중입니다...`);
 
-    // 실제 다운로드
-    window.open(framework.documentUrl, '_blank');
+    // 실제 다운로드 - 형식에 따라 다른 URL 처리
+    let downloadUrl = framework.documentUrl;
+    if (format === 'docx') {
+      // docx 파일 URL로 변경 (예시)
+      downloadUrl = downloadUrl.replace('.pdf', '.docx');
+    }
+    window.open(downloadUrl, '_blank');
 
     // 다운로드 상태 표시 후 3초 후 제거
     setTimeout(() => {
       setDownloadStatus(null);
     }, 3000);
-  };
-
-  const createReport = () => {
-    // 보고서 생성 기능 구현 (향후 추가)
-    console.log('보고서 생성');
   };
 
   return (
@@ -56,13 +61,6 @@ export default function ReportPage() {
           {downloadStatus && (
             <span className="text-xs md:text-sm text-blue-600">{downloadStatus}</span>
           )}
-          <CustomButton
-            variant="outline"
-            className="bg-white text-xs md:text-sm px-2 md:px-4 h-8 md:h-9"
-            onClick={createReport}
-          >
-            <Plus className="mr-2 h-4 w-4" />새 보고서
-          </CustomButton>
         </div>
       }
     >
@@ -84,18 +82,47 @@ export default function ReportPage() {
               <CardDescription>{framework.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(framework);
-                }}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                문서 다운로드
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    문서 다운로드
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2">
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(framework, 'pdf');
+                      }}
+                    >
+                      <FileText className="mr-2 h-4 w-4" /> PDF 형식
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownload(framework, 'docx');
+                      }}
+                    >
+                      <FileText className="mr-2 h-4 w-4" /> DOCX 형식
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </CardContent>
           </Card>
         ))}
@@ -118,15 +145,36 @@ export default function ReportPage() {
               <Button onClick={() => {
                 window.location.href = `/dashboard/${selectedFramework.id}`;
               }}>
-                프레임워크 관리
+                데이터 관리
               </Button>
-              <Button variant="outline" onClick={() => handleDownload(selectedFramework)}>
-                <Download className="mr-2 h-4 w-4" />
-                문서 다운로드
-              </Button>
-              <Button variant="secondary" onClick={createReport}>
-                <Plus className="mr-2 h-4 w-4" />새 보고서 작성
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline">
+                    <Download className="mr-2 h-4 w-4" />
+                    문서 다운로드
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2">
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => handleDownload(selectedFramework, 'pdf')}
+                    >
+                      <FileText className="mr-2 h-4 w-4" /> PDF 형식
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="justify-start"
+                      onClick={() => handleDownload(selectedFramework, 'docx')}
+                    >
+                      <FileText className="mr-2 h-4 w-4" /> DOCX 형식
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           </CardContent>
         </Card>

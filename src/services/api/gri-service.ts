@@ -22,6 +22,8 @@ interface BackendGRIDataItem {
   createdAt?: string;
   updatedAt?: string;
   valid?: boolean;
+  timeSeriesData?: TimeSeriesDataPoint[];
+  auditLog?: boolean;
 }
 
 /**
@@ -116,36 +118,15 @@ function transformFrontendDataToBackend(frontendData: CompanyGRIData): BackendGR
     
     // 시계열 데이터인 경우
     if (griValue.dataType === 'timeSeries' && griValue.timeSeriesData && griValue.timeSeriesData.length > 0) {
-      // 방법 1: 시계열 데이터를 JSON 문자열로 저장
       const backendItem: BackendGRIDataItem = {
         standardCode,
         disclosureCode,
         companyId,
-        disclosureValue: JSON.stringify(griValue.timeSeriesData),
-        numericValue: null
+        timeSeriesData: griValue.timeSeriesData,
+        numericValue: griValue.timeSeriesData[griValue.timeSeriesData.length - 1].value as number,
+        disclosureValue: griValue.timeSeriesData[griValue.timeSeriesData.length - 1].value.toString()
       };
       backendItems.push(backendItem);
-
-      // 방법 2: 각 시계열 데이터 포인트를 개별 항목으로 저장
-      // 이 방법은 백엔드가 시계열 데이터를 직접 지원하지 않을 때 사용
-      /*
-      griValue.timeSeriesData.forEach(point => {
-        const reportingPeriodStart = new Date(point.year, 0, 1).toISOString();
-        const reportingPeriodEnd = new Date(point.year, 11, 31).toISOString();
-        
-        const backendItem: BackendGRIDataItem = {
-          standardCode,
-          disclosureCode,
-          companyId,
-          disclosureValue: point.value.toString(),
-          numericValue: typeof point.value === 'number' ? point.value : null,
-          unit: point.unit,
-          reportingPeriodStart,
-          reportingPeriodEnd
-        };
-        backendItems.push(backendItem);
-      });
-      */
     } 
     // 텍스트 데이터인 경우
     else if (griValue.dataType === 'text' && griValue.textValue !== null) {
@@ -179,8 +160,8 @@ function transformFrontendDataToBackend(frontendData: CompanyGRIData): BackendGR
 export async function getCompanyGriData(companyId: string): Promise<CompanyGRIData> {
   console.log(`Fetching GRI data for company: ${companyId}`);
   try {
-    // 실제 API 호출 구현
-    const response = await axiosInstance.get(`/api/gri/company/${companyId}`);
+    // 실제 API 호출 구현 - 수정된 엔드포인트 사용
+    const response = await axiosInstance.get(`/api/company/${companyId}/gri`);
     
     if (response.status !== 200) {
       throw new Error(`GRI 데이터 조회 실패: ${response.status}`);
@@ -190,6 +171,15 @@ export async function getCompanyGriData(companyId: string): Promise<CompanyGRIDa
     return transformBackendDataToFrontend(response.data, companyId);
   } catch (error) {
     console.error('GRI 데이터 조회 중 오류:', error);
+    
+    // 더 상세한 오류 메시지 제공
+    if (error.response) {
+      // 서버 응답이 있는 오류
+      console.error(`서버 오류 (${error.response.status}): ${error.response.data.message || '알 수 없는 오류'}`);
+    } else if (error.request) {
+      // 서버 응답이 없는 오류
+      console.error('서버 응답 없음: 네트워크 오류 가능성');
+    }
     
     // 오류가 발생하면 빈 데이터 구조 반환
     const initialData: Record<string, CompanyGRICategoryValue> = {};
@@ -218,8 +208,8 @@ export async function saveCompanyGriData(data: CompanyGRIData): Promise<boolean>
     // 프론트엔드 데이터를 백엔드 형식으로 변환
     const backendData = transformFrontendDataToBackend(data);
     
-    // 실제 API 호출 구현
-    const response = await axiosInstance.post(`/api/gri/company/${data.companyId}/batch`, backendData);
+    // 실제 API 호출 구현 - 수정된 엔드포인트와 메서드 사용
+    const response = await axiosInstance.put(`/api/company/${data.companyId}/gri`, backendData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 데이터 저장 실패: ${response.status}`);
@@ -256,8 +246,8 @@ export async function saveSingleGriCategory(
       return false;
     }
     
-    // 단일 항목 또는 배치 요청 결정
-    const response = await axiosInstance.post(`/api/gri/company/${companyId}/batch`, backendData);
+    // 수정된 엔드포인트 사용
+    const response = await axiosInstance.put(`/api/company/${companyId}/gri`, backendData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
@@ -266,6 +256,57 @@ export async function saveSingleGriCategory(
     return true;
   } catch (error) {
     console.error(`GRI 카테고리(${categoryId}) 데이터 저장 중 오류:`, error);
+    throw error;
+  }
+}
+
+// 감사 로그 조회 함수 추가
+export async function getAuditLogs(entityType: string, entityId: string): Promise<any[]> {
+  try {
+    const response = await axiosInstance.get(`/api/audit-logs`, {
+      params: {
+        entityType,
+        entityId
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('감사 로그 조회 오류:', error);
+    return [];
+  }
+}
+
+// 페이지네이션 인터페이스 정의
+export interface PageRequest {
+  page: number;
+  size: number;
+  sort?: string;
+}
+
+// 페이지 응답 인터페이스
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+}
+
+// 페이지 요청 함수
+export async function getGriDataPaginated(pageRequest: PageRequest): Promise<PageResponse<BackendGRIDataItem>> {
+  try {
+    const response = await axiosInstance.get('/api/gri/paged', {
+      params: {
+        page: pageRequest.page,
+        size: pageRequest.size,
+        sort: pageRequest.sort
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('페이지네이션 데이터 조회 오류:', error);
     throw error;
   }
 }
