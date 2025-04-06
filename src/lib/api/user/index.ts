@@ -116,7 +116,7 @@ export const updateCompany = async (userData: companyUpdateRequest): Promise<Use
     );
 
     console.log('[API User] 회사 정보 업데이트 성공:', response.status);
-    return response.data;
+    return response.data as User;
   } catch (error) {
     console.error('[API User] 회사 정보 업데이트 오류:', error);
     throw error;

@@ -12,7 +12,7 @@ export default function AccountForm() {
   // 현재 로그인한 사용자의 인증 정보 (예: 토큰)
   const [auth] = useAtom(authAtom);
   // 현재 로그인한 사용자의 정보. user는 사용자 객체, setUser는 사용자 정보 업데이트 함수
-  const [user, setUser] = useAtom(userAtom);
+  const [user, setUser] = useState<User | null>(null);
   // 로그인 관련 로직을 실행하는 함수. 호출 시 내부적으로 토큰 및 사용자 정보를 갱신
   const [, login] = useAtom(loginAtom);
 
@@ -40,6 +40,20 @@ export default function AccountForm() {
       });
     }
   }, [user]); // user 값이 변경될 때마다 실행
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const userData = await api.user.getCurrentUser();
+        console.log('사용자 정보:', userData);
+        setUser(userData); // 사용자 정보를 상태에 저장
+      } catch (err) {
+        console.error('사용자 정보 조회 실패:', err);
+      }
+    };
+
+    fetchUserInfo();
+  }, [])
 
   // 입력 필드(input)의 값이 변경될 때마다 호출되는 함수
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
