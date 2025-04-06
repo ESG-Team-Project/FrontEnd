@@ -17,12 +17,20 @@ export default function NaviBar() {
   const isMainPage = pathname === '/';
 
   const handleLogout = () => {
-    // logoutAtom 액션을 호출하면 내부적으로 상태 초기화 및 localStorage 정리가 이루어질 것으로 기대
+    // 로컬 스토리지 정리
+    if (typeof window !== 'undefined') {
+      console.log('[NaviBar] 로그아웃: 로컬 스토리지 정리');
+      localStorage.removeItem('auth');
+      localStorage.removeItem('auth_token');
+    }
+    
+    // logoutAtom 액션 호출
+    console.log('[NaviBar] 로그아웃: Jotai 상태 초기화');
     logout();
-    // 직접 localStorage를 건드리는 로직은 logoutAtom 구현에 따라 제거하거나 유지
-    // if (typeof window !== 'undefined') {
-    //   localStorage.removeItem('auth'); // authAtom이 사용하는 키
-    // }
+    
+    // 로그인 페이지로 리디렉션
+    console.log('[NaviBar] 로그아웃: 로그인 페이지로 리디렉션');
+    window.location.href = '/login';
   };
 
   return (

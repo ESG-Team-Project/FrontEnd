@@ -57,7 +57,19 @@ export const loginAtom = atom(null, (get, set, { user, token }: { user: User; to
 
 export const logoutAtom = atom(null, (get, set) => {
   console.log('[Auth Atom Action] Logout executed');
+  
+  // 로컬 스토리지 정리
+  if (typeof window !== 'undefined') {
+    console.log('[Auth Atom Action] 로컬 스토리지 정리');
+    localStorage.removeItem('auth');
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
+  }
+  
+  // 인증 상태 초기화
   set(authAtom, { isLoggedIn: false, user: null, token: null, isLoading: false });
+  
+  // 초기화 플래그 설정
   if (!get(authInitializedAtom)) {
     set(authInitializedAtom, true);
   }

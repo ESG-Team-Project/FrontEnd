@@ -148,18 +148,26 @@ export const signup = async (userData: SignUpRequest): Promise<SignUpResponse> =
  *
  * 로컬 스토리지와 상태 관리 라이브러리에서 인증 정보를 제거합니다.
  *
- * @param {Function} setAuth - 인증 상태를 업데이트하는 함수 (jotai의 setState)
+ * @param {Function} setAuth - 인증 상태를 업데이트하는 함수 (선택적)
  * @returns {Object} 성공 여부 객체
  */
-export const logout = (setAuth: (update: SetStateAction<string | null>) => void): object => {
+export const logout = (setAuth?: (update: SetStateAction<string | null>) => void): object => {
   try {
-    // 로컬 스토리지에서 토큰 제거 (브라우저 환경인 경우)
+    console.log('[API Auth] 로그아웃 실행');
+    
+    // 로컬 스토리지에서 모든 인증 관련 정보 제거
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
+      console.log('[API Auth] 로컬 스토리지에서 인증 정보 제거');
+      localStorage.removeItem('auth'); // authAtom이 사용하는 키
+      localStorage.removeItem('auth_token'); // 일부 API 호출에 사용되는 키
+      localStorage.removeItem('token'); // 이전 버전 호환성을 위한 키
     }
 
-    // jotai 상태 초기화 (null로 설정)
-    setAuth(null);
+    // jotai 상태 초기화 (선택적)
+    if (setAuth) {
+      console.log('[API Auth] Jotai 상태 초기화');
+      setAuth(null);
+    }
 
     return { success: true };
   } catch (error) {

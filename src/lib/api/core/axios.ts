@@ -127,52 +127,40 @@ axiosInstance.interceptors.request.use(
  * 401 오류는 보통 토큰이 만료되었거나 유효하지 않을 때 발생합니다.
  */
 axiosInstance.interceptors.response.use(
-  // 응답이 성공적인 경우 그대로 반환
-  (response) => response,
-
-  // 오류 응답 처리
-  (error: AxiosError) => {
-    // API 요청이 401 (Unauthorized) 오류일 경우 처리
-    if (error.response?.status === 401) {
-      console.error('[AXIOS] 401 인증 오류 발생. 토큰이 만료되었거나 유효하지 않습니다.', error);
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // 오류 응답에서 상태 코드 확인
+    const status = error.response?.status;
+    
+    console.error(`[AXIOS] 응답 오류: ${status}`, error.config?.url);
+    
+    // 401 Unauthorized 오류 (인증 만료) 또는 403 Forbidden 오류 (권한 부족)
+    if (status === 401 || status === 403) {
+      console.error(`[AXIOS] 인증 오류 (${status}): 자동 로그아웃 처리 및 리디렉션`);
       
-      // 로컬 스토리지에서 토큰 제거 (만료된 토큰 정리)
+      // 로컬 스토리지의 인증 정보 제거
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth');
-      }
-
-      // 로그인 페이지로 리다이렉션 (현재 경로 저장)
-      if (typeof window !== 'undefined') {
-        const currentPath = window.location.pathname;
-        const redirectPath = encodeURIComponent(currentPath);
-        window.location.href = `/login?redirectTo=${redirectPath}`;
-      }
-    }
-    
-    // 403 (Forbidden) 오류 처리
-    if (error.response?.status === 403) {
-      console.error('[AXIOS] 403 권한 오류 발생. 접근 권한이 없습니다.', error);
-    }
-    
-    // 500 (Internal Server Error) 오류 처리
-    if (error.response?.status === 500) {
-      console.error('[AXIOS] 500 서버 오류 발생.', error);
-      
-      // 응답에 상세 오류 정보가 있으면 로그에 기록
-      if (error.response.data) {
-        try {
-          console.error('[AXIOS] 서버 오류 상세 정보:', 
-            typeof error.response.data === 'string' 
-              ? error.response.data 
-              : JSON.stringify(error.response.data)
-          );
-        } catch (e) {
-          console.error('[AXIOS] 오류 정보 파싱 실패');
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
+        
+        // 현재 페이지가 로그인 페이지가 아닌 경우에만 리디렉션
+        if (!window.location.pathname.includes('/login')) {
+          console.log('[AXIOS] 로그인 페이지로 리디렉션');
+          // 현재 URL을 리디렉션 파라미터로 전달 (선택적)
+          const returnUrl = encodeURIComponent(window.location.pathname);
+          window.location.href = `/login?redirectTo=${returnUrl}`;
         }
       }
     }
-
-    // 모든 오류는 호출한 컴포넌트에서 처리할 수 있도록 전파
+    
+    // 500 Internal Server Error
+    else if (status === 500) {
+      console.error('[AXIOS] 서버 오류:', error.response?.data);
+    }
+    
     return Promise.reject(error);
   }
 );
