@@ -55,7 +55,7 @@ interface GriEditModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   editingCategory: EditingCategory | null;
-  onSave: (categoryId: string, updatedValue: CompanyGRICategoryValue) => Promise<void>;
+  onSave: (categoryId: string, updatedValue: CompanyGRICategoryValue) => Promise<boolean>;
 }
 
 export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: GriEditModalProps) {
@@ -288,17 +288,26 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
       }
 
       // 상위 컴포넌트의 저장 함수 호출
-      await onSave(categoryId, updatedValue);
+      const success = await onSave(categoryId, updatedValue);
 
-      setSaveMessage({
-        type: 'success',
-        text: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
-      });
+      if (success) {
+        setSaveMessage({
+          type: 'success',
+          text: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
+        });
 
-      // 성공 메시지는 자동으로 사라지게 설정
-      setTimeout(() => {
-        setSaveMessage(null);
-      }, 3000);
+        // 성공 메시지는 자동으로 사라지게 설정
+        setTimeout(() => {
+          setSaveMessage(null);
+          // 저장 성공 시 모달 닫기
+          onOpenChange(false);
+        }, 1500);
+      } else {
+        setSaveMessage({
+          type: 'error',
+          text: '데이터 저장 중 오류가 발생했습니다. 다시 시도해주세요.',
+        });
+      }
     } catch (error) {
       console.error('데이터 저장 중 오류 발생:', error);
       setSaveMessage({

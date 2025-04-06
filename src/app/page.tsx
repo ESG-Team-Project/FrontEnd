@@ -22,7 +22,6 @@ import {
 } from 'lucide-react';
 import { useAtom } from 'jotai';
 import { isLoggedInAtom } from '@/lib/atoms';
-import GriDataPreview from './gri-data-preview';
 
 export default function Page() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);
@@ -72,9 +71,6 @@ export default function Page() {
             </Button>
           </Link>
         </div>
-
-        {/* GRI 데이터 미리보기 컴포넌트 */}
-        <GriDataPreview />
 
         {/* 주요 기능 카드 */}
         <div className="grid w-full max-w-6xl grid-cols-1 gap-4 px-4 mx-auto md:grid-cols-3 md:gap-8">

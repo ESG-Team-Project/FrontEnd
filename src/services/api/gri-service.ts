@@ -47,3 +47,27 @@ export async function saveCompanyGriData(data: CompanyGRIData): Promise<boolean>
 
   return true;
 }
+
+// 개별 GRI 카테고리 데이터만 저장하는 함수
+export async function saveSingleGriCategory(
+  companyId: string,
+  categoryId: string,
+  categoryValue: CompanyGRICategoryValue
+): Promise<boolean> {
+  console.log(`Saving single GRI category ${categoryId} for company: ${companyId}`);
+
+  // 실제로는 API 호출로 구현:
+  // const response = await fetch(`/api/company/${companyId}/gri/${categoryId}`, {
+  //   method: 'PUT',
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //   },
+  //   body: JSON.stringify(categoryValue),
+  // });
+  // return response.ok;
+
+  // 저장 성공 시뮬레이션 (지연 효과)
+  await new Promise(resolve => setTimeout(resolve, 500));
+
+  return true;
+}

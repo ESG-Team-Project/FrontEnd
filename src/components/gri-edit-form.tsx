@@ -170,25 +170,41 @@ export default function GriEditForm({
 
   // 모달에서 저장 이벤트 처리
   const handleSave = async (categoryId: string, updatedValue: CompanyGRICategoryValue) => {
-    // 폼 데이터 업데이트
-    const updatedFormData = {
-      ...formData,
-      [categoryId]: updatedValue,
-    };
+    try {
+      setIsSaving(true);
 
-    setFormData(updatedFormData);
+      // 폼 데이터 업데이트
+      const updatedFormData = {
+        ...formData,
+        [categoryId]: updatedValue,
+      };
 
-    // 서버 API 호출하여 데이터 저장
-    const updatedData: CompanyGRIData = {
-      ...initialData,
-      griValues: updatedFormData,
-    };
+      // 서버 API 호출하여 데이터 저장
+      const { saveSingleGriCategory } = await import('@/services/api/gri-service');
+      const success = await saveSingleGriCategory(initialData.companyId, categoryId, updatedValue);
 
-    // API 호출 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 500));
+      if (success) {
+        // 성공 시 로컬 상태 업데이트
+        setFormData(updatedFormData);
 
-    if (onChange) {
-      onChange(updatedData);
+        // 부모 컴포넌트에 알림
+        if (onChange) {
+          const updatedData: CompanyGRIData = {
+            ...initialData,
+            griValues: updatedFormData,
+          };
+          onChange(updatedData);
+        }
+
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('데이터 저장 중 오류 발생:', error);
+      return false;
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -313,10 +329,6 @@ export default function GriEditForm({
         editingCategory={editingCategory}
         onSave={handleSave}
       />
-
-      <div className="mt-6 flex justify-end">
-        <CustomButton type="submit">전체 변경사항 저장</CustomButton>
-      </div>
     </form>
   );
 }

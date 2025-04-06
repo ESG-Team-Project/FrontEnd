@@ -50,7 +50,8 @@ export const getCurrentUser = async (): Promise<User> => {
       email: response.data.email,
       role: response.data.role || 'user', // role이 없으면 기본값 'user' 사용
       phoneNumber: response.data.phoneNumber, // phoneNumber -> phone으로 매핑
-      companyName: response.data.companyName, // companyName -> company로 매핑
+      company: response.data.companyName, // companyName -> company로 매핑
+      companyName: response.data.companyName, // companyName -> companyName으로 매핑
       ceoName: response.data.ceoName, // ceoName -> ceo로 매핑
       companyCode: response.data.companyCode, // companyCode -> companyCode로 매핑 
       companyPhoneNumber: response.data.companyPhoneNumber, // companyPhoneNumber -> companyPhoneNumber로 매핑
