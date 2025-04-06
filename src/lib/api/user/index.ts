@@ -1,11 +1,19 @@
 import axiosInstance from '../core/axios';
 import type { AxiosResponse } from 'axios';
-import type { User } from '@/lib/atoms';
+import type { User } from '@/lib/atoms/auth';
 import type { 
   UserUpdateRequest, 
   PasswordChangeResponse,
   ProfileImageResponse 
 } from '@/types/user';
+
+
+interface companyUpdateRequest {
+  companyName?: string;      // 회사 이름 (선택적)
+  ceoName?: string;          // CEO 이름 (선택적)
+  companyCode?: string;      // 회사 코드 (선택적)
+  companyPhoneNumber?: string; // 회사 전화번호 (선택적)
+}
 
 /**
  * 현재 로그인한 사용자 정보를 가져오는 함수
@@ -41,8 +49,11 @@ export const getCurrentUser = async (): Promise<User> => {
       name: response.data.name,
       email: response.data.email,
       role: response.data.role || 'user', // role이 없으면 기본값 'user' 사용
-      company: response.data.companyName, // companyName -> company로 매핑
-      phone: response.data.phoneNumber // phoneNumber -> phone으로 매핑
+      phoneNumber: response.data.phoneNumber, // phoneNumber -> phone으로 매핑
+      companyName: response.data.companyName, // companyName -> company로 매핑
+      ceoName: response.data.ceoName, // ceoName -> ceo로 매핑
+      companyCode: response.data.companyCode, // companyCode -> companyCode로 매핑 
+      companyPhoneNumber: response.data.companyPhoneNumber, // companyPhoneNumber -> companyPhoneNumber로 매핑
     };
     
     return user;
@@ -85,7 +96,7 @@ export const updateUser = async (userData: UserUpdateRequest): Promise<User> => 
       phone: undefined // phone 필드 제거
     };
     
-    const response: AxiosResponse<User> = await axiosInstance.put<User>('/user/update', mappedData);
+    const response: AxiosResponse<User> = await axiosInstance.put<User>('/users/update', mappedData);
     
     console.log('[API User] 사용자 정보 업데이트 성공:', response.status);
     return response.data;
@@ -94,6 +105,21 @@ export const updateUser = async (userData: UserUpdateRequest): Promise<User> => 
     throw error;
   }
 };
+
+// 회사 정보 업데이트 함수
+export const updateCompany = async (userData: companyUpdateRequest ): Promise<User> => {
+  try {
+    console.log('[API User] 회사 정보 업데이트 시도');
+    
+    const response: AxiosResponse<User> = await axiosInstance.put<User>('/users/update-company', userData);
+    
+    console.log('[API User] 회사 정보 업데이트 성공:', response.status);
+    return response.data;
+  } catch (error) {
+    console.error('[API User] 회사 정보 업데이트 오류:', error);
+    throw error;
+  }
+}
 
 /**
  * 사용자 프로필 이미지 업데이트 함수
