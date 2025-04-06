@@ -18,7 +18,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
-import { Refresh, User, Calendar, Clock, File, Database, Settings as SettingsIcon, Grid3x3, Grid4x4 } from 'lucide-react';
+import { Refresh, User, Calendar, Clock, File, Database, Settings as SettingsIcon, Grid, LayoutGrid } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -135,7 +135,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Grid4x4 className="h-5 w-5 text-primary" />
+              <LayoutGrid className="h-5 w-5 text-primary" />
               대시보드 레이아웃
             </CardTitle>
             <CardDescription>
@@ -152,14 +152,14 @@ export default function SettingsPage() {
                 <div className="flex items-center space-x-3 rounded-md border p-3 shadow-sm hover:bg-muted">
                   <RadioGroupItem value="3" id="r1" />
                   <div className="flex items-center gap-2">
-                    <Grid3x3 className="h-5 w-5 text-muted-foreground" />
+                    <Grid className="h-5 w-5 text-muted-foreground" />
                     <Label htmlFor="r1" className="font-medium">3열 레이아웃</Label>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3 rounded-md border p-3 shadow-sm hover:bg-muted">
                   <RadioGroupItem value="4" id="r2" />
                   <div className="flex items-center gap-2">
-                    <Grid4x4 className="h-5 w-5 text-muted-foreground" />
+                    <LayoutGrid className="h-5 w-5 text-muted-foreground" />
                     <Label htmlFor="r2" className="font-medium">4열 레이아웃</Label>
                   </div>
                 </div>
