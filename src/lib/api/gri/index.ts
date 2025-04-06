@@ -228,10 +228,22 @@ export async function saveCompanyGriDataFormatted(data: CompanyGRIData): Promise
   console.log('Saving GRI data for company');
   try {
     // 프론트엔드 데이터를 백엔드 형식으로 변환
-    const backendData = transformFrontendDataToBackend(data);
+    const backendDataArray = transformFrontendDataToBackend(data);
     
-    // API 호출
-    const response = await axiosInstance.put('/company/gri', backendData);
+    // 백엔드가 객체 형식을 기대하므로 배열에서 객체로 변환
+    const objectData: Record<string, BackendGRIDataItem> = {};
+    backendDataArray.forEach(item => {
+      const key = `${item.standardCode}-${item.disclosureCode}`;
+      objectData[key] = item;
+    });
+    
+    console.log('데이터 형식 변환:', {
+      before: `배열 (${backendDataArray.length}개 항목)`,
+      after: `객체 (${Object.keys(objectData).length}개 키)`
+    });
+    
+    // API 호출 - 객체 형식으로 전송
+    const response = await axiosInstance.put('/company/gri', objectData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 데이터 저장 실패: ${response.status}`);
@@ -262,19 +274,26 @@ export async function saveSingleGriCategory(
     };
     
     // 변환 함수 사용
-    const backendData = transformFrontendDataToBackend(tempData);
+    const backendDataArray = transformFrontendDataToBackend(tempData);
     
-    if (backendData.length === 0) {
+    if (backendDataArray.length === 0) {
       console.warn(`변환할 데이터가 없습니다: ${categoryId}`);
       return false;
     }
     
-    // 요청 데이터 로깅
-    console.log('백엔드로 전송할 GRI 데이터:', JSON.stringify(backendData, null, 2));
+    // 배열에서 객체로 변환
+    const objectData: Record<string, BackendGRIDataItem> = {};
+    backendDataArray.forEach(item => {
+      const key = `${item.standardCode}-${item.disclosureCode}`;
+      objectData[key] = item;
+    });
     
-    // API 호출
+    // 요청 데이터 로깅
+    console.log('백엔드로 전송할 GRI 데이터:', JSON.stringify(objectData, null, 2));
+    
+    // API 호출 - 객체 형식으로 전송
     try {
-      const response = await axiosInstance.put('/company/gri', backendData);
+      const response = await axiosInstance.put('/company/gri', objectData);
       
       if (response.status !== 200 && response.status !== 201) {
         throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
