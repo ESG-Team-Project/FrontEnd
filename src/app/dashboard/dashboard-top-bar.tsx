@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { CustomButton } from '@/components/ui/custom-button';
 import { useAtom } from 'jotai';
 import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';

@@ -1,12 +1,14 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
-  LineChart as LineChartIcon,
-  AreaChart as AreaChartIcon,
+  BarChart,
+  PieChart,
+  LineChart,
+  AreaChart,
+  Activity,
+  FileText,
 } from 'lucide-react';
-import type { ChartData, DrawChartData } from '@/types/chart';
+import type { ChartType, ChartData } from '@/types/chart';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -39,168 +41,140 @@ ChartJS.register(
 );
 
 interface TotalChartsProps {
-  chartData: DrawChartData;
+  chartData: ChartData;
 }
 
-// 차트 아이콘 반환 함수 (유지)
-const getChartIcon = (type: string) => {
-  switch (type) {
-    case 'bar':
-      return <BarChartIcon className="w-5 h-5 mr-2 text-blue-500" />;
-    case 'pie':
-      return <PieChartIcon className="w-5 h-5 mr-2 text-green-500" />;
-    case 'line':
-      return <LineChartIcon className="w-5 h-5 mr-2 text-yellow-500" />;
-    case 'area':
-      return <AreaChartIcon className="w-5 h-5 mr-2 text-purple-500" />;
-    case 'donut': // 도넛 아이콘 추가
-      return <PieChartIcon className="w-5 h-5 mr-2 text-indigo-500" />; // 파이 아이콘 재활용 또는 다른 아이콘
-    default:
-      return <BarChartIcon className="w-5 h-5 mr-2" />;
-  }
-};
-
-// 차트 콘텐츠를 렌더링하는 함수 (page.tsx 로직 가져오기)
-const renderChartContent = (chart: DrawChartData) => {
-  const baseOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: !!chart.datasets && chart.datasets.length > 1, // 데이터셋이 2개 이상일 때만 범례 표시
-        position: 'top' as const,
-      },
-      title: {
-        display: false,
-      },
-      tooltip: {
-        enabled: true,
-      },
-    },
-    // scales 기본 설정 추가 (필요 시)
-    scales: {
-      x: { display: chart.type !== 'pie' && chart.type !== 'donut' }, // 파이/도넛 외 표시
-      y: { display: chart.type !== 'pie' && chart.type !== 'donut' }, // 파이/도넛 외 표시
-    },
-  };
-
-  const chartDataProp = {
-    labels: chart.labels || [],
-    datasets: chart.datasets || [],
-  };
-
-  const chartContainerStyle = { position: 'relative', width: '100%', height: '200px' };
-
-  try {
-    switch (chart.type) {
-      case 'bar': {
-        const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'bar'>;
-        const data = chartDataProp as ChartJSData<'bar'>;
-        return (
-          <div style={chartContainerStyle}>
-            <Bar options={options} data={data} />
-          </div>
-        );
-      }
-      case 'pie': {
-        const options = {
-          ...baseOptions,
-          maintainAspectRatio: false,
-          ...(chart.options || {}),
-        } as ChartOptions<'pie'>;
-        const data = chartDataProp as ChartJSData<'pie'>;
-        return (
-          <div style={chartContainerStyle}>
-            <Pie options={options} data={data} />
-          </div>
-        );
-      }
-      case 'line': {
-        const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'line'>;
-        const data = chartDataProp as ChartJSData<'line'>;
-        return (
-          <div style={chartContainerStyle}>
-            <Line options={options} data={data} />
-          </div>
-        );
-      }
-      case 'area': {
-        // Area는 Line으로 렌더링
-        const options = { ...baseOptions, ...(chart.options || {}) } as ChartOptions<'line'>;
-        // Area 차트 데이터셋에는 fill: true가 필요
-        const data = {
-          ...chartDataProp,
-          datasets: chartDataProp.datasets.map(ds => ({ ...ds, fill: true })), // 명시적으로 fill: true 추가
-        } as ChartJSData<'line'>;
-        return (
-          <div style={chartContainerStyle}>
-            <Line options={options} data={data} />
-          </div>
-        );
-      }
-      case 'donut': {
-        // Donut은 Pie로 렌더링
-        const options = {
-          ...baseOptions,
-          maintainAspectRatio: false,
-          cutout: '50%',
-          ...(chart.options || {}),
-        } as ChartOptions<'pie'>;
-        const data = chartDataProp as ChartJSData<'pie'>;
-        return (
-          <div style={chartContainerStyle}>
-            <Pie options={options} data={data} />
-          </div>
-        );
-      }
-      default: {
-        // 컴파일 타임 체크는 어려우므로 런타임 메시지 표시
-        return (
-          <p className="flex items-center justify-center h-full text-sm text-gray-600">
-            지원되지 않는 차트 유형입니다: {chart.type}
-          </p>
-        );
-      }
+export default function TotalCharts({ chartData }: TotalChartsProps) {
+  // 차트 아이콘 선택
+  const getChartIcon = (chartType: ChartType) => {
+    switch (chartType) {
+      case 'line':
+        return <LineChart className="w-5 h-5 mr-2" />;
+      case 'bar':
+        return <BarChart className="w-5 h-5 mr-2" />;
+      case 'area':
+        return <AreaChart className="w-5 h-5 mr-2" />;
+      case 'pie':
+      case 'donut':
+        return <PieChart className="w-5 h-5 mr-2" />;
+      default:
+        return <Activity className="w-5 h-5 mr-2" />;
     }
-  } catch (error) {
-    console.error('Error rendering chart:', chart.id, chart.type, error);
-    return (
-      <p className="flex items-center justify-center h-full text-sm text-red-600">
-        차트를 렌더링하는 중 오류가 발생했습니다.
-      </p>
-    );
-  }
-};
+  };
 
-const TotalCharts: React.FC<TotalChartsProps> = ({ chartData }) => {
-  // 데이터 유효성 검사 추가
-  const isValidData = chartData && chartData.labels && chartData.datasets;
+  // 차트 렌더링 함수
+  const renderChartContent = () => {
+    // 기본 옵션 설정
+    const baseOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top' as const,
+        },
+        title: {
+          display: false,
+        },
+        tooltip: {
+          enabled: true,
+        },
+      },
+    };
+
+    const chartDataProp = {
+      labels: chartData.labels || [],
+      datasets: chartData.datasets || [],
+    };
+
+    const chartContainerStyle = { height: '250px', width: '100%' };
+
+    try {
+      switch (chartData.chartType) {
+        case 'bar': {
+          const options = { ...baseOptions, ...(chartData.options || {}) } as ChartOptions<'bar'>;
+          const data = chartDataProp as ChartJSData<'bar'>;
+          return (
+            <div style={chartContainerStyle}>
+              <Bar options={options} data={data} />
+            </div>
+          );
+        }
+        case 'pie': {
+          const options = {
+            ...baseOptions,
+            maintainAspectRatio: false,
+            ...(chartData.options || {}),
+          } as ChartOptions<'pie'>;
+          const data = chartDataProp as ChartJSData<'pie'>;
+          return (
+            <div style={chartContainerStyle}>
+              <Pie options={options} data={data} />
+            </div>
+          );
+        }
+        case 'line': {
+          const options = { ...baseOptions, ...(chartData.options || {}) } as ChartOptions<'line'>;
+          const data = chartDataProp as ChartJSData<'line'>;
+          return (
+            <div style={chartContainerStyle}>
+              <Line options={options} data={data} />
+            </div>
+          );
+        }
+        case 'area': {
+          // Area는 Line으로 렌더링
+          const options = { ...baseOptions, ...(chartData.options || {}) } as ChartOptions<'line'>;
+          // Area 차트 데이터셋에는 fill: true가 필요 (이미 설정되어 있어야 함)
+          const data = chartDataProp as ChartJSData<'line'>;
+          return (
+            <div style={chartContainerStyle}>
+              <Line options={options} data={data} />
+            </div>
+          );
+        }
+        case 'donut': {
+          // Donut은 Pie로 렌더링
+          const options = {
+            ...baseOptions,
+            maintainAspectRatio: false,
+            cutout: '50%',
+            ...(chartData.options || {}),
+          } as ChartOptions<'pie'>;
+          const data = chartDataProp as ChartJSData<'pie'>;
+          return (
+            <div style={chartContainerStyle}>
+              <Pie options={options} data={data} />
+            </div>
+          );
+        }
+        default: {
+          return (
+            <p className="flex items-center justify-center h-full text-sm text-gray-600">
+              지원되지 않는 차트 유형입니다
+            </p>
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Error rendering chart:', chartData.id, chartData.chartType, error);
+      return (
+        <p className="flex items-center justify-center h-full text-sm text-red-600">
+          차트를 렌더링하는 중 오류가 발생했습니다
+        </p>
+      );
+    }
+  };
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 shadow-sm hover:shadow-md">
-      <CardHeader className="p-3 pb-1 md:p-4">
-        <CardTitle className="flex items-center text-sm md:text-base lg:text-lg line-clamp-1">
-          {getChartIcon(chartData.type)}
-          <span className="truncate">{chartData.title}</span>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="flex items-center text-lg">
+          {getChartIcon(chartData.chartType)}
+          {chartData.title}
         </CardTitle>
-        {chartData.description && (
-          <CardDescription className="mt-1 text-xs truncate md:text-sm line-clamp-1">
-            {chartData.description}
-          </CardDescription>
-        )}
+        {chartData.description && <CardDescription>{chartData.description}</CardDescription>}
       </CardHeader>
-      <CardContent className="flex-grow p-2 md:p-4">
-        {/* 데이터가 유효할 때만 차트 렌더링 */}
-        {isValidData ? (
-          renderChartContent(chartData)
-        ) : (
-          <div className="w-full h-[200px] flex items-center justify-center bg-gray-50 rounded">
-            <p className="text-sm text-muted-foreground">차트 데이터가 없습니다.</p>
-          </div>
-        )}
-      </CardContent>
+      <CardContent>{renderChartContent()}</CardContent>
     </Card>
   );
-};
-
-export default TotalCharts;
+}
