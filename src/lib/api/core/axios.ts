@@ -91,8 +91,10 @@ axiosInstance.interceptors.request.use(
 
     // 토큰이 있으면 Authorization 헤더에 추가
     if (token) {
-      // Bearer 접두사가 없으면 추가
-      const formattedToken = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+      // Bearer 접두사와 공백이 있는지 확인
+      const formattedToken = token.startsWith('Bearer ') 
+        ? token 
+        : `Bearer ${token}`;  // 'Bearer ' 문자열과 공백 포함 필수
       config.headers.Authorization = formattedToken;
     }
 
@@ -121,14 +123,41 @@ axiosInstance.interceptors.response.use(
     // API 요청이 401 (Unauthorized) 오류일 경우 처리
     if (error.response?.status === 401) {
       console.error('[AXIOS] 401 인증 오류 발생. 토큰이 만료되었거나 유효하지 않습니다.', error);
+      
+      // 로컬 스토리지에서 토큰 제거 (만료된 토큰 정리)
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth');
+      }
 
-      // 주석 처리된 리다이렉션 로직 (필요시 활성화 가능)
-      // 현재는 ProtectedRoute 컴포넌트에서 처리하도록 설계됨
-      // if (typeof window !== 'undefined') {
-      //   const currentPath = window.location.pathname;
-      //   const redirectPath = encodeURIComponent(currentPath);
-      //   window.location.href = `/login?redirectTo=${redirectPath}`;
-      // }
+      // 로그인 페이지로 리다이렉션 (현재 경로 저장)
+      if (typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        const redirectPath = encodeURIComponent(currentPath);
+        window.location.href = `/login?redirectTo=${redirectPath}`;
+      }
+    }
+    
+    // 403 (Forbidden) 오류 처리
+    if (error.response?.status === 403) {
+      console.error('[AXIOS] 403 권한 오류 발생. 접근 권한이 없습니다.', error);
+    }
+    
+    // 500 (Internal Server Error) 오류 처리
+    if (error.response?.status === 500) {
+      console.error('[AXIOS] 500 서버 오류 발생.', error);
+      
+      // 응답에 상세 오류 정보가 있으면 로그에 기록
+      if (error.response.data) {
+        try {
+          console.error('[AXIOS] 서버 오류 상세 정보:', 
+            typeof error.response.data === 'string' 
+              ? error.response.data 
+              : JSON.stringify(error.response.data)
+          );
+        } catch (e) {
+          console.error('[AXIOS] 오류 정보 파싱 실패');
+        }
+      }
     }
 
     // 모든 오류는 호출한 컴포넌트에서 처리할 수 있도록 전파

@@ -31,18 +31,41 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
   try {
     console.log('[API Auth] 로그인 시도:', credentials.email);
 
-    // API 요청 - POST /users/login
+    // API 요청 - POST /api/auth/login (최신 백엔드 엔드포인트)
     const response: AxiosResponse<LoginResponse> = await axiosInstance.post(
-      '/users/login',
+      '/api/auth/login',
       credentials
     );
 
     console.log('[API Auth] 로그인 응답 받음:', response.status);
 
-    // 응답에 토큰이 없으면 오류 처리
-    if (!response.data?.token) {
+    // 응답 구조 검사
+    if (!response.data) {
+      console.error('[API Auth] 로그인 응답 데이터가 없음');
+      throw new Error('로그인 응답에 데이터가 없습니다.');
+    }
+
+    // 토큰 검사
+    if (!response.data.token) {
       console.error('[API Auth] 로그인 응답에 토큰이 없음');
       throw new Error('로그인 응답에 토큰이 없습니다.');
+    }
+
+    // 사용자 정보 검사
+    if (!response.data.user) {
+      console.warn('[API Auth] 로그인 응답에 사용자 정보가 없음, 기본값 생성');
+      // 사용자 정보가 없는 경우 기본 사용자 객체 생성
+      response.data.user = {
+        id: "0", // User 인터페이스는 id가 string 타입
+        name: '사용자',
+        email: credentials.email,
+        role: 'user', // role은 필수 필드
+        companyName: '회사명 없음',
+        phoneNumber: '',
+        ceoName: '',
+        companyCode: '',
+        companyPhoneNumber: ''
+      };
     }
 
     // 응답 데이터 반환
@@ -66,25 +89,19 @@ export const signup = async (userData: SignUpRequest): Promise<SignUpResponse> =
   try {
     console.log('[API Auth] 회원가입 시도:', userData.email);
 
-    // API 요청 - POST /users/signup
+    // API 요청 - POST /api/auth/signup (최신 백엔드 엔드포인트)
     const response: AxiosResponse<SignUpResponse> = await axiosInstance.post(
-      '/users/signup',
+      '/api/auth/signup',
       userData
     );
 
     console.log('[API Auth] 회원가입 응답:', response.status);
     
-    // 응답 형식 변환 (표준화)
-    const standardResponse: SignupResponse = {
-      user: {
-        id: String(response.data.id),  // 숫자를 문자열로 변환
-        name: response.data.name,
-        email: response.data.email,
-        role: 'user',                   // 기본 권한: 'user'
-        companyName: response.data.companyName
-      },
-      token: response.data.token || 'temporary-token' // 토큰이 없으면 임시 토큰 사용
-    };
+    // 응답 구조 검사
+    if (!response.data) {
+      console.error('[API Auth] 회원가입 응답 데이터가 없음');
+      throw new Error('회원가입 응답에 데이터가 없습니다.');
+    }
 
     return response.data;
   } catch (error) {
@@ -138,7 +155,7 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
     console.log(`[AUTH] 토큰 검증 - 토큰 확인: ${auth.token.substring(0, 10)}...`);
 
     // 토큰 검증 API 호출 (axios 인스턴스가 자동으로 토큰을 헤더에 추가)
-    const response = await axiosInstance.get('/auth/verify');
+    const response = await axiosInstance.get('/api/auth/verify');
 
     console.log(`[AUTH] 토큰 검증 결과: ${response.status === 200 ? '성공' : '실패'}`);
     return response.status === 200;
