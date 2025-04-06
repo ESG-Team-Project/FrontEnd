@@ -1,27 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
 import { CustomButton } from '@/components/ui/custom-button';
+import api from '@/lib/api';
+import type { User } from '@/lib/atoms';
+import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
+import clsx from 'clsx';
+import { useAtom } from 'jotai';
 import {
-  User as UserIcon,
+  BarChart3,
   Building,
+  Database,
+  FileText,
+  LayoutDashboard,
+  LineChart,
   Loader2,
   Menu,
-  LayoutDashboard,
-  BarChart3,
-  LineChart,
   PieChart,
-  FileText,
   Settings,
-  Database,
+  User as UserIcon,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import api from '@/lib/api';
-import { User } from '@/lib/atoms';
-import { useAtom } from 'jotai';
-import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
-import clsx from 'clsx';
+import type React from 'react';
+import { useEffect, useState } from 'react';
 
 // 네비게이션 아이템 정의
 interface NavItem {
@@ -86,7 +87,7 @@ export default function DashboardSidebar() {
   const isActive = (item: NavItem): boolean => {
     if (pathname === item.href) return true;
     if (item.children) {
-      return item.children.some(child => pathname === child.href);
+      return item.children.some((child) => pathname === child.href);
     }
     return false;
   };
@@ -112,7 +113,7 @@ export default function DashboardSidebar() {
 
         {!isLayoutLocked && item.children && (
           <ul className="pl-8 mt-1 space-y-1">
-            {item.children.map(child => (
+            {item.children.map((child) => (
               <li key={child.href}>
                 <Link
                   href={child.href}

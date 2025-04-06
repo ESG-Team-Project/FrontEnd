@@ -1,9 +1,9 @@
 'use client';
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import React, { type ReactNode, useEffect } from 'react';
+import { authInitializedAtom, isLoggedInAtom } from '@/lib/atoms';
 import { useAtom } from 'jotai';
-import { isLoggedInAtom, authInitializedAtom } from '@/lib/atoms';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import React, { type ReactNode, useEffect } from 'react';
 
 // --- Simple Error Boundary Component ---
 interface ErrorBoundaryState {

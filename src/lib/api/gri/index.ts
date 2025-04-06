@@ -1,5 +1,5 @@
-import { get, post, put, del } from '..';
 import type { AxiosResponse } from 'axios';
+import { del, get, post, put } from '..';
 
 /**
  * GRI 데이터 항목 인터페이스
@@ -27,11 +27,11 @@ export interface GriDataItem {
 
 /**
  * 모든 GRI 데이터 항목 가져오기
- * 
+ *
  * 이 함수는 서버에 저장된 모든 GRI 데이터 항목을 가져옵니다.
- * 
+ *
  * @returns {Promise<GriDataItem[]>} GRI 데이터 항목 배열
- * 
+ *
  * 사용 예시:
  * ```
  * const griItems = await getAllGriData();
@@ -50,12 +50,12 @@ export const getAllGriData = async (): Promise<GriDataItem[]> => {
 
 /**
  * 특정 회사의 GRI 데이터 항목 가져오기
- * 
+ *
  * 이 함수는 특정 회사 ID를 기반으로 GRI 데이터 항목을 가져옵니다.
- * 
+ *
  * @param {number} companyId - 회사 ID
  * @returns {Promise<GriDataItem[]>} 회사의 GRI 데이터 항목 배열
- * 
+ *
  * 사용 예시:
  * ```
  * const companyGriItems = await getCompanyGriData(123);
@@ -74,12 +74,12 @@ export const getCompanyGriData = async (companyId: number): Promise<GriDataItem[
 
 /**
  * GRI 데이터 항목 저장/업데이트
- * 
+ *
  * 이 함수는 GRI 데이터 항목을 저장하거나 업데이트합니다.
- * 
+ *
  * @param {GriDataItem | GriDataItem[]} data - 저장할 GRI 데이터 항목 또는 항목 배열
  * @returns {Promise<boolean>} 성공 여부
- * 
+ *
  * 사용 예시:
  * ```
  * const success = await saveGriData(griItem);
@@ -93,14 +93,14 @@ export const saveGriData = async (data: GriDataItem | GriDataItem[]): Promise<bo
       const response = await post('/api/gri/batch', data);
       return response.status === 200 || response.status === 201;
     }
-    
+
     // 단일 항목 저장
     if (data.id) {
       // id가 있으면 기존 항목 업데이트
       const response = await put(`/api/gri/${data.id}`, data);
       return response.status === 200;
     }
-    
+
     // id가 없으면 새 항목 생성
     const response = await post('/api/gri', data);
     return response.status === 201;
@@ -112,12 +112,12 @@ export const saveGriData = async (data: GriDataItem | GriDataItem[]): Promise<bo
 
 /**
  * GRI 데이터 항목 삭제
- * 
+ *
  * 이 함수는 특정 ID의 GRI 데이터 항목을 삭제합니다.
- * 
+ *
  * @param {number} id - 삭제할 GRI 항목 ID
  * @returns {Promise<boolean>} 성공 여부
- * 
+ *
  * 사용 예시:
  * ```
  * const success = await deleteGriData(456);
@@ -139,7 +139,7 @@ const griService = {
   getAllGriData,
   getCompanyGriData,
   saveGriData,
-  deleteGriData
+  deleteGriData,
 };
 
-export default griService; 
+export default griService;

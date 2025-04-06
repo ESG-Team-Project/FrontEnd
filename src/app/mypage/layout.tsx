@@ -1,8 +1,8 @@
 'use client';
 import { AppSidebar } from '@/components/mypageSidebar';
-import { Building, User } from 'lucide-react';
-import { SidebarProvider } from '@/components/ui/sidebar';
 import ProtectedRoute from '@/components/protected-route';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Building, User } from 'lucide-react';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const menuItems = [

@@ -2,11 +2,11 @@ import { Calendar, Home, Inbox, Search, Settings } from 'lucide-react';
 import Link from 'next/link';
 
 import {
-  SidebarInset,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,

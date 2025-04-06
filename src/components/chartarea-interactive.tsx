@@ -1,13 +1,13 @@
-import { Bar } from 'react-chartjs-2';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
   BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  Legend,
+  LinearScale,
   Title,
   Tooltip,
-  Legend,
 } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
 
 // ChartConfig는 타입으로만 사용되므로 type import 사용
 import type { ChartConfig } from '@/components/ui/chart';
@@ -46,17 +46,17 @@ export function ChartAreaInteractive(props: ChartProps) {
 
   // Chart.js 데이터 형식으로 변환
   const data = {
-    labels: chartData.map(item => item.month),
+    labels: chartData.map((item) => item.month),
     datasets: [
       {
         label: chartConfig.desktop.label,
-        data: chartData.map(item => item.desktop),
+        data: chartData.map((item) => item.desktop),
         backgroundColor: chartConfig.desktop.color,
         borderRadius: 4,
       },
       {
         label: chartConfig.mobile.label,
-        data: chartData.map(item => item.mobile),
+        data: chartData.map((item) => item.mobile),
         backgroundColor: chartConfig.mobile.color,
         borderRadius: 4,
       },

@@ -14,7 +14,7 @@ export interface User {
   ceoName?: string; // ceoName 속성 추가
   companyCode?: string; // companyCode 속성 추가
   companyPhoneNumber?: string; // companyPhoneNumber 속성 추가
-} 
+}
 
 export interface AuthState {
   isLoggedIn: boolean;
@@ -36,10 +36,10 @@ const initialState: AuthState = {
 export const authAtom = atomWithStorage<AuthState>('auth', initialState);
 
 // --- 파생 상태 Atom ---
-export const isLoggedInAtom = atom(get => get(authAtom).isLoggedIn);
-export const userAtom = atom(get => get(authAtom).user);
-export const tokenAtom = atom(get => get(authAtom).token);
-export const isLoadingAtom = atom(get => get(authAtom).isLoading);
+export const isLoggedInAtom = atom((get) => get(authAtom).isLoggedIn);
+export const userAtom = atom((get) => get(authAtom).user);
+export const tokenAtom = atom((get) => get(authAtom).token);
+export const isLoadingAtom = atom((get) => get(authAtom).isLoading);
 
 // --- 상태 초기화 완료 Atom ---
 export const authInitializedAtom = atom(false);
@@ -65,10 +65,10 @@ export const logoutAtom = atom(null, (get, set) => {
 
 // --- 초기화 훅 ---
 export const useInitializeAuth = () => {
-  const [isLoading] = useAtom(isLoadingAtom);     // 상태 복원 중 여부
-  const [isInitialized, setInitialized] = useAtom (authInitializedAtom);  // 초기화 여부
-  const [auth] = useAtom(authAtom);          // 전체 인증 상태
-  const [, logout] = useAtom(logoutAtom);     // 로그아웃 액션
+  const [isLoading] = useAtom(isLoadingAtom); // 상태 복원 중 여부
+  const [isInitialized, setInitialized] = useAtom(authInitializedAtom); // 초기화 여부
+  const [auth] = useAtom(authAtom); // 전체 인증 상태
+  const [, logout] = useAtom(logoutAtom); // 로그아웃 액션
 
   useEffect(() => {
     if (!isLoading && !isInitialized) {

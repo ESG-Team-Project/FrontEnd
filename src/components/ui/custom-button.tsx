@@ -1,9 +1,9 @@
 'use client';
 
-import { Button, buttonVariants } from '@/components/ui/button';
+import { Button, type buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { VariantProps } from 'class-variance-authority';
-import { ReactNode, forwardRef } from 'react';
+import type { VariantProps } from 'class-variance-authority';
+import { type ReactNode, forwardRef } from 'react';
 
 export interface CustomButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,

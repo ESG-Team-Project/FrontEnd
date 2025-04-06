@@ -91,11 +91,6 @@ ${colorConfig
   );
 };
 
-export {
-  ChartContainer,
-  ChartStyle,
-  useChart,
-  ChartContext,
-};
+export { ChartContainer, ChartStyle, useChart, ChartContext };
 
 export type { ChartConfig };

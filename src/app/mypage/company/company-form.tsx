@@ -1,20 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import LabeledInputBox from '@/components/labeled-inputbox';
 import { Button } from '@/components/ui/button';
-import { useAtom } from 'jotai';
-import { authAtom, userAtom, loginAtom } from '@/lib/atoms/auth';
-import type { AuthState, User } from '@/lib/atoms/auth';
 import api from '@/lib/api';
+import { authAtom, loginAtom, userAtom } from '@/lib/atoms/auth';
+import type { AuthState, User } from '@/lib/atoms/auth';
+import { useAtom } from 'jotai';
+import { useEffect, useState } from 'react';
 
 export default function AccountForm() {
-    const [auth] = useAtom(authAtom);
-    const [user, setUser] = useAtom(userAtom);
-    const [, login] = useAtom(loginAtom);
+  const [auth] = useAtom(authAtom);
+  const [user, setUser] = useAtom(userAtom);
+  const [, login] = useAtom(loginAtom);
   const [formData, setFormData] = useState<
-      Partial<User & { password?: string; confirmPassword?: string }>
-    >({
+    Partial<User & { password?: string; confirmPassword?: string }>
+  >({
     companyName: '',
     ceoName: '',
     companyCode: '',
@@ -26,7 +26,7 @@ export default function AccountForm() {
       setFormData({
         companyName: user.companyName || '',
         ceoName: user.ceoName || '',
-        companyCode: user.ceoName ||'',
+        companyCode: user.ceoName || '',
         companyPhoneNumber: user.companyPhoneNumber || '',
       });
     }
@@ -53,49 +53,48 @@ export default function AccountForm() {
     }
     const token = currentAuth.token;
 
-      // 3. 서버에 전송할 사용자 정보 객체 생성
-      const updateData: Partial<User> & { password?: string } = {
-        companyName: formData.companyName,
-        ceoName: formData.ceoName,
-        companyCode: formData.companyCode,
-        companyPhoneNumber: formData.companyPhoneNumber,
-      };
-  
-      if (formData.password) {
-        updateData.password = formData.password;
-      }
-  
-      try {
-        // 4. 사용자 정보 업데이트 요청(PUT)
-        const updatedUserData = await api.user.updateCompany(updateData);
-  
-        let finalUserData: User | null = null;
-        if (updatedUserData && typeof updatedUserData === 'object' && updatedUserData.id) {
-          finalUserData = updatedUserData;
-        } else if (user) {
-          finalUserData = {
-            ...user,
-            name: formData.name ?? user.name,
-            email: formData.email ?? user.email,
-            phoneNumber: formData.phoneNumber ?? user.phoneNumber,
-          };
-        }
-  
-        if (finalUserData) {
-          login({ user: finalUserData, token: token });
-          alert('프로필이 성공적으로 업데이트되었습니다.');
-        } else {
-          console.warn('Could not determine updated user data after successful API call.');
-          alert('프로필 업데이트는 성공했으나, 화면 갱신에 문제가 있을 수 있습니다.');
-        }
-      } catch (error) {
-        console.error('프로필 업데이트 오류:', error);
-        alert(
-          `프로필 업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
-        );
-      }
+    // 3. 서버에 전송할 사용자 정보 객체 생성
+    const updateData: Partial<User> & { password?: string } = {
+      companyName: formData.companyName,
+      ceoName: formData.ceoName,
+      companyCode: formData.companyCode,
+      companyPhoneNumber: formData.companyPhoneNumber,
     };
 
+    if (formData.password) {
+      updateData.password = formData.password;
+    }
+
+    try {
+      // 4. 사용자 정보 업데이트 요청(PUT)
+      const updatedUserData = await api.user.updateCompany(updateData);
+
+      let finalUserData: User | null = null;
+      if (updatedUserData && typeof updatedUserData === 'object' && updatedUserData.id) {
+        finalUserData = updatedUserData;
+      } else if (user) {
+        finalUserData = {
+          ...user,
+          name: formData.name ?? user.name,
+          email: formData.email ?? user.email,
+          phoneNumber: formData.phoneNumber ?? user.phoneNumber,
+        };
+      }
+
+      if (finalUserData) {
+        login({ user: finalUserData, token: token });
+        alert('프로필이 성공적으로 업데이트되었습니다.');
+      } else {
+        console.warn('Could not determine updated user data after successful API call.');
+        alert('프로필 업데이트는 성공했으나, 화면 갱신에 문제가 있을 수 있습니다.');
+      }
+    } catch (error) {
+      console.error('프로필 업데이트 오류:', error);
+      alert(
+        `프로필 업데이트 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`
+      );
+    }
+  };
 
   return (
     <form className="w-full max-w-4xl space-y-6" onSubmit={handleSubmit}>
@@ -112,7 +111,7 @@ export default function AccountForm() {
       />
       <LabeledInputBox
         label="대표자명"
-        name='ceoName'
+        name="ceoName"
         type="text"
         value={formData.ceoName}
         onChange={handleChange}
@@ -123,7 +122,7 @@ export default function AccountForm() {
       />
       <LabeledInputBox
         label="사업자 등록 번호"
-        name='companyCode'
+        name="companyCode"
         type="text"
         value={formData.companyCode}
         onChange={handleChange}
@@ -134,7 +133,7 @@ export default function AccountForm() {
       />
       <LabeledInputBox
         label="대표번호"
-        name='companyPhoneNumber'
+        name="companyPhoneNumber"
         type="tel"
         value={formData.companyPhoneNumber}
         onChange={handleChange}

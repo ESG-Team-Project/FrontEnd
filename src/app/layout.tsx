@@ -1,9 +1,9 @@
 import type { Metadata } from 'next';
 import localFont from 'next/font/local';
 import './globals.css';
+import AuthInitializer from '@/components/AuthInitializer';
 import NaviBar from '@/components/NaviBar';
 import { Provider as JotaiProvider } from 'jotai';
-import AuthInitializer from '@/components/AuthInitializer';
 
 const pretendard = localFont({
   src: [

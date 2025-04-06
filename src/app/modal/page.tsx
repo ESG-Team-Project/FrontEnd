@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileInputDialog } from './fileinput-form';
+import { useState } from 'react';
 import { ESGChartDialog } from './chartinput-form'; // dialog → chartinput으로 변경
+import { FileInputDialog } from './fileinput-form';
 
 export default function ModalPage() {
   const [fileModalOpen, setFileModalOpen] = useState(false);

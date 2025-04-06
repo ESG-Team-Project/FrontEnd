@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import LabeledInputBox from '@/components/labeled-inputbox';
 import { Button } from '@/components/ui/button';
-import { useAtom } from 'jotai';
-import { authAtom, userAtom, loginAtom } from '@/lib/atoms';
-import type { AuthState, User } from '@/lib/atoms';
 import api from '@/lib/api';
+import { authAtom, loginAtom, userAtom } from '@/lib/atoms';
+import type { AuthState, User } from '@/lib/atoms';
+import { useAtom } from 'jotai';
+import { useEffect, useState } from 'react';
 
 export default function AccountForm() {
   // 현재 로그인한 사용자의 인증 정보 (예: 토큰)
@@ -39,20 +39,20 @@ export default function AccountForm() {
         phoneNumber: user.phoneNumber || '',
       });
     }
-  }, [user]);   // user 값이 변경될 때마다 실행
+  }, [user]); // user 값이 변경될 때마다 실행
 
   // 입력 필드(input)의 값이 변경될 때마다 호출되는 함수
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;   // 입력 요소의 name 속성과 입력된 값
+    const { name, value } = e.target; // 입력 요소의 name 속성과 입력된 값
     setFormData((prevData: typeof formData) => ({
-      ...prevData,      // 이전 상태를 복사
-      [name]: value,    // 변경된 name 필드만 새로운 값으로 덮어씀
+      ...prevData, // 이전 상태를 복사
+      [name]: value, // 변경된 name 필드만 새로운 값으로 덮어씀
     }));
   };
 
   // 폼 제출 시 호출되는 함수
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();   // 기본 제출 동작 방지
+    e.preventDefault(); // 기본 제출 동작 방지
 
     // 1. 비밀번호 확인 유효성 검사
     if (formData.password && formData.password !== formData.confirmPassword) {

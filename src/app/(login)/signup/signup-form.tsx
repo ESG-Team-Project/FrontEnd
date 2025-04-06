@@ -1,15 +1,15 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import InputBox from '@/components/labeled-inputbox';
-import Link from 'next/link';
-import AuthContainer from '../AuthContainer';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAtom } from 'jotai';
-import { loginAtom } from '@/lib/atoms';
+import { Button } from '@/components/ui/button';
 import { authService } from '@/lib/api';
+import { loginAtom } from '@/lib/atoms';
 import type { SignUpRequest, SignUpResponse } from '@/types/auth';
+import { useAtom } from 'jotai';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import AuthContainer from '../AuthContainer';
 
 export function SignupForm() {
   const [step, setStep] = useState(1);
@@ -37,9 +37,7 @@ export function SignupForm() {
     if (data === null || typeof data !== 'object') return false;
     const obj = data as Record<string, unknown>;
     return (
-      typeof obj.id === 'number' &&
-      typeof obj.email === 'string' &&
-      typeof obj.name === 'string'
+      typeof obj.id === 'number' && typeof obj.email === 'string' && typeof obj.name === 'string'
     );
   };
 
@@ -72,14 +70,14 @@ export function SignupForm() {
         ceoName: companyInfo.ceoName,
         companyCode: companyInfo.companyCode,
         companyPhoneNumber: companyInfo.companyPhoneNumber,
-        phoneNumber: companyInfo.phoneNumber
+        phoneNumber: companyInfo.phoneNumber,
       };
-      
+
       const response = await authService.signup(signupData);
-      
+
       // 응답 확인
       console.log('회원가입 응답:', response);
-      
+
       // 타입 가드를 통한 안전한 타입 처리
       if (isSignUpResponse(response)) {
         // 회원가입 성공 시 자동 로그인
@@ -91,7 +89,7 @@ export function SignupForm() {
             role: 'user',
             company: response.companyName || '',
           },
-          token: response.token || ''
+          token: response.token || '',
         });
 
         router.push('/dashboard');
@@ -101,17 +99,19 @@ export function SignupForm() {
       }
     } catch (error: unknown) {
       // 오류 응답 처리
-      const err = error as { response?: { status: number; data?: { errors?: Record<string, string>; message?: string } } };
+      const err = error as {
+        response?: { status: number; data?: { errors?: Record<string, string>; message?: string } };
+      };
       if (err.response) {
         // 409 오류: 이미 존재하는 이메일
         if (err.response.status === 409) {
           setError('이미 사용 중인 이메일입니다');
-        } 
+        }
         // 400 오류: 유효성 검증 실패
         else if (err.response.status === 400 && err.response.data?.errors) {
           const validationErrors = Object.values(err.response.data.errors).join(', ');
           setError(`입력값 유효성 검증에 실패했습니다: ${validationErrors}`);
-        } 
+        }
         // 그 외 서버 오류
         else {
           setError(err.response.data?.message || '회원가입 처리 중 오류가 발생했습니다');
@@ -125,12 +125,12 @@ export function SignupForm() {
 
   const handleUserInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setUserInfo(prev => ({ ...prev, [name]: value }));
+    setUserInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleCompanyInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setCompanyInfo(prev => ({ ...prev, [name]: value }));
+    setCompanyInfo((prev) => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -257,12 +257,7 @@ export function SignupForm() {
           {error && <div className="text-red-500 text-sm">{error}</div>}
 
           <div className="flex gap-2 mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => setStep(1)}
-            >
+            <Button type="button" variant="outline" className="flex-1" onClick={() => setStep(1)}>
               이전
             </Button>
             <Button type="submit" className="flex-1">

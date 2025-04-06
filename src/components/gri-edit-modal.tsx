@@ -1,19 +1,17 @@
 'use client';
 
-import { useState, ChangeEvent, useEffect } from 'react';
-import { CompanyGRICategoryValue, TimeSeriesDataPoint } from '@/types/companyGriData';
-import { GRICategory } from '@/data/griCategories';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { CustomButton } from '@/components/ui/custom-button';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -22,25 +20,27 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Label } from '@/components/ui/label';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import type { GRICategory } from '@/data/griCategories';
+import type { CompanyGRICategoryValue, TimeSeriesDataPoint } from '@/types/companyGriData';
 import { PlusCircle, Trash2 } from 'lucide-react';
+import { type ChangeEvent, useEffect, useState } from 'react';
 
 // GRI 데이터 타입 정의
 type GRIDataType = 'text' | 'timeSeries' | 'numeric';
 
 // 간단한 UUID v4 생성 함수
 const generateId = (): string => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0,
-      v = c === 'x' ? r : (r & 0x3) | 0x8;
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
 };
@@ -92,10 +92,10 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
         setModalDecimalPlaces(0);
         break;
 
-      case 'timeSeries':
+      case 'timeSeries': {
         // timeSeriesData가 배열이 아니면 빈 배열로 초기화
         const timeSeriesData = Array.isArray(currentValue.timeSeriesData)
-          ? [...currentValue.timeSeriesData.map(d => ({ ...d }))]
+          ? [...currentValue.timeSeriesData.map((d) => ({ ...d }))]
           : [];
 
         setModalTimeSeriesData(timeSeriesData);
@@ -104,6 +104,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
         setModalNumericUnit('');
         setModalDecimalPlaces(0);
         break;
+      }
 
       case 'numeric':
         setModalNumericValue(
@@ -147,7 +148,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
         processedValue = new Date().getFullYear(); // 빈 값은 현재 연도로 기본값 설정
       } else {
         const num = Number(value);
-        processedValue = isNaN(num) ? new Date().getFullYear() : num;
+        processedValue = Number.isNaN(num) ? new Date().getFullYear() : num;
       }
     } else if (field === 'quarter' || field === 'month') {
       // quarter, month는 선택적 숫자 필드 (null 가능)
@@ -155,12 +156,13 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
         processedValue = null;
       } else {
         const num = Number(value);
-        processedValue = isNaN(num) ? null : num;
+        processedValue = Number.isNaN(num) ? null : num;
       }
     } else if (field === 'value') {
       // value는 string 또는 number이므로 null은 안됨
       // 빈 문자열이거나 NaN이면 빈 문자열로 저장 (숫자 입력 필드라면 0으로 저장할 수도 있음)
-      processedValue = value === '' || (typeof value === 'number' && isNaN(value)) ? '' : value;
+      processedValue =
+        value === '' || (typeof value === 'number' && Number.isNaN(value)) ? '' : value;
     }
 
     // 타입스크립트의 엄격한 타입 체크를 위해 타입 단언 사용
@@ -211,7 +213,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
 
   // 모달 내 TimeSeries 데이터 삭제
   const removeTimeSeriesDataPoint = (idToRemove: string) => {
-    setModalTimeSeriesData(modalTimeSeriesData.filter(point => point.id !== idToRemove));
+    setModalTimeSeriesData(modalTimeSeriesData.filter((point) => point.id !== idToRemove));
   };
 
   // 숫자 입력 값 변경 핸들러
@@ -224,14 +226,14 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
     // 소수점 제한이 있는 경우
     if (modalDecimalPlaces === 0) {
       // 정수만 허용
-      const parsedValue = parseInt(value, 10);
-      if (!isNaN(parsedValue)) {
+      const parsedValue = Number.parseInt(value, 10);
+      if (!Number.isNaN(parsedValue)) {
         setModalNumericValue(parsedValue);
       }
     } else {
       // 소수점 허용
-      const parsedValue = parseFloat(value);
-      if (!isNaN(parsedValue)) {
+      const parsedValue = Number.parseFloat(value);
+      if (!Number.isNaN(parsedValue)) {
         // 소수점 자릿수 제한
         setModalNumericValue(Number(parsedValue.toFixed(modalDecimalPlaces)));
       }
@@ -245,8 +247,8 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
 
   // 소수점 자릿수 변경 핸들러
   const handleDecimalPlacesChange = (value: string) => {
-    const places = parseInt(value, 10);
-    if (!isNaN(places) && places >= 0) {
+    const places = Number.parseInt(value, 10);
+    if (!Number.isNaN(places) && places >= 0) {
       setModalDecimalPlaces(places);
 
       // 현재 값이 있으면 소수점 자릿수에 맞게 변환
@@ -383,7 +385,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                           id="modal-numeric-value"
                           type="number"
                           value={modalNumericValue !== null ? modalNumericValue : ''}
-                          onChange={e => handleNumericValueChange(e.target.value)}
+                          onChange={(e) => handleNumericValueChange(e.target.value)}
                           step={
                             modalDecimalPlaces > 0
                               ? `0.${'0'.repeat(modalDecimalPlaces - 1)}1`
@@ -394,7 +396,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                         />
                         <Input
                           value={modalNumericUnit}
-                          onChange={e => handleNumericUnitChange(e.target.value)}
+                          onChange={(e) => handleNumericUnitChange(e.target.value)}
                           placeholder="단위"
                           className="w-20 sm:w-24"
                         />
@@ -410,7 +412,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                           min="0"
                           max="10"
                           value={modalDecimalPlaces}
-                          onChange={e => handleDecimalPlacesChange(e.target.value)}
+                          onChange={(e) => handleDecimalPlacesChange(e.target.value)}
                           className="w-20 sm:w-24"
                         />
                         <span className="text-sm text-muted-foreground ml-2">
@@ -434,8 +436,6 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                     )}
                   </div>
                 );
-
-              case 'timeSeries':
               default:
                 return (
                   <div className="py-2">
@@ -522,7 +522,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                                     <Input
                                       type="number"
                                       value={point.year ?? ''}
-                                      onChange={e =>
+                                      onChange={(e) =>
                                         handleModalTimeSeriesChange(index, 'year', e.target.value)
                                       }
                                       className="w-full"
@@ -533,7 +533,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                                     <Input
                                       type="number"
                                       value={point.quarter ?? ''}
-                                      onChange={e =>
+                                      onChange={(e) =>
                                         handleModalTimeSeriesChange(
                                           index,
                                           'quarter',
@@ -551,7 +551,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                                     <Input
                                       type="number"
                                       value={point.month ?? ''}
-                                      onChange={e =>
+                                      onChange={(e) =>
                                         handleModalTimeSeriesChange(index, 'month', e.target.value)
                                       }
                                       className="w-full"
@@ -567,7 +567,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                                         editingCategory?.category.isQuantitative ? 'number' : 'text'
                                       }
                                       value={point.value ?? ''}
-                                      onChange={e =>
+                                      onChange={(e) =>
                                         handleModalTimeSeriesChange(index, 'value', e.target.value)
                                       }
                                       className="w-full"
@@ -580,7 +580,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                                   <TableCell>
                                     <Input
                                       value={point.unit ?? ''}
-                                      onChange={e =>
+                                      onChange={(e) =>
                                         handleModalTimeSeriesChange(index, 'unit', e.target.value)
                                       }
                                       className="w-full"
@@ -590,7 +590,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
                                   <TableCell>
                                     <Input
                                       value={point.notes ?? ''}
-                                      onChange={e =>
+                                      onChange={(e) =>
                                         handleModalTimeSeriesChange(index, 'notes', e.target.value)
                                       }
                                       className="w-full"
@@ -634,7 +634,7 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
             <div className="flex items-center gap-2">
               {isSaving ? (
                 <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                   <span>저장 중...</span>
                 </div>
               ) : (

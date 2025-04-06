@@ -1,17 +1,17 @@
 'use client';
 
+import DashboardTopBar from '@/app/dashboard/dashboard-top-bar';
+import { useDashboard } from '@/contexts/dashboard-context';
+import { layoutLockedAtom } from '@/lib/atoms';
+import clsx from 'clsx';
+import { useAtom } from 'jotai';
+import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import NaviBar from './NaviBar';
-import DashboardTopBar from '@/app/dashboard/dashboard-top-bar';
-import { useAtom } from 'jotai';
-import { layoutLockedAtom } from '@/lib/atoms';
-import clsx from 'clsx';
-import { useDashboard } from '@/contexts/dashboard-context';
-import { LoadingState } from './dashboard/loading-state';
-import { ErrorState } from './dashboard/error-state';
 import { AuthRequired } from './dashboard/auth-required';
-import { usePathname } from 'next/navigation';
+import { ErrorState } from './dashboard/error-state';
+import { LoadingState } from './dashboard/loading-state';
 
 interface DashboardShellProps {
   children: ReactNode;

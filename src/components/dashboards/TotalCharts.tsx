@@ -1,29 +1,22 @@
-import React from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { ChartData, ChartType } from '@/types/chart';
 import {
-  BarChart,
-  PieChart,
-  LineChart,
-  AreaChart,
-  Activity,
-  FileText,
-} from 'lucide-react';
-import type { ChartType, ChartData } from '@/types/chart';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
   ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  type ChartData as ChartJSData,
+  type ChartOptions,
+  Filler,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler,
-  type ChartOptions,
-  type ChartData as ChartJSData,
 } from 'chart.js';
+import { Activity, AreaChart, BarChart, FileText, LineChart, PieChart } from 'lucide-react';
+import React from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 
 // Chart.js에 필요한 모든 요소 등록 (컴포넌트 로드 시 한 번만 실행되도록)

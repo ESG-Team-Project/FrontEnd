@@ -1,13 +1,13 @@
 'use client';
-import { NavigationMenu } from '@/components/ui/navigation-menu';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import Logo from './Logo';
-import { useAtom } from 'jotai';
-import { isLoggedInAtom, logoutAtom } from '@/lib/atoms';
+import { NavigationMenu } from '@/components/ui/navigation-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { User, LogOut } from 'lucide-react';
+import { isLoggedInAtom, logoutAtom } from '@/lib/atoms';
+import { useAtom } from 'jotai';
+import { LogOut, User } from 'lucide-react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Logo from './Logo';
 
 export default function NaviBar() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);

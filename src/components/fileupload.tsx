@@ -1,7 +1,7 @@
 'use client';
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
 import { Upload } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 export default function FileUpload() {
   const [files, setFiles] = useState<File[]>([]);
@@ -34,7 +34,7 @@ export default function FileUpload() {
         <div className="mt-4 w-full max-w-md">
           <p className="text-gray-700 dark:text-gray-300 font-semibold">업로드된 파일:</p>
           <ul className="mt-2 space-y-1">
-            {files.map(file => (
+            {files.map((file) => (
               <li key={file.name} className="text-gray-600 dark:text-gray-300 text-sm">
                 📂 {file.name}
               </li>

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { griService } from '@/lib/api';
 import type { GriDataItem } from '@/lib/api/gri';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function GriDataPreview() {
   const [griData, setGriData] = useState<GriDataItem[]>([]);
@@ -17,7 +17,7 @@ export default function GriDataPreview() {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // API 호출을 try-catch로 감싸서 오류 처리
         try {
           const data = await griService.getAllGriData();
@@ -89,7 +89,8 @@ export default function GriDataPreview() {
                 <td className="p-3">{item.disclosureTitle || '-'}</td>
                 <td className="p-3">{item.category || '-'}</td>
                 <td className="p-3">
-                  {item.disclosureValue || (item.numericValue !== null ? String(item.numericValue) : '-')}
+                  {item.disclosureValue ||
+                    (item.numericValue !== null ? String(item.numericValue) : '-')}
                 </td>
                 <td className="p-3">{item.unit || '-'}</td>
               </tr>
@@ -106,4 +107,4 @@ export default function GriDataPreview() {
       </div>
     </div>
   );
-} 
+}

@@ -1,18 +1,18 @@
-import axiosInstance from './core/axios';
-import { getTokenFromAtom } from './core/axios';
+import type { AxiosRequestConfig, AxiosResponse } from 'axios';
 import * as authService from './auth';
 import * as chartService from './chart';
+import axiosInstance from './core/axios';
+import { getTokenFromAtom } from './core/axios';
 import * as fileService from './file';
-import * as userService from './user';
 import * as griService from './gri';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
+import * as userService from './user';
 
 // 타입 재export
-export type { 
-  LoginRequest, 
-  LoginResponse, 
-  SignUpRequest, 
-  SignUpResponse 
+export type {
+  LoginRequest,
+  LoginResponse,
+  SignUpRequest,
+  SignUpResponse,
 } from '@/types/auth';
 
 export type {
@@ -20,20 +20,14 @@ export type {
   UserUpdateRequest,
   PasswordChangeRequest,
   PasswordChangeResponse,
-  ProfileImageResponse
+  ProfileImageResponse,
 } from '@/types/user';
 
-export type {
-  FileUploadResponse
-} from '@/types/file';
+export type { FileUploadResponse } from '@/types/file';
 
-export type {
-  ChartData
-} from '@/types/chart';
+export type { ChartData } from '@/types/chart';
 
-export type {
-  GriDataItem
-} from './gri';
+export type { GriDataItem } from './gri';
 
 // 서비스 모듈 재export
 export { authService, chartService, fileService, userService, griService };
@@ -41,7 +35,7 @@ export { authService, chartService, fileService, userService, griService };
 // 각 서비스 모듈 개별 export
 export * from './auth';
 export * from './chart';
-export * from './file'; 
+export * from './file';
 export * from './user';
 export * from './gri';
 
@@ -50,11 +44,11 @@ export const getCurrentUser = userService.getCurrentUser;
 
 /**
  * GET 요청을 보내는 함수
- * 
+ *
  * @param {string} url - API 엔드포인트 주소 (예: '/users/123')
  * @param {AxiosRequestConfig} config - 추가 설정 (헤더, 타임아웃 등)
  * @returns {Promise<AxiosResponse<T>>} API 응답 데이터
- * 
+ *
  * 사용 예시:
  * ```
  * const { data } = await get('/users/me');
@@ -70,12 +64,12 @@ export const get = async <T = unknown>(
 
 /**
  * POST 요청을 보내는 함수 (데이터 생성)
- * 
+ *
  * @param {string} url - API 엔드포인트 주소
  * @param {any} data - 서버로 보낼 데이터 객체
  * @param {AxiosRequestConfig} config - 추가 설정
  * @returns {Promise<AxiosResponse<T>>} API 응답 데이터
- * 
+ *
  * 사용 예시:
  * ```
  * const { data } = await post('/users', { name: '홍길동', email: 'hong@example.com' });
@@ -92,12 +86,12 @@ export const post = async <T = unknown>(
 
 /**
  * PUT 요청을 보내는 함수 (데이터 전체 수정)
- * 
+ *
  * @param {string} url - API 엔드포인트 주소
  * @param {any} data - 서버로 보낼 데이터 객체
  * @param {AxiosRequestConfig} config - 추가 설정
  * @returns {Promise<AxiosResponse<T>>} API 응답 데이터
- * 
+ *
  * 사용 예시:
  * ```
  * const { data } = await put('/users/123', { name: '홍길동', email: 'hong@example.com' });
@@ -114,12 +108,12 @@ export const put = async <T = unknown>(
 
 /**
  * PATCH 요청을 보내는 함수 (데이터 일부 수정)
- * 
+ *
  * @param {string} url - API 엔드포인트 주소
  * @param {any} data - 서버로 보낼 데이터 객체 (변경할 필드만 포함)
  * @param {AxiosRequestConfig} config - 추가 설정
  * @returns {Promise<AxiosResponse<T>>} API 응답 데이터
- * 
+ *
  * 사용 예시:
  * ```
  * const { data } = await patch('/users/123', { name: '홍길동' }); // 이름만 변경
@@ -136,11 +130,11 @@ export const patch = async <T = unknown>(
 
 /**
  * DELETE 요청을 보내는 함수 (데이터 삭제)
- * 
+ *
  * @param {string} url - API 엔드포인트 주소
  * @param {AxiosRequestConfig} config - 추가 설정
  * @returns {Promise<AxiosResponse<T>>} API 응답 데이터
- * 
+ *
  * 사용 예시:
  * ```
  * await del('/users/123');
@@ -156,17 +150,17 @@ export const del = async <T = unknown>(
 
 /**
  * 모든 API 서비스와 HTTP 메서드를 포함하는 객체
- * 
+ *
  * 컴포넌트에서 사용 예시:
  * ```
  * import api from '@/lib/api';
- * 
+ *
  * // 인증 관련 API 호출
  * const loginResponse = await api.auth.login({ email, password });
- * 
+ *
  * // 사용자 관련 API 호출
  * const userInfo = await api.user.updateUser({ name: '홍길동' });
- * 
+ *
  * // 일반 HTTP 메서드 사용
  * const data = await api.get('/some/endpoint');
  * ```

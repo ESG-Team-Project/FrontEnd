@@ -1,9 +1,9 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 import DashboardSidebar from '@/components/dashboard-sidebar';
 import { SidebarProvider } from '@/components/ui/sidebar';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useEffect } from 'react';
 
 interface DashboardClientLayoutProps {
   children: ReactNode;

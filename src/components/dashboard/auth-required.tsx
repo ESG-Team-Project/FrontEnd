@@ -1,5 +1,5 @@
-import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { User } from 'lucide-react';
 import Link from 'next/link';
 
 interface AuthRequiredProps {

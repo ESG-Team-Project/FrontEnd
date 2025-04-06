@@ -1,7 +1,7 @@
-import type { Metadata } from 'next';
+import DashboardClientLayout from '@/components/dashboard/client-layout';
 import ProtectedRoute from '@/components/protected-route';
 import DashboardDataProvider from '@/contexts/dashboard-context';
-import DashboardClientLayout from '@/components/dashboard/client-layout';
+import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'ESG 대시보드',

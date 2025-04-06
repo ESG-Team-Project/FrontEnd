@@ -10,7 +10,7 @@ export const layoutLockedAtom = atom<boolean>(false);
 export const sidebarOpenAtom = atom<boolean>(false);
 
 // 실제 사이드바 표시 상태를 결정하는 파생 atom
-export const displaySidebarAtom = atom(get => {
+export const displaySidebarAtom = atom((get) => {
   const isLocked = get(layoutLockedAtom);
   const isOpen = get(sidebarOpenAtom);
   // 레이아웃이 잠겨있지 않고, 사이드바가 열려 있어야 표시

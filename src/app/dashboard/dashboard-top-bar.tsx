@@ -1,13 +1,13 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { CustomButton } from '@/components/ui/custom-button';
-import { useAtom } from 'jotai';
 import { layoutLockedAtom, sidebarOpenAtom } from '@/lib/atoms';
-import { PanelLeftClose, PanelRightClose, Menu, ChevronRight, Home } from 'lucide-react';
 import clsx from 'clsx';
+import { useAtom } from 'jotai';
+import { ChevronRight, Home, Menu, PanelLeftClose, PanelRightClose } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import type { ReactNode } from 'react';
 
 interface DashboardTopBarProps {
   // 우측 메뉴 아이템을 개별 페이지에서 전달받음 (선택적)
@@ -51,7 +51,7 @@ export default function DashboardTopBar({ rightMenuItems, pageTitle }: Dashboard
   const breadcrumbs = generateBreadcrumbs(pathname);
 
   const toggleLayoutLock = () => {
-    setLayoutLocked(prev => {
+    setLayoutLocked((prev) => {
       const nextLocked = !prev;
       if (nextLocked) {
         setSidebarOpen(false);
@@ -61,7 +61,7 @@ export default function DashboardTopBar({ rightMenuItems, pageTitle }: Dashboard
   };
 
   const toggleSidebar = () => {
-    setSidebarOpen(prev => !prev);
+    setSidebarOpen((prev) => !prev);
   };
 
   return (

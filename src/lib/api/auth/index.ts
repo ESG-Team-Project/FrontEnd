@@ -1,13 +1,8 @@
-import axiosInstance from '../core/axios';
-import type { AxiosResponse } from 'axios';
 import type { AuthState, User } from '@/lib/atoms';
+import type { LoginRequest, LoginResponse, SignUpRequest, SignUpResponse } from '@/types/auth';
+import type { AxiosResponse } from 'axios';
 import type { SetStateAction } from 'react';
-import type { 
-  LoginRequest, 
-  LoginResponse, 
-  SignUpRequest, 
-  SignUpResponse 
-} from '@/types/auth';
+import axiosInstance from '../core/axios';
 
 // 내부 변환 용도로 사용하는 타입
 interface InternalSignupResponse extends SignUpResponse {
@@ -16,9 +11,9 @@ interface InternalSignupResponse extends SignUpResponse {
 
 /**
  * 로그인 기능
- * 
+ *
  * 이메일과 비밀번호로 사용자를 인증하고 토큰을 받아옵니다.
- * 
+ *
  * @param {LoginRequest} credentials - 이메일과 비밀번호 객체
  * @returns {Promise<LoginResponse>} 토큰과 사용자 정보가 포함된 응답
  */
@@ -27,7 +22,10 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
     console.log('[API Auth] 로그인 시도:', credentials.email);
 
     // API 요청 - POST /users/login
-    const response: AxiosResponse<LoginResponse> = await axiosInstance.post('/users/login', credentials);
+    const response: AxiosResponse<LoginResponse> = await axiosInstance.post(
+      '/users/login',
+      credentials
+    );
 
     console.log('[API Auth] 로그인 응답 받음:', response.status);
 
@@ -48,34 +46,34 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 
 /**
  * 회원가입 기능
- * 
+ *
  * 회원가입을 처리하고 결과를 반환합니다.
- * 
+ *
  * @param {SignUpRequest} userData - 회원가입 정보
  * @returns {Promise<SignUpResponse>} 회원가입 결과
  */
 export const signup = async (userData: SignUpRequest): Promise<InternalSignupResponse> => {
   try {
     console.log('[API Auth] 회원가입 시도:', userData.email);
-    
+
     // API 요청 - POST /users/signup
     const response: AxiosResponse<SignUpResponse> = await axiosInstance.post(
       '/users/signup',
       userData
     );
-    
+
     console.log('[API Auth] 회원가입 응답:', response.status);
-    
+
     // 응답이 빈 객체인지 확인
     if (!response.data || Object.keys(response.data).length === 0) {
       console.error('[API Auth] 회원가입 응답이 비어있음');
       throw new Error(`예상과 다른 회원가입 응답 형식: ${JSON.stringify(response.data)}`);
     }
-    
+
     // API 응답 그대로 반환 (token 필드 추가)
     const responseWithToken: InternalSignupResponse = {
       ...response.data,
-      token: 'temporary-token' // 토큰이 없으면 임시 토큰 사용
+      token: 'temporary-token', // 토큰이 없으면 임시 토큰 사용
     };
 
     return responseWithToken;
@@ -88,9 +86,9 @@ export const signup = async (userData: SignUpRequest): Promise<InternalSignupRes
 
 /**
  * 로그아웃 기능
- * 
+ *
  * 로컬 스토리지와 상태 관리 라이브러리에서 인증 정보를 제거합니다.
- * 
+ *
  * @param {Function} setAuth - 인증 상태를 업데이트하는 함수 (jotai의 setState)
  * @returns {Object} 성공 여부 객체
  */
@@ -113,10 +111,10 @@ export const logout = (setAuth: (update: SetStateAction<string | null>) => void)
 
 /**
  * 토큰 유효성 검증 기능
- * 
+ *
  * 현재 저장된 토큰이 유효한지 서버에 확인 요청합니다.
  * 주로 페이지 로드 시나 보안이 필요한 작업 전에 호출합니다.
- * 
+ *
  * @param {AuthState} auth - 현재 인증 상태 객체
  * @returns {Promise<boolean>} 토큰 유효 여부 (true: 유효, false: 유효하지 않음)
  */
@@ -145,7 +143,7 @@ const authAPI = {
   login,
   signup,
   logout,
-  verifyToken
+  verifyToken,
 };
 
 export default authAPI;

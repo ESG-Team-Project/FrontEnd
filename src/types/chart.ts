@@ -1,4 +1,4 @@
-import type { ChartOptions, ChartDataset } from 'chart.js'; // Chart.js 타입 임포트
+import type { ChartDataset, ChartOptions } from 'chart.js'; // Chart.js 타입 임포트
 
 // chart.js 라이브러리에서 직접 지원하는 핵심 차트 타입 정의
 export type ChartTypeCore = 'line' | 'bar' | 'pie';
@@ -30,8 +30,8 @@ export interface PieChartData {
 
 export type ChartDataType = BarChartData | LineChartData | PieChartData | Record<string, unknown>;
 
-// API 차트 데이터 항목 인터페이스
-interface ApiChartDataItem {
+// API 차트 데이터 아이템 인터페이스
+export interface ApiChartDataItem {
   label: string;
   value: number;
   unit?: string;
@@ -39,7 +39,7 @@ interface ApiChartDataItem {
 }
 
 // API 차트 스타일 인터페이스
-interface ApiChartStyle {
+export interface ApiChartStyle {
   backgroundColor?: string | string[];
   borderColor?: string | string[];
   borderWidth?: number;
@@ -110,22 +110,29 @@ export interface ChartCreateInput {
 // API 데이터를 애플리케이션 차트 데이터로 변환하는 유틸리티 함수
 export function transformApiToChartData(apiData: ApiChartData): ChartData {
   // 레이블과 값 추출
-  const labels = apiData.data.map(item => item.label);
-  const values = apiData.data.map(item => item.value);
-  
+  const labels = apiData.data.map((item) => item.label);
+  const values = apiData.data.map((item) => item.value);
+
   // 스타일 가져오기 (있는 경우)
-  const backgroundColor = apiData.style?.backgroundColor || 
-    (apiData.chartType.toLowerCase() === 'pie' ? values.map(() => getRandomColor()) : getRandomColor());
-  
-  const borderColor = apiData.style?.borderColor || 
+  const backgroundColor =
+    apiData.style?.backgroundColor ||
+    (apiData.chartType.toLowerCase() === 'pie'
+      ? values.map(() => getRandomColor())
+      : getRandomColor());
+
+  const borderColor =
+    apiData.style?.borderColor ||
     (apiData.chartType.toLowerCase() === 'line' || apiData.chartType.toLowerCase() === 'area'
-    ? getRandomColor() 
-    : values.map(() => getRandomColor()));
-  
+      ? getRandomColor()
+      : values.map(() => getRandomColor()));
+
   const borderWidth = apiData.style?.borderWidth ? Number(apiData.style.borderWidth) : 1;
-  const tension = apiData.style?.tension || 
-    (apiData.chartType.toLowerCase() === 'line' || apiData.chartType.toLowerCase() === 'area' ? 0.1 : undefined);
-  
+  const tension =
+    apiData.style?.tension ||
+    (apiData.chartType.toLowerCase() === 'line' || apiData.chartType.toLowerCase() === 'area'
+      ? 0.1
+      : undefined);
+
   return {
     id: String(apiData.id),
     title: apiData.title,
@@ -141,19 +148,25 @@ export function transformApiToChartData(apiData: ApiChartData): ChartData {
         borderColor,
         borderWidth,
         fill: apiData.chartType.toLowerCase() === 'area',
-        tension
-      }
+        tension,
+      },
     ],
     options: getDefaultOptions(apiData.chartType.toLowerCase() as ChartType),
-    colSpan: apiData.chartGrid || 1
+    colSpan: apiData.chartGrid || 1,
   };
 }
 
 // 랜덤 색상 생성 함수
 function getRandomColor(): string {
   const colors = [
-    '#3498db', '#e74c3c', '#2ecc71', '#f39c12', 
-    '#9b59b6', '#1abc9c', '#34495e', '#d35400'
+    '#3498db',
+    '#e74c3c',
+    '#2ecc71',
+    '#f39c12',
+    '#9b59b6',
+    '#1abc9c',
+    '#34495e',
+    '#d35400',
   ];
   return colors[Math.floor(Math.random() * colors.length)];
 }
@@ -165,25 +178,25 @@ function getDefaultOptions(chartType: ChartType): ChartOptions<ChartTypeCore> {
       return {
         indexAxis: 'x',
         plugins: { legend: { display: true } },
-        scales: { x: { beginAtZero: true }, y: { beginAtZero: true } }
+        scales: { x: { beginAtZero: true }, y: { beginAtZero: true } },
       };
     case 'pie':
     case 'donut':
       return {
-        plugins: { 
+        plugins: {
           legend: { position: 'top' },
-          tooltip: { enabled: true }
-        }
+          tooltip: { enabled: true },
+        },
       };
     case 'line':
     case 'area':
       return {
         plugins: { legend: { display: true } },
-        scales: { y: { beginAtZero: true } }
+        scales: { y: { beginAtZero: true } },
       };
     default:
       return {
-        plugins: { legend: { display: true } }
+        plugins: { legend: { display: true } },
       };
   }
 }

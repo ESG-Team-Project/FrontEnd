@@ -1,16 +1,16 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import InputBox from '@/components/labeled-inputbox';
-import Link from 'next/link';
-import AuthContainer from '../AuthContainer';
-import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import { authService } from '@/lib/api';
-import type { LoginResponse } from '@/types/auth';
-import { useAtom } from 'jotai';
 import { isLoggedInAtom, loginAtom } from '@/lib/atoms';
 import type { User } from '@/lib/atoms';
+import type { LoginResponse } from '@/types/auth';
+import { useAtom } from 'jotai';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import AuthContainer from '../AuthContainer';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -55,7 +55,7 @@ export function LoginForm() {
       email: apiResponse.user.email,
       role: 'user',
       phone: apiResponse.user.phoneNumber,
-      company: apiResponse.user.companyName
+      company: apiResponse.user.companyName,
     };
   };
 
@@ -68,7 +68,7 @@ export function LoginForm() {
       // API 호출 결과
       const response = await authService.login({ email, password });
       console.log('로그인 API 응답:', response);
-      
+
       // 타입 검사를 통한 안전한 타입 처리
       if (isLoginResponse(response)) {
         if (response.success && response.token && response.user) {
@@ -118,7 +118,7 @@ export function LoginForm() {
           label="이메일"
           type="email"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         >
           you@example.com
         </InputBox>
@@ -126,7 +126,7 @@ export function LoginForm() {
           label="비밀번호"
           type="password"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         >
           ********
         </InputBox>

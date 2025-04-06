@@ -1,6 +1,3 @@
-import { useEffect, useState } from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Command,
@@ -12,6 +9,9 @@ import {
 } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
+import { Check, ChevronsUpDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export const esgIndicators = {
   environment: [
@@ -186,7 +186,7 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
   useEffect(() => {
     if (value) {
       for (const cat in esgIndicators) {
-        if (esgIndicators[cat as EsgCategory].some(ind => ind.id === value)) {
+        if (esgIndicators[cat as EsgCategory].some((ind) => ind.id === value)) {
           setCategory(cat as EsgCategory);
           break;
         }
@@ -221,7 +221,7 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
             }}
           >
             {category
-              ? `${categoryOptions.find(item => item.value === category)?.label}`
+              ? `${categoryOptions.find((item) => item.value === category)?.label}`
               : 'ESG 항목 선택'}
             <ChevronsUpDown className="opacity-50" />
           </Button>
@@ -231,11 +231,11 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
             <CommandList>
               <CommandGroup>
                 {!category ? (
-                  categoryOptions.map(option => (
+                  categoryOptions.map((option) => (
                     <CommandItem
                       key={option.value}
                       value={option.value}
-                      onSelect={selectedValue => {
+                      onSelect={(selectedValue) => {
                         setCategory(selectedValue as EsgCategory);
                         onValueChange(null); // 카테고리 변경 시 indicator 초기화 콜백 호출
                         setOpenCategoryPopover(false); // Close the category popover
@@ -248,11 +248,11 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
                 ) : (
                   <ScrollArea className="w-48 overflow-auto border rounded-md h-72">
                     <div className="p-4">
-                      {indicators.map(option => (
+                      {indicators.map((option) => (
                         <CommandItem
                           key={option.id}
                           value={option.id}
-                          onSelect={currentValue => {
+                          onSelect={(currentValue) => {
                             onValueChange(currentValue === value ? null : currentValue); // 콜백 호출 (토글)
                             setOpenIndicatorPopover(false); // Close the indicator popover
                           }}
@@ -285,7 +285,7 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
               aria-expanded={openIndicatorPopover}
               className="w-full max-w-[500px] justify-between bg-white mt-2"
             >
-              {value ? indicators.find(item => item.id === value)?.label : '지표 선택'}
+              {value ? indicators.find((item) => item.id === value)?.label : '지표 선택'}
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
@@ -296,7 +296,7 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
                 <CommandEmpty>결과 없음</CommandEmpty>
                 <ScrollArea className="w-full overflow-auto border rounded-md h-72">
                   <CommandGroup>
-                    {indicators.map(option => (
+                    {indicators.map((option) => (
                       <CommandItem
                         key={option.id}
                         value={option.label}
