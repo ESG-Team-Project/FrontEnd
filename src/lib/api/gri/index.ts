@@ -132,12 +132,35 @@ export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
       throw new Error(`GRI 데이터 조회 실패: ${response.status}`);
     }
     
-    // 회사 ID 얻기 (응답에서 추출 또는 인증 상태에서 가져오기)
-    // 여기서는 응답의 첫 번째 아이템에서 회사 ID를 얻는다고 가정
+    // 응답 데이터 구조 로깅
+    console.log('API 응답 구조: ', 
+      Array.isArray(response.data) ? '배열' : 
+      (response.data?.content ? 'Pagination 객체' : '객체'),
+      '총 항목 수: ', 
+      Array.isArray(response.data) ? response.data.length : 
+      (response.data?.content ? response.data.content.length : '알 수 없음')
+    );
+    
+    // 회사 ID 얻기
     let companyId = "current";
-    if (response.data && response.data.length > 0 && response.data[0].companyId) {
-      companyId = response.data[0].companyId.toString();
+    
+    // 응답 구조에 따라 추출 방식 변경
+    if (Array.isArray(response.data) && response.data.length > 0) {
+      // 배열인 경우 첫 번째 항목에서 companyId 추출
+      if (response.data[0].companyId) {
+        companyId = String(response.data[0].companyId);
+      }
+    } else if (response.data?.content && response.data.content.length > 0) {
+      // 페이지네이션 객체인 경우 content 배열의 첫 번째 항목에서 추출
+      if (response.data.content[0].companyId) {
+        companyId = String(response.data.content[0].companyId);
+      }
+    } else if (response.data?.companyId) {
+      // 단일 객체인 경우 직접 추출
+      companyId = String(response.data.companyId);
     }
+    
+    console.log('GRI 데이터 변환에 사용할 회사 ID:', companyId);
     
     // 백엔드 데이터를 프론트엔드 형식으로 변환
     return transformBackendDataToFrontend(response.data, companyId);
@@ -308,6 +331,8 @@ export async function getGriDataPaginated(
   pageRequest: PageRequest
 ): Promise<PageResponse<BackendGRIDataItem>> {
   try {
+    console.log(`페이지네이션 데이터 요청: page=${pageRequest.page}, size=${pageRequest.size}, sort=${pageRequest.sort || 'none'}`);
+    
     const response = await axiosInstance.get('/company/gri/paged', {
       params: {
         page: pageRequest.page,
@@ -315,10 +340,37 @@ export async function getGriDataPaginated(
         sort: pageRequest.sort
       }
     });
+    
+    console.log(`페이지네이션 응답: 총 ${response.data.totalElements || 0}개 항목, ${response.data.totalPages || 0}개 페이지`);
+    
+    // 데이터 구조 확인
+    if (!response.data.content) {
+      console.warn('페이지네이션 응답에 content 배열이 없습니다:', response.data);
+      // 기본 페이지네이션 객체 생성
+      return {
+        content: [],
+        totalElements: 0,
+        totalPages: 0,
+        size: pageRequest.size,
+        number: pageRequest.page,
+        first: true,
+        last: true
+      };
+    }
+    
     return response.data;
   } catch (error) {
     console.error('페이지네이션 데이터 조회 오류:', error);
-    throw error;
+    // 오류 시 기본 페이지네이션 객체 반환
+    return {
+      content: [],
+      totalElements: 0,
+      totalPages: 0,
+      size: pageRequest.size,
+      number: pageRequest.page,
+      first: true,
+      last: true
+    };
   }
 }
 

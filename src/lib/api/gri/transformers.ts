@@ -4,11 +4,11 @@ import type { BackendGRIDataItem } from './index';
 
 /**
  * 백엔드 GRI 데이터를 프론트엔드 형식으로 변환
- * @param backendData 백엔드 API로부터 받은 GRI 데이터 항목 배열
+ * @param backendData 백엔드 API로부터 받은 GRI 데이터 항목 배열 또는 객체
  * @param companyId 회사 ID
  * @returns 프론트엔드에서 사용하는 CompanyGRIData 형식
  */
-export function transformBackendDataToFrontend(backendData: BackendGRIDataItem[], companyId: string): CompanyGRIData {
+export function transformBackendDataToFrontend(backendData: any, companyId: string): CompanyGRIData {
   const griValues: Record<string, CompanyGRICategoryValue> = {};
 
   // 1. 먼저 빈 데이터 구조 초기화
@@ -23,7 +23,19 @@ export function transformBackendDataToFrontend(backendData: BackendGRIDataItem[]
   });
 
   // 2. 백엔드 데이터로 값 채우기
-  backendData.forEach(item => {
+  // API 응답 형식 변경에 따른 처리
+  const dataArray = Array.isArray(backendData) ? backendData : 
+                  (backendData && backendData.content ? backendData.content : 
+                  (backendData && typeof backendData === 'object' ? [backendData] : []));
+  
+  console.log('GRI 데이터 변환 시작: ', dataArray.length, '개 항목');
+  
+  dataArray.forEach(item => {
+    if (!item || !item.standardCode || !item.disclosureCode) {
+      console.warn('GRI 데이터 항목 처리 중 누락된 정보: ', item);
+      return;
+    }
+    
     const categoryId = `${item.standardCode}-${item.disclosureCode}`;
     
     // 카테고리가 존재하는지 확인
@@ -71,6 +83,8 @@ export function transformBackendDataToFrontend(backendData: BackendGRIDataItem[]
           existingData.numericUnit = item.unit;
         }
       }
+    } else {
+      console.warn(`카테고리 ID가 매칭되지 않음: ${categoryId}`);
     }
   });
 
