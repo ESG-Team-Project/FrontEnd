@@ -16,16 +16,17 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/toaster';
+import api from '@/lib/api';
 
 // 프레임워크 타입 정의
 type SupportLevel = 'full' | 'partial' | 'coming';
 
-type Framework = {
+interface Framework {
   id: string;
   name: string;
   description: string;
   supportLevel: SupportLevel;
-};
+}
 
 // 현재는 GRI만 완전히 지원하고 다른 프레임워크도 추가
 const frameworks: Framework[] = [
@@ -75,44 +76,40 @@ export default function ReportPage() {
       setIsDownloading(true);
       setDownloadStatus(`${selectedFramework?.name || frameworkId} ${isCompanyReport ? '회사 보고서' : '문서'}를 ${format.toUpperCase()} 형식으로 다운로드 중입니다...`);
       
-      // API 엔드포인트 결정
-      const endpoint = isCompanyReport 
-        ? `/api/documents/company/${frameworkId}`
-        : `/api/documents/${frameworkId}`;
-      
-      // 토큰 가져오기 (예시: localStorage에서)
-      const token = localStorage.getItem('auth_token');
-      
-      const response = await fetch(`${endpoint}?format=${format}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`문서 다운로드 실패: ${response.status} ${response.statusText}`);
+      let blob: Blob;
+      let response: Response;
+
+      if (isCompanyReport) {
+        blob = await api.documents.downloadCompanyReport(frameworkId, format as 'pdf' | 'docx');
+        // 응답 헤더를 얻기 위해 fetch를 한번 더 호출
+        response = await fetch(`/api/documents/company/${frameworkId}?format=${format}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
+      } else {
+        blob = await api.documents.downloadFrameworkDocument(frameworkId, format as 'pdf' | 'docx');
+        // 응답 헤더를 얻기 위해 fetch를 한번 더 호출
+        response = await fetch(`/api/documents/${frameworkId}?format=${format}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+          }
+        });
       }
       
       // 파일명 가져오기
       const contentDisposition = response.headers.get('Content-Disposition');
-      const filename = contentDisposition
-        ? decodeURIComponent(contentDisposition.split('filename=')[1].replace(/"/g, ''))
-        : `${frameworkId}_document.${format}`;
+      const filename = api.documents.getFilenameFromContentDisposition(
+        contentDisposition,
+        `${frameworkId}_${isCompanyReport ? 'company_report' : 'document'}.${format}`
+      );
       
       // 파일 다운로드
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      api.documents.downloadBlob(blob, filename);
       
       toast({
-        title: "다운로드 완료",
         description: `${filename} 파일이 다운로드되었습니다.`,
       });
     } catch (error) {

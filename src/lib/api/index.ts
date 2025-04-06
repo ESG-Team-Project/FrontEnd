@@ -6,6 +6,7 @@ import { getTokenFromAtom } from './core/axios';
 import * as fileService from './file';
 import * as griService from './gri';
 import * as userService from './user';
+import documentsService from './documents';
 
 // 타입 재export
 export type {
@@ -176,6 +177,7 @@ const apiService = {
   file: fileService,
   user: userService,
   gri: griService,
+  documents: documentsService,
 };
 
 export default apiService;
