@@ -3,6 +3,7 @@ import { del, get, post, put } from '..';
 import axiosInstance from '@/lib/api/core/axios';
 import type { CompanyGRIData, CompanyGRICategoryValue, TimeSeriesDataPoint } from '@/types/companyGriData';
 import { transformBackendDataToFrontend, transformFrontendDataToBackend, createInitialGriData } from './transformers';
+import { logApiResponseDetails } from '../error';
 
 /**
  * GRI 데이터 항목 인터페이스
@@ -268,14 +269,24 @@ export async function saveSingleGriCategory(
       return false;
     }
     
+    // 요청 데이터 로깅
+    console.log('백엔드로 전송할 GRI 데이터:', JSON.stringify(backendData, null, 2));
+    
     // API 호출
-    const response = await axiosInstance.put('/company/gri', backendData);
-    
-    if (response.status !== 200 && response.status !== 201) {
-      throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
+    try {
+      const response = await axiosInstance.put('/company/gri', backendData);
+      
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
+      }
+      
+      console.log('GRI 데이터 저장 성공:', response.status, response.data);
+      return true;
+    } catch (apiError) {
+      // 상세 오류 로깅
+      logApiResponseDetails(apiError, `GRI 카테고리(${categoryId}) 데이터 저장`);
+      throw apiError;
     }
-    
-    return true;
   } catch (error) {
     console.error(`GRI 카테고리(${categoryId}) 데이터 저장 중 오류:`, error);
     throw error;

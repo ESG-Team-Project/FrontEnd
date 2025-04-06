@@ -142,6 +142,88 @@ export const errorUtils = {
   getErrorMessage,
   handleApiError,
   callApi,
+  logApiResponseDetails
+};
+
+export const logApiResponseDetails = (error: any, context: string = ''): void => {
+  console.error(`[API 상세 로그] ${context || '오류'} 발생:`);
+  
+  if (!error) {
+    console.error('  - 오류 객체가 null 또는 undefined입니다.');
+    return;
+  }
+  
+  try {
+    // Axios 오류인 경우 응답 상세 정보 추출
+    if (error.isAxiosError) {
+      console.error('  - Axios 오류 발생');
+      
+      // 요청 정보
+      if (error.config) {
+        console.error('  - 요청 정보:');
+        console.error(`    URL: ${error.config.method?.toUpperCase() || 'UNKNOWN'} ${error.config.url}`);
+        console.error(`    헤더: ${JSON.stringify(error.config.headers)}`);
+        
+        if (error.config.data) {
+          try {
+            const data = typeof error.config.data === 'string' 
+              ? JSON.parse(error.config.data) 
+              : error.config.data;
+            console.error('    요청 데이터:', data);
+          } catch (e) {
+            console.error('    요청 데이터 (파싱 불가):', error.config.data);
+          }
+        }
+      }
+      
+      // 응답 정보
+      if (error.response) {
+        console.error(`  - 응답 상태: ${error.response.status} ${error.response.statusText}`);
+        
+        if (error.response.headers) {
+          console.error('  - 응답 헤더:', error.response.headers);
+        }
+        
+        if (error.response.data) {
+          console.error('  - 응답 데이터:', error.response.data);
+          
+          // 백엔드의 상세 에러 메시지 확인
+          if (typeof error.response.data === 'object' && error.response.data !== null) {
+            if (error.response.data.message) {
+              console.error(`  - 백엔드 오류 메시지: ${error.response.data.message}`);
+            }
+            
+            if (error.response.data.error) {
+              console.error(`  - 백엔드 오류 코드: ${error.response.data.error}`);
+            }
+            
+            // 스프링 부트의 에러 형식
+            if (error.response.data.errors && Array.isArray(error.response.data.errors)) {
+              console.error('  - 유효성 검사 오류:');
+              error.response.data.errors.forEach((err: any, index: number) => {
+                console.error(`    ${index + 1}. ${err.field || '필드 없음'}: ${err.defaultMessage || err.message || '메시지 없음'}`);
+              });
+            }
+          }
+        }
+      } 
+      // 응답이 없는 경우 (네트워크 오류 등)
+      else if (error.request) {
+        console.error('  - 서버 응답 없음 (네트워크 오류 가능성)');
+      }
+    } 
+    // 일반 오류인 경우
+    else if (error instanceof Error) {
+      console.error(`  - 일반 오류: ${error.name} - ${error.message}`);
+      console.error(`  - 스택 트레이스: ${error.stack}`);
+    } 
+    // 그 외 모든 타입의 오류
+    else {
+      console.error(`  - 알 수 없는 형식의 오류:`, error);
+    }
+  } catch (logError) {
+    console.error('  - 오류 로깅 중 추가 예외 발생:', logError);
+  }
 };
 
 export default errorUtils; 

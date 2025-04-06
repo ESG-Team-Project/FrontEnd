@@ -101,48 +101,110 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
  */
 export function transformFrontendDataToBackend(frontendData: CompanyGRIData): BackendGRIDataItem[] {
   const backendItems: BackendGRIDataItem[] = [];
-  const companyId = Number.parseInt(frontendData.companyId, 10);
+  
+  // 숫자로 변환 시도, 실패시 기본값 사용
+  let companyId: number;
+  try {
+    companyId = typeof frontendData.companyId === 'string' 
+      ? Number.parseInt(frontendData.companyId, 10) 
+      : (frontendData.companyId as unknown as number);
+    
+    // NaN 체크
+    if (Number.isNaN(companyId)) {
+      console.warn('CompanyId 숫자 변환 실패, 기본값 1 사용');
+      companyId = 1; // 기본값
+    }
+  } catch (error) {
+    console.warn('CompanyId 변환 오류, 기본값 1 사용:', error);
+    companyId = 1; // 기본값
+  }
 
   Object.values(frontendData.griValues).forEach(griValue => {
-    const [standardCode, disclosureCode] = griValue.categoryId.split('-');
+    if (!griValue || !griValue.categoryId) {
+      console.warn('유효하지 않은 GRI 값 무시:', griValue);
+      return;
+    }
     
-    // 시계열 데이터인 경우
-    if (griValue.dataType === 'timeSeries' && griValue.timeSeriesData && griValue.timeSeriesData.length > 0) {
-      const backendItem: BackendGRIDataItem = {
-        standardCode,
-        disclosureCode,
-        companyId,
-        timeSeriesData: griValue.timeSeriesData,
-        numericValue: griValue.timeSeriesData[griValue.timeSeriesData.length - 1].value as number,
-        disclosureValue: griValue.timeSeriesData[griValue.timeSeriesData.length - 1].value.toString()
-      };
-      backendItems.push(backendItem);
-    } 
-    // 텍스트 데이터인 경우
-    else if (griValue.dataType === 'text' && griValue.textValue !== null) {
-      const backendItem: BackendGRIDataItem = {
-        standardCode,
-        disclosureCode,
-        companyId,
-        disclosureValue: griValue.textValue || '',
-        numericValue: null
-      };
-      backendItems.push(backendItem);
-    } 
-    // 숫자 데이터인 경우
-    else if (griValue.dataType === 'numeric' && griValue.numericValue !== null) {
-      const backendItem: BackendGRIDataItem = {
-        standardCode,
-        disclosureCode,
-        companyId,
-        disclosureValue: griValue.numericValue?.toString() || '0',
-        numericValue: griValue.numericValue ?? null,
-        unit: griValue.numericUnit
-      };
-      backendItems.push(backendItem);
+    const parts = griValue.categoryId.split('-');
+    if (parts.length < 2) {
+      console.warn(`유효하지 않은 카테고리 ID 형식: ${griValue.categoryId}`);
+      return;
+    }
+    
+    const standardCode = parts[0];
+    const disclosureCode = parts[1];
+    
+    // null, undefined 등 유효하지 않은 값 검사
+    if (!standardCode || !disclosureCode) {
+      console.warn(`표준 코드 또는 공개 코드가 유효하지 않음: ${griValue.categoryId}`);
+      return;
+    }
+    
+    try {
+      // 시계열 데이터인 경우
+      if (griValue.dataType === 'timeSeries' && griValue.timeSeriesData && griValue.timeSeriesData.length > 0) {
+        // 시계열 데이터는 문자열로 직렬화하여 전송
+        const serializedData = JSON.stringify(griValue.timeSeriesData);
+        const latestData = griValue.timeSeriesData.reduce(
+          (latest, current) => (current.year > latest.year ? current : latest),
+          griValue.timeSeriesData[0]
+        );
+        
+        const backendItem: BackendGRIDataItem = {
+          standardCode,
+          disclosureCode,
+          companyId,
+          // 전체 시계열 데이터를 JSON 문자열로 저장
+          disclosureValue: serializedData,
+          // 최신 값을 numericValue에 저장
+          numericValue: typeof latestData.value === 'number' ? latestData.value : null,
+          unit: latestData.unit || ''
+        };
+        backendItems.push(backendItem);
+      } 
+      // 텍스트 데이터인 경우
+      else if (griValue.dataType === 'text') {
+        const backendItem: BackendGRIDataItem = {
+          standardCode,
+          disclosureCode,
+          companyId,
+          disclosureValue: griValue.textValue || '',
+          numericValue: null
+        };
+        backendItems.push(backendItem);
+      } 
+      // 숫자 데이터인 경우
+      else if (griValue.dataType === 'numeric') {
+        let numericValue: number | null = null;
+        
+        // 숫자 값이 있는 경우만 처리
+        if (griValue.numericValue !== null && griValue.numericValue !== undefined) {
+          // 문자열인 경우 변환 시도
+          if (typeof griValue.numericValue === 'string') {
+            numericValue = Number.parseFloat(griValue.numericValue);
+            if (Number.isNaN(numericValue)) numericValue = null;
+          } else {
+            numericValue = griValue.numericValue;
+          }
+        }
+        
+        const backendItem: BackendGRIDataItem = {
+          standardCode,
+          disclosureCode,
+          companyId,
+          disclosureValue: numericValue !== null ? String(numericValue) : '0',
+          numericValue,
+          unit: griValue.numericUnit || ''
+        };
+        backendItems.push(backendItem);
+      }
+    } catch (error) {
+      console.error(`GRI 항목 변환 오류 (${griValue.categoryId}):`, error);
+      // 오류 있는 항목은 건너뛰고 계속 진행
     }
   });
 
+  console.log(`변환된 백엔드 데이터: ${backendItems.length}개 항목`);
   return backendItems;
 }
 
