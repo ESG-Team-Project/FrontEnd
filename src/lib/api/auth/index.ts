@@ -31,13 +31,25 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
   try {
     console.log('[API Auth] 로그인 시도:', credentials.email);
 
+    // 요청 데이터 및 헤더 확인을 위한 로깅
+    console.log('[API Auth] 로그인 요청 데이터:', JSON.stringify(credentials));
+
     // API 요청 - POST /api/auth/login (최신 백엔드 엔드포인트)
     const response: AxiosResponse<LoginResponse> = await axiosInstance.post(
       '/api/auth/login',
-      credentials
+      credentials,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
     );
 
     console.log('[API Auth] 로그인 응답 받음:', response.status);
+
+    // 응답 데이터 로깅 (디버깅용)
+    console.log('[API Auth] 로그인 응답 데이터:', JSON.stringify(response.data));
 
     // 응답 구조 검사
     if (!response.data) {
@@ -70,8 +82,24 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
 
     // 응답 데이터 반환
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API Auth] 로그인 오류:', error);
+    
+    // 오류 응답 상세 정보 로깅
+    if (error.response) {
+      console.error('[API Auth] 오류 상태 코드:', error.response.status);
+      console.error('[API Auth] 오류 응답 데이터:', 
+        typeof error.response.data === 'object' 
+          ? JSON.stringify(error.response.data) 
+          : error.response.data
+      );
+      
+      // 403 오류일 경우 추가 메시지
+      if (error.response.status === 403) {
+        console.error('[API Auth] 403 Forbidden 오류 - 접근 권한이 없습니다. 백엔드 관리자에게 문의하세요.');
+      }
+    }
+    
     // 오류를 그대로 전파 (컴포넌트에서 처리)
     throw error;
   }

@@ -11,6 +11,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AuthContainer from '../AuthContainer';
+import type { z } from 'zod';
+import { toast } from '@/components/ui/use-toast';
+import { AxiosError } from 'axios';
 
 export function LoginForm() {
   const [email, setEmail] = useState('');
@@ -59,43 +62,64 @@ export function LoginForm() {
     };
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setIsLoading(true);
-
+  // 로그인 처리 함수
+  const handleLogin = async (data: z.infer<typeof formSchema>) => {
     try {
-      // API 호출 결과
-      const response = await authService.login({ email, password });
-      console.log('로그인 API 응답:', response);
-
-      // 타입 검사를 통한 안전한 타입 처리
-      if (isLoginResponse(response)) {
-        if (response.success && response.token && response.user) {
-          const userData = mapApiResponseToUser(response);
-          login({ user: userData, token: response.token });
-          router.push(redirectPath);
-        } else {
-          throw new Error(response.message || '로그인 응답 형식이 올바르지 않습니다.');
-        }
-      } else {
-        console.error('예상과 다른 응답 형식:', response);
-        throw new Error('서버에서 예상하지 않은 응답 형식이 반환되었습니다.');
+      setIsLoading(true);
+      
+      // 백엔드에서 기대하는 정확한 형식으로 데이터 구성
+      const loginData = {
+        email: data.email,
+        password: data.password
+      };
+      
+      console.log('로그인 시도:', loginData);
+      
+      // 로그인 API 호출
+      const response = await authService.login(loginData);
+      
+      if (!response || !response.token) {
+        throw new Error('로그인 실패: 응답에 토큰이 없습니다.');
       }
-    } catch (err: any) {
-      if (err.response) {
-        if (err.response.status === 401) {
-          setError('이메일 또는 비밀번호가 일치하지 않습니다.');
-        } else if (err.response.status === 400 && err.response.data?.errors) {
-          const validationErrors = Object.values(err.response.data.errors).join(', ');
-          setError(`입력값 유효성 검증에 실패했습니다: ${validationErrors}`);
-        } else {
-          setError(err.response.data?.message || '로그인 중 오류가 발생했습니다.');
-        }
+      
+      console.log('로그인 성공:', `${response.token.substring(0, 10)}...`);
+      
+      // 상태 관리에 로그인 정보 저장
+      login({ token: response.token, user: response.user });
+      
+      // 성공 메시지와 리디렉션
+      toast({
+        title: '로그인 성공',
+        description: '대시보드로 이동합니다.',
+      });
+      
+      // 리디렉션 처리
+      if (redirectPath) {
+        router.push(decodeURIComponent(redirectPath));
       } else {
-        setError(err.message || '로그인 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+        router.push('/dashboard');
       }
-      console.error('로그인 오류:', err);
+    } catch (error) {
+      console.error('로그인 오류:', error);
+      
+      // 403 오류 특별 처리
+      if (error instanceof AxiosError && error.response?.status === 403) {
+        toast({
+          variant: 'destructive',
+          title: '접근 권한 오류',
+          description: '계정에 로그인 권한이 없습니다. 관리자에게 문의하세요.',
+        });
+        return;
+      }
+      
+      // 일반 오류 처리
+      toast({
+        variant: 'destructive',
+        title: '로그인 실패',
+        description: error instanceof Error 
+          ? error.message 
+          : '로그인 처리 중 오류가 발생했습니다.',
+      });
     } finally {
       setIsLoading(false);
     }
