@@ -59,11 +59,11 @@ export default function ReportPage() {
   const getSupportLevelBadge = (supportLevel: SupportLevel) => {
     switch (supportLevel) {
       case 'full':
-        return <span className="text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-800">완전 지원</span>;
+        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">완전 지원</span>;
       case 'partial':
-        return <span className="text-xs font-medium px-2 py-1 rounded-full bg-yellow-100 text-yellow-800">부분 지원</span>;
+        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">부분 지원</span>;
       case 'coming':
-        return <span className="text-xs font-medium px-2 py-1 rounded-full bg-gray-100 text-gray-800">준비중</span>;
+        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">준비중</span>;
       default:
         return null;
     }
@@ -183,8 +183,8 @@ export default function ReportPage() {
               onClick={() => setSelectedFramework(framework)}
             >
               <CardHeader>
-                <div className="flex justify-between items-start">
-                  <CardTitle>{framework.name}</CardTitle>
+                <div className="flex justify-between items-center mb-1">
+                  <CardTitle className="text-lg">{framework.name}</CardTitle>
                   {getSupportLevelBadge(framework.supportLevel)}
                 </div>
                 <CardDescription>{framework.description}</CardDescription>
@@ -245,7 +245,9 @@ export default function ReportPage() {
                   <FileText className="mr-2 h-5 w-5 text-primary" />
                   {selectedFramework.name} 프레임워크
                 </div>
-                {getSupportLevelBadge(selectedFramework.supportLevel)}
+                <div className="ml-2">
+                  {getSupportLevelBadge(selectedFramework.supportLevel)}
+                </div>
               </CardTitle>
               <CardDescription>프레임워크에 대한 상세 정보 및 관리 페이지입니다.</CardDescription>
             </CardHeader>
