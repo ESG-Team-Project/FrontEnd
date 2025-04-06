@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { getAuditLogs } from '@/lib/api/gri';
-import { Refresh, User, Calendar, Clock, File, Database, Settings as SettingsIcon, Grid, LayoutGrid } from 'lucide-react';
+import { RefreshCw, User, Calendar, Clock, File, Database, Settings as SettingsIcon, Grid, LayoutGrid } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import { Separator } from '@/components/ui/separator';
@@ -106,9 +106,9 @@ export default function SettingsPage() {
           disabled={isLoading}
         >
           {isLoading ? (
-            <Refresh className="h-4 w-4 animate-spin mr-2" />
+            <RefreshCw className="h-4 w-4 animate-spin mr-2" />
           ) : (
-            <Refresh className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 mr-2" />
           )}
           새로고침
         </Button>
@@ -258,7 +258,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-center p-8 text-center text-muted-foreground rounded-md border">
                 {isLoading ? (
                   <div className="flex flex-col items-center">
-                    <Refresh className="w-8 h-8 mb-2 animate-spin text-primary" />
+                    <RefreshCw className="w-8 h-8 mb-2 animate-spin text-primary" />
                     <p>감사 로그를 불러오는 중...</p>
                   </div>
                 ) : (
