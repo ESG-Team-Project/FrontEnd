@@ -1,10 +1,7 @@
 'use client';
-import { useState, useCallback } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Upload, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import api from '@/lib/api';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -14,7 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import api from '@/lib/api';
+import { Upload, X } from 'lucide-react';
+import { useCallback, useState } from 'react';
+import { useDropzone } from 'react-dropzone';
 
 export function FileInputDialog({
   open,
@@ -71,22 +71,24 @@ export function FileInputDialog({
 
         // 컬럼 개수 결정 (가장 긴 행 기준)
         let maxCols = 0;
-        parsedData.forEach(row => {
+        
+        for (const row of parsedData) {
           const colCount = Object.keys(row).length; // 열의 개수
           if (colCount > maxCols) {
             maxCols = colCount;
           }
-        });
+        }
+        
         setMaxColumns(maxCols);
       };
 
       reader.readAsText(file);
     }
-    setFiles(prevFiles => [...prevFiles, ...acceptedFiles]);
+    setFiles((prevFiles) => [...prevFiles, ...acceptedFiles]);
   }, []);
 
   const parseCSV = (csvText: string): Map<number, Record<number, string>> => {
-    const rows = csvText.split('\n').map(row => row.trim());
+    const rows = csvText.split('\n').map((row) => row.trim());
     const result = new Map<any, any>();
 
     rows.forEach((row, rowIndex) => {
@@ -113,7 +115,7 @@ export function FileInputDialog({
 
   // 파일 삭제 핸들러
   const removeFile = (fileName: string) => {
-    setFiles(prevFiles => prevFiles.filter(file => file.name !== fileName));
+    setFiles((prevFiles) => prevFiles.filter((file) => file.name !== fileName));
     setCsvData(new Map()); // 파일 삭제 시 CSV 데이터 초기화
     setMaxColumns(0); // 파일 삭제 시 최대 컬럼 수 초기화
   };
@@ -151,10 +153,14 @@ export function FileInputDialog({
                     <TableHeader>
                       {Array.from({ length: maxColumns + 1 }).map((_, colIndex) => (
                         <TableHead
-                          key={colIndex}
+                          key={`header-col-${colIndex}`}
                           className="max-w-12 min-w-12 border p-2 overflow-hidden  whitespace-nowrap border-amber-400"
-                          onClick={e => (e.currentTarget.contentEditable = 'true')}
-                          onBlur={e => (e.currentTarget.contentEditable = 'true')}
+                          onClick={(e) => {
+                            e.currentTarget.contentEditable = 'true';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.contentEditable = 'true';
+                          }}
                         >
                           {colIndex === 0 ? '행|열' : `${colIndex}`}
                         </TableHead>
@@ -171,23 +177,23 @@ export function FileInputDialog({
                       Array.from(csvData.entries())
                         .slice(0, 5)
                         .map(([key, row], rowIndex) => (
-                          <TableRow key={rowIndex}>
+                          <TableRow key={`row-${rowIndex}-${key}`}>
                             {Array.from({ length: maxColumns + 1 }).map((_, cellIndex) => (
                               <TableCell
-                                key={cellIndex}
+                                key={`cell-${rowIndex}-${cellIndex}`}
                                 className={
                                   cellIndex === 0
                                     ? 'max-w-12 min-w-12 p-2 border border-amber-400 overflow-hidden whitespace-nowrap'
                                     : 'max-w-12 min-w-12 p-2 border overflow-hidden whitespace-nowrap cursor-pointer'
                                 }
-                                onClick={e => {
+                                onClick={(e) => {
                                   if (cellIndex === 0) {
                                     e.currentTarget.contentEditable = 'false';
                                   } else {
                                     e.currentTarget.contentEditable = 'true';
                                   }
                                 }}
-                                onBlur={e => {
+                                onBlur={(e) => {
                                   if (cellIndex === 0) {
                                     e.currentTarget.contentEditable = 'false';
                                   } else {
@@ -213,7 +219,7 @@ export function FileInputDialog({
           <div className="mt-4">
             <p className="font-bold text-gray-700 dark:text-gray-300">업로드된 파일</p>
             <ul className="mt-2 space-y-1">
-              {files.map(file => (
+              {files.map((file) => (
                 <li
                   key={file.name}
                   className="flex items-center justify-between py-2 text-sm text-gray-600 border-b dark:text-gray-300"

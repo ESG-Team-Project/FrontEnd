@@ -10,7 +10,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html>
+    <html lang="ko">
       <body>
         <div className="flex flex-col items-center justify-center min-h-screen px-4 text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">치명적인 오류가 발생했습니다</h1>

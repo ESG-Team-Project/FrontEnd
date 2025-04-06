@@ -1,42 +1,42 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { chartService } from '@/lib/api';
-import { Card, CardContent, CardTitle, CardHeader, CardDescription } from '@/components/ui/card';
-import {
-  LineChart as LineChartIcon,
-  BarChart as BarChartIcon,
-  PieChart as PieChartIcon,
-  AreaChart as AreaChartIcon,
-  Activity,
-  FileText,
-  PlusCircle,
-} from 'lucide-react';
-import { v4 as uuidv4 } from 'uuid';
-import type { ChartData, ChartType } from '@/types/chart';
-import { ApiChartData, transformApiToChartData } from '@/types/chart';
+import { ESGChartDialog } from '@/app/modal/chartinput-form';
+import { FileInputDialog } from '@/app/modal/fileinput-form';
 import DashboardShell from '@/components/dashboard-shell';
 import TotalCharts from '@/components/dashboards/TotalCharts';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomButton } from '@/components/ui/custom-button';
+import { chartService } from '@/lib/api';
+import type { ChartData, ChartType } from '@/types/chart';
+import { type ApiChartData, transformApiToChartData } from '@/types/chart';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
   ArcElement,
+  BarElement,
+  CategoryScale,
+  Chart as ChartJS,
+  type ChartData as ChartJSData,
+  type ChartOptions,
+  Filler,
+  Legend,
+  LineElement,
+  LinearScale,
+  PointElement,
   Title,
   Tooltip,
-  Legend,
-  Filler,
-  type ChartOptions,
-  type ChartData as ChartJSData,
 } from 'chart.js';
+import {
+  Activity,
+  AreaChart as AreaChartIcon,
+  BarChart as BarChartIcon,
+  FileText,
+  LineChart as LineChartIcon,
+  PieChart as PieChartIcon,
+  PlusCircle,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
-import { FileInputDialog } from '@/app/modal/fileinput-form';
-import { ESGChartDialog } from '@/app/modal/chartinput-form'; //=!=
-import { CustomButton } from '@/components/ui/custom-button';
+import { v4 as uuidv4 } from 'uuid';
 
 // Chart.js에 필요한 모든 요소 등록
 ChartJS.register(
@@ -151,36 +151,38 @@ export default function Dashboard() {
 
   useEffect(() => {
     console.log('대시보드 컴포넌트가 마운트되었습니다.');
-    
+
     const fetchCharts = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       console.log('차트 데이터를 불러오는 중...');
       try {
         const apiCharts = await chartService.getCharts();
         console.log(`총 ${apiCharts.length}개의 차트를 불러왔습니다.`);
 
         // apiCharts를 ChartData 형식으로 변환
-        const transformedCharts = apiCharts.map((apiChart: unknown) => {
-          try {
-            // API 응답의 추가적인 검증
-            if (
-              typeof apiChart === 'object' && 
-              apiChart !== null &&
-              'userId' in apiChart &&
-              'title' in apiChart &&
-              'chartType' in apiChart
-            ) {
-              return transformApiToChartData(apiChart as ApiChartData);
+        const transformedCharts = apiCharts
+          .map((apiChart: unknown) => {
+            try {
+              // API 응답의 추가적인 검증
+              if (
+                typeof apiChart === 'object' &&
+                apiChart !== null &&
+                'userId' in apiChart &&
+                'title' in apiChart &&
+                'chartType' in apiChart
+              ) {
+                return transformApiToChartData(apiChart as ApiChartData);
+              }
+              console.error('유효하지 않은 차트 데이터:', apiChart);
+              return null;
+            } catch (err) {
+              console.error('차트 데이터 변환 오류:', err);
+              return null;
             }
-            console.error("유효하지 않은 차트 데이터:", apiChart);
-            return null;
-          } catch (err) {
-            console.error("차트 데이터 변환 오류:", err);
-            return null;
-          }
-        }).filter((chart): chart is ChartData => chart !== null);
+          })
+          .filter((chart): chart is ChartData => chart !== null);
 
         setCharts(transformedCharts.length > 0 ? transformedCharts : sampleCharts);
         setError(null);
@@ -198,7 +200,7 @@ export default function Dashboard() {
 
   // 차트 추가 함수
   const addChart = (newChart: ChartData) => {
-    setCharts(prev => [...prev, { ...newChart, id: uuidv4() }]);
+    setCharts((prev) => [...prev, { ...newChart, id: uuidv4() }]);
   };
 
   // 차트 아이콘 선택 함수
@@ -238,22 +240,13 @@ export default function Dashboard() {
     <DashboardShell
       pageTitle="ESG 대시보드"
       rightMenuItems={
-        <>
-          <Button
-            variant="outline"
-            className="h-8 px-2 text-xs bg-white md:text-sm md:px-4 md:h-9"
-            onClick={() => setIsChartModalOpen(true)}
-          >
-            차트 추가
-          </Button>
-          <Button
-            variant="outline"
-            className="h-8 px-2 ml-2 text-xs bg-white md:text-sm md:px-4 md:h-9"
-            onClick={() => setFileModalOpen(true)}
-          >
-            파일 선택
-          </Button>
-        </>
+        <Button
+          variant="outline"
+          className="h-8 px-2 text-xs bg-white md:text-sm md:px-4 md:h-9"
+          onClick={() => setIsChartModalOpen(true)}
+        >
+          차트 추가
+        </Button>
       }
     >
       <div className="flex items-center justify-between mb-6">
@@ -261,24 +254,21 @@ export default function Dashboard() {
           <h1 className="text-2xl font-bold">ESG 대시보드</h1>
           {error && <p className="text-sm text-red-500">{error}</p>}
         </div>
-        <Button onClick={() => setIsChartModalOpen(true)}>
-          <PlusCircle className="w-4 h-4 mr-2" /> 차트 추가
-        </Button>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {[1, 2, 3, 4].map(i => (
+          {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="w-full h-64 animate-pulse">
               <CardContent className="flex items-center justify-center h-full">
-                <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                <div className="w-10 h-10 bg-gray-200 rounded-full" />
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
-          {charts.map(chart => (
+          {charts.map((chart) => (
             <div key={chart.id} className={getColumnClass(chart.colSpan)}>
               <TotalCharts chartData={chart} />
             </div>
@@ -287,7 +277,15 @@ export default function Dashboard() {
       )}
 
       {/* 모달 */}
-      <ESGChartDialog open={isChartModalOpen} setOpen={setIsChartModalOpen} />
+      <ESGChartDialog
+        open={isChartModalOpen}
+        setOpen={setIsChartModalOpen}
+        onChartAdd={(newChart) => {
+          console.log('새 차트 추가됨:', newChart);
+          // 차트 배열에 새 차트 추가
+          setCharts((prevCharts) => [...prevCharts, newChart]);
+        }}
+      />
       <FileInputDialog open={fileModalOpen} setOpen={setFileModalOpen} />
     </DashboardShell>
   );

@@ -1,21 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import {
-  CompanyGRIData,
-  CompanyGRICategoryValue,
-  TimeSeriesDataPoint,
-} from '@/types/companyGriData'; // TimeSeriesDataPoint 임포트
-import { GRICategory } from '@/data/griCategories'; // 경로 확인
-import { GRIGroup } from '@/data/griGroups'; // 경로 확인
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'; // shadcn/ui 경로 확인
 import { CustomButton } from '@/components/ui/custom-button'; // CustomButton 추가
 import {
   Select,
@@ -24,6 +8,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'; // shadcn/ui 경로 확인
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'; // shadcn/ui 경로 확인
+import type { GRICategory } from '@/data/griCategories'; // 경로 확인
+import type { GRIGroup } from '@/data/griGroups'; // 경로 확인
+import type {
+  CompanyGRICategoryValue,
+  CompanyGRIData,
+  TimeSeriesDataPoint,
+} from '@/types/companyGriData'; // TimeSeriesDataPoint 임포트
+import { useEffect, useState } from 'react';
 import { GriEditModal } from './gri-edit-modal'; // 새로 분리한 모달 컴포넌트 임포트
 
 interface GriEditFormProps {
@@ -84,31 +84,25 @@ export default function GriEditForm({
   // 컴포넌트 마운트 시 또는 initialData 변경 시 formData 초기화 강화
   useEffect(() => {
     const initialFormValues: Record<string, CompanyGRICategoryValue> = {};
-    griCategories.forEach(cat => {
+    
+    for (const cat of griCategories) {
       const existingValue = initialData.griValues[cat.id];
-      // 카테고리에 지정된 기본 데이터 타입 사용 (없으면 isQuantitative 기반으로 결정)
-      const defaultDataType: GRIDataType =
-        cat.defaultDataType || (cat.isQuantitative ? 'timeSeries' : 'text');
-
+      
+      // 기존 데이터가 있으면 그대로 사용
       if (existingValue) {
-        // 기존 데이터가 있고 dataType이 설정되어 있으면 사용, 아니면 defaultDataType 사용
-        initialFormValues[cat.id] = {
-          ...existingValue,
-          dataType: (existingValue.dataType as GRIDataType) || defaultDataType,
-          categoryId: cat.id,
-        };
+        initialFormValues[cat.id] = existingValue;
       } else {
-        // 데이터가 없으면 기본 구조 생성
+        // 새 카테고리라면 빈 데이터 생성
         initialFormValues[cat.id] = {
           categoryId: cat.id,
-          dataType: defaultDataType,
-          // 데이터 타입에 따라 필드 초기화
-          ...(defaultDataType === 'timeSeries' ? { timeSeriesData: [] } : {}),
-          ...(defaultDataType === 'text' ? { textValue: null } : {}),
-          ...(defaultDataType === 'numeric' ? { numericValue: null } : {}),
+          dataType: cat.defaultDataType as 'timeSeries' | 'text' | 'numeric',
+          timeSeriesData: cat.defaultDataType === 'timeSeries' ? [] : undefined,
+          textValue: cat.defaultDataType === 'text' ? '' : null,
+          numericValue: cat.defaultDataType === 'numeric' ? 0 : null
         };
       }
-    });
+    }
+    
     setFormData(initialFormValues);
   }, [initialData, griCategories]);
 
@@ -130,10 +124,10 @@ export default function GriEditForm({
         setModalDecimalPlaces(0);
         break;
 
-      case 'timeSeries':
+      case 'timeSeries': {
         // timeSeriesData가 배열이 아니면 빈 배열로 초기화
         const timeSeriesData = Array.isArray(currentValue.timeSeriesData)
-          ? [...currentValue.timeSeriesData.map(d => ({ ...d }))]
+          ? [...currentValue.timeSeriesData.map((d) => ({ ...d }))]
           : [];
 
         setModalTimeSeriesData(timeSeriesData); // 깊은 복사
@@ -142,6 +136,7 @@ export default function GriEditForm({
         setModalNumericUnit('');
         setModalDecimalPlaces(0);
         break;
+      }
 
       case 'numeric':
         setModalNumericValue(
@@ -198,7 +193,7 @@ export default function GriEditForm({
 
         return true;
       }
-      
+
       return false;
     } catch (error) {
       console.error('데이터 저장 중 오류 발생:', error);
@@ -212,7 +207,7 @@ export default function GriEditForm({
   const filteredCategories =
     selectedGroup === 'all'
       ? griCategories
-      : griCategories.filter(cat => getGroupIdFromCategoryId(cat.id) === selectedGroup);
+      : griCategories.filter((cat) => getGroupIdFromCategoryId(cat.id) === selectedGroup);
 
   // 현재 값 표시 함수 수정
   const displayCurrentValue = (value: CompanyGRICategoryValue | undefined): string => {
@@ -226,8 +221,8 @@ export default function GriEditForm({
 
       case 'timeSeries':
         if (value.timeSeriesData && value.timeSeriesData.length > 0) {
-          const latestYear = Math.max(...value.timeSeriesData.map(d => d.year));
-          const latestData = value.timeSeriesData.find(d => d.year === latestYear);
+          const latestYear = Math.max(...value.timeSeriesData.map((d) => d.year));
+          const latestData = value.timeSeriesData.find((d) => d.year === latestYear);
           return latestData?.value?.toString() ?? `${value.timeSeriesData.length}개 항목`;
         }
         return '항목 없음';
@@ -238,7 +233,7 @@ export default function GriEditForm({
             value.decimalPlaces !== undefined && value.decimalPlaces > 0
               ? value.numericValue.toFixed(value.decimalPlaces)
               : value.numericValue.toString();
-          return `${formattedValue}${value.numericUnit ? ' ' + value.numericUnit : ''}`;
+          return `${formattedValue}${value.numericUnit ? ` ${value.numericUnit}` : ''}`;
         }
         return '-';
 
@@ -259,7 +254,7 @@ export default function GriEditForm({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">전체 보기</SelectItem>
-            {griGroups.map(group => (
+            {griGroups.map((group) => (
               <SelectItem key={group.id} value={group.id}>
                 {group.id} - {group.name}
               </SelectItem>
@@ -282,7 +277,7 @@ export default function GriEditForm({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredCategories.map(category => (
+              {filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.id}</TableCell>
                   <TableCell className="max-w-[420px]">
@@ -296,7 +291,7 @@ export default function GriEditForm({
                     </div>
                     {/* 설명 텍스트 */}
                     {category.description.split('\n').map((line, idx) => (
-                      <p key={idx} className="text-sm my-0.5">
+                      <p key={`${category.id}-line-${idx}`} className="text-sm my-0.5">
                         {line}
                       </p>
                     ))}

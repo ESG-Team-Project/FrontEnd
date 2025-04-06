@@ -1,17 +1,17 @@
 'use client';
 
-import * as React from 'react';
+import { Input } from '@/components/ui/input';
 import {
   Table,
-  TableHeader,
   TableBody,
-  TableRow,
-  TableHead,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
-import { Input } from '@/components/ui/input';
-import { Plus, Trash2, Edit } from 'lucide-react';
-import { ChartData } from '@/types/chart';
+import type { ChartData } from '@/types/chart';
+import { Edit, Plus, Trash2 } from 'lucide-react';
+import * as React from 'react';
 
 interface DataTableProps {
   initialLabels?: string[];
@@ -26,7 +26,7 @@ export default function DataTable({
 }: DataTableProps) {
   const [columns, setColumns] = React.useState<string[]>(() => {
     if (initialLabels && initialLabels.length > 0) {
-      const datasetLabels = initialDatasets?.map(ds => ds?.label || '') || [];
+      const datasetLabels = initialDatasets?.map((ds) => ds?.label || '') || [];
       return ['Label', ...datasetLabels];
     }
     return ['Label', 'Value'];
@@ -36,7 +36,7 @@ export default function DataTable({
     if (initialLabels && initialLabels.length > 0) {
       return initialLabels.map((label, index) => ({
         id: Date.now() + index,
-        columns: [label, ...(initialDatasets?.map(ds => ds?.data?.[index] ?? '') || [])],
+        columns: [label, ...(initialDatasets?.map((ds) => ds?.data?.[index] ?? '') || [])],
       }));
     }
     return [{ id: Date.now(), columns: Array(columns.length).fill('') }];
@@ -46,13 +46,13 @@ export default function DataTable({
   const [tempColumnName, setTempColumnName] = React.useState<string>('');
 
   React.useEffect(() => {
-    const newLabels = rows.map(row => row.columns[0]);
+    const newLabels = rows.map((row) => row.columns[0]);
     const newDatasets: ChartData['datasets'] = columns.slice(1).map((colName, colIndex) => ({
       label: colName,
-      data: rows.map(row => {
+      data: rows.map((row) => {
         const value = row.columns[colIndex + 1];
         const numericValue = Number(value);
-        return isNaN(numericValue) ? 0 : numericValue;
+        return Number.isNaN(numericValue) ? 0 : numericValue;
       }),
     }));
     onDataChange(newLabels, newDatasets);
@@ -69,13 +69,13 @@ export default function DataTable({
   };
 
   const deleteRow = (rowId: number) => {
-    setRows(rows.filter(row => row.id !== rowId));
+    setRows(rows.filter((row) => row.id !== rowId));
   };
 
   const addColumn = () => {
     const newColumnName = `데이터셋 ${columns.length}`;
     setColumns([...columns, newColumnName]);
-    setRows(rows.map(row => ({ ...row, columns: [...row.columns, ''] })));
+    setRows(rows.map((row) => ({ ...row, columns: [...row.columns, ''] })));
   };
 
   const handleColumnHeaderDoubleClick = (index: number) => {
@@ -112,7 +112,7 @@ export default function DataTable({
               <TableRow>
                 {columns.map((col, colIndex) => (
                   <TableHead
-                    key={colIndex}
+                    key={`col-${colIndex}`}
                     className={`min-w-[150px] ${colIndex > 0 ? 'cursor-pointer' : ''}`}
                     onDoubleClick={() => handleColumnHeaderDoubleClick(colIndex)}
                   >
@@ -131,35 +131,29 @@ export default function DataTable({
                   </TableHead>
                 ))}
                 <TableHead className="min-w-[100px]">
-                  <button onClick={addColumn} className="text-blue-500">
+                  <button type="button" onClick={addColumn} className="text-blue-500">
                     <Plus size={32} />
                   </button>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rows.map(row => (
+              {rows.map((row) => (
                 <TableRow key={row.id}>
                   {row.columns.map((cell, colIndex) => (
-                    <TableCell key={colIndex} className="min-w-[150px]">
+                    <TableCell key={`cell-${row.id}-${colIndex}`} className="min-w-[150px]">
                       <Input
                         value={cell}
-                        onChange={e =>
-                          handleInputChange(
-                            rows.findIndex(r => r.id === row.id),
-                            colIndex,
-                            e.target.value
-                          )
-                        }
-                        placeholder={`Enter ${columns[colIndex]}`}
+                        onChange={(e) => handleInputChange(rows.findIndex((r) => r.id === row.id), colIndex, e.target.value)}
+                        className="border-none focus:ring-0"
                       />
                     </TableCell>
                   ))}
                   <TableCell className="flex gap-2 min-w-[100px]">
-                    <button className="text-gray-500">
+                    <button type="button" className="text-gray-500">
                       <Edit size={24} />
                     </button>
-                    <button onClick={() => deleteRow(row.id)} className="text-red-500">
+                    <button type="button" onClick={() => deleteRow(row.id)} className="text-red-500">
                       <Trash2 size={24} />
                     </button>
                   </TableCell>
@@ -170,6 +164,7 @@ export default function DataTable({
         </div>
       </div>
       <button
+        type="button"
         onClick={addRow}
         className="px-4 py-2 mt-4 text-white bg-blue-500 rounded hover:bg-black-600"
       >
