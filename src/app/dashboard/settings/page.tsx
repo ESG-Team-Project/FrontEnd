@@ -9,15 +9,6 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { getAuditLogs } from '@/lib/api/gri';
-import { 
-  Table, 
-  TableBody, 
-  TableCaption, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from '@/components/ui/table';
 import { Refresh, User, Calendar, Clock, File, Database, Settings as SettingsIcon, Grid, LayoutGrid } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -196,58 +187,72 @@ export default function SettingsPage() {
                 <p>{error}</p>
               </div>
             ) : auditLogs.length > 0 ? (
-              <div className="rounded-md border">
-                <Table>
-                  <TableCaption>최근 감사 로그 기록입니다.</TableCaption>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[180px]">날짜/시간</TableHead>
-                      <TableHead>작업자</TableHead>
-                      <TableHead>작업</TableHead>
-                      <TableHead>대상</TableHead>
-                      <TableHead className="hidden md:table-cell">상세 정보</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {auditLogs.map((log) => (
-                      <TableRow key={log.id}>
-                        <TableCell className="whitespace-nowrap">
-                          <div className="flex items-center">
-                            <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
-                            {formatDate(log.timestamp)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <User className="w-4 h-4 mr-2 text-muted-foreground" />
-                            {log.userName || log.userId || '알 수 없음'}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-medium ${
-                            log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
-                            log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
-                            log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {getActionLabel(log.action)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center">
-                            {getEntityTypeIcon(log.entityType)}
-                            <span className="ml-2">
-                              {log.entityType} {log.entityId ? `(${log.entityId})` : ''}
+              <div className="rounded-md border overflow-x-auto">
+                <div className="w-full caption-bottom text-sm">
+                  <table className="w-full">
+                    <caption className="mt-4 text-sm text-muted-foreground">
+                      최근 감사 로그 기록입니다.
+                    </caption>
+                    <thead className="[&_tr]:border-b">
+                      <tr className="border-b">
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground w-[180px]">
+                          날짜/시간
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                          작업자
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                          작업
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                          대상
+                        </th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground hidden md:table-cell">
+                          상세 정보
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="[&_tr:last-child]:border-0">
+                      {auditLogs.map((log) => (
+                        <tr key={log.id} className="border-b transition-colors hover:bg-muted/50">
+                          <td className="p-4 align-middle whitespace-nowrap">
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+                              {formatDate(log.timestamp)}
+                            </div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <div className="flex items-center">
+                              <User className="w-4 h-4 mr-2 text-muted-foreground" />
+                              {log.userName || log.userId || '알 수 없음'}
+                            </div>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <span className={`inline-flex items-center justify-center rounded-full px-2 py-1 text-xs font-medium ${
+                              log.action === 'CREATE' ? 'bg-green-100 text-green-700' :
+                              log.action === 'UPDATE' ? 'bg-blue-100 text-blue-700' :
+                              log.action === 'DELETE' ? 'bg-red-100 text-red-700' :
+                              'bg-gray-100 text-gray-700'
+                            }`}>
+                              {getActionLabel(log.action)}
                             </span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell max-w-xs truncate">
-                          {log.details || '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <div className="flex items-center">
+                              {getEntityTypeIcon(log.entityType)}
+                              <span className="ml-2">
+                                {log.entityType} {log.entityId ? `(${log.entityId})` : ''}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-4 align-middle hidden md:table-cell max-w-xs truncate">
+                            {log.details || '-'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-center p-8 text-center text-muted-foreground rounded-md border">
