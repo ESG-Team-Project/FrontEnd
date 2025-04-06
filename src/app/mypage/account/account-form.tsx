@@ -9,10 +9,14 @@ import type { AuthState, User } from '@/lib/atoms/auth';
 import api from '@/lib/api';
 
 export default function AccountForm() {
+  // 현재 로그인한 사용자의 인증 정보 (예: 토큰)
   const [auth] = useAtom(authAtom);
-  const [user, setUser] = useAtom(userAtom);
+  // 현재 로그인한 사용자의 정보. user는 사용자 객체, setUser는 사용자 정보 업데이트 함수
+  const [user, setUser] = useState<User | null>(null);
+  // 로그인 관련 로직을 실행하는 함수. 호출 시 내부적으로 토큰 및 사용자 정보를 갱신
   const [, login] = useAtom(loginAtom);
 
+  // 사용자 입력값을 저장하는 상태 변수
   const [formData, setFormData] = useState<
     Partial<User & { password?: string; confirmPassword?: string }>
   >({
@@ -20,9 +24,11 @@ export default function AccountForm() {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: '',
+    phoneNumber: '',
   });
 
+  // userAtom 값이 변경될 때마다 formData를 업데이트
+  // 로그인한 사용자 정보(user)가 존재하면 formData 상태를 해당 사용자 정보로 초기화
   useEffect(() => {
     if (user) {
       setFormData({
@@ -30,27 +36,45 @@ export default function AccountForm() {
         email: user.email || '',
         password: '',
         confirmPassword: '',
-        phone: user.phone || '',
+        phoneNumber: user.phoneNumber || '',
       });
     }
-  }, [user]);
+  }, [user]);   // user 값이 변경될 때마다 실행
 
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const userData = await api.user.getCurrentUser();
+        console.log('사용자 정보:', userData);
+        setUser(userData); // 사용자 정보를 상태에 저장
+      } catch (err) {
+        console.error('사용자 정보 조회 실패:', err);
+      }
+    };
+
+    fetchUserInfo();
+  }, [])
+
+  // 입력 필드(input)의 값이 변경될 때마다 호출되는 함수
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target;   // 입력 요소의 name 속성과 입력된 값
     setFormData((prevData: typeof formData) => ({
-      ...prevData,
-      [name]: value,
+      ...prevData,      // 이전 상태를 복사
+      [name]: value,    // 변경된 name 필드만 새로운 값으로 덮어씀
     }));
   };
 
+  // 폼 제출 시 호출되는 함수
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault();   // 기본 제출 동작 방지
 
+    // 1. 비밀번호 확인 유효성 검사
     if (formData.password && formData.password !== formData.confirmPassword) {
       alert('비밀번호가 일치하지 않습니다.');
       return;
     }
 
+    // 2. 인증 상태 검사 (로그인 여부 및 토큰 존재 확인)
     const currentAuth = auth as AuthState | null;
     if (!currentAuth || typeof currentAuth !== 'object' || !currentAuth.token) {
       alert('인증 정보가 유효하지 않습니다. 다시 로그인해주세요.');
@@ -59,16 +83,20 @@ export default function AccountForm() {
     }
     const token = currentAuth.token;
 
+    // 3. 서버에 전송할 사용자 정보 객체 생성
     const updateData: Partial<User> & { password?: string } = {
       name: formData.name,
       email: formData.email,
-      phone: formData.phone,
+      phoneNumber: formData.phoneNumber,
     };
+
+    // 비밀번호가 입력되었다면 포함 (선택적)
     if (formData.password) {
       updateData.password = formData.password;
     }
 
     try {
+      // 4. 사용자 정보 업데이트 요청(PUT)
       const updatedUserData = await api.user.updateUser(updateData);
 
       let finalUserData: User | null = null;
@@ -79,7 +107,7 @@ export default function AccountForm() {
           ...user,
           name: formData.name ?? user.name,
           email: formData.email ?? user.email,
-          phone: formData.phone ?? user.phone,
+          phoneNumber: formData.phoneNumber ?? user.phoneNumber,
         };
       }
 
@@ -99,7 +127,7 @@ export default function AccountForm() {
   };
 
   return (
-    <form className="space-y-6 w-full max-w-4xl" onSubmit={handleSubmit}>
+    <form className="w-full max-w-4xl space-y-6" onSubmit={handleSubmit}>
       <LabeledInputBox
         label="담당자 이름"
         name="name"
@@ -154,9 +182,9 @@ export default function AccountForm() {
       </LabeledInputBox>
       <LabeledInputBox
         label="휴대전화"
-        name="phone"
+        name="phoneNumber"
         type="tel"
-        value={formData.phone}
+        value={formData.phoneNumber}
         onChange={handleChange}
         direction="row"
         width="w-[400px]"

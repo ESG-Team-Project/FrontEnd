@@ -8,7 +8,7 @@ import { authAtom } from '@/lib/atoms/auth';
  * 환경 변수에서 API URL을 가져오거나, 기본값을 사용합니다.
  * 개발 환경과 배포 환경에서 다른 URL을 사용할 수 있습니다.
  */
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.224:8080/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 console.log('[AXIOS] API 기본 URL:', baseURL);
 
 // 로컬 스토리지에 인증 정보를 저장할 때 사용하는 키

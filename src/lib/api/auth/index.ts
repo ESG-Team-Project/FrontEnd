@@ -61,7 +61,7 @@ interface SignupResponse {
     name: string;   // 사용자 이름
     email: string;  // 이메일 주소
     role: string;   // 권한 (일반적으로 'user')
-    company?: string; // 회사명 (선택적)
+    companyName?: string; // 회사명 (선택적)
   };
   token: string;    // 자동 로그인을 위한 인증 토큰
 }
@@ -145,7 +145,7 @@ export const signup = async (userData: SignUpRequest): Promise<SignupResponse> =
         name: response.data.name,
         email: response.data.email,
         role: 'user',                   // 기본 권한: 'user'
-        company: response.data.companyName
+        companyName: response.data.companyName
       },
       token: response.data.token || 'temporary-token' // 토큰이 없으면 임시 토큰 사용
     };
