@@ -37,6 +37,9 @@ import {
 import { useEffect, useState } from 'react';
 import { Bar, Line, Pie } from 'react-chartjs-2';
 import { v4 as uuidv4 } from 'uuid';
+import { useDashboard } from '@/contexts/dashboard-context';
+import { dashboardColumnsAtom } from '@/lib/atoms';
+import { useAtom } from 'jotai';
 
 // Chart.js에 필요한 모든 요소 등록
 ChartJS.register(
@@ -142,12 +145,31 @@ const sampleCharts: ChartData[] = [
   },
 ];
 
+// 반응형 열 크기 클래스 조정
+const getColumnClass = (colSpan = 1, columnsCount: 3 | 4 = 4) => {
+  const lgColSpan = columnsCount === 3 ? Math.min(colSpan, 3) : Math.min(colSpan, 4);
+  
+  switch (colSpan) {
+    case 1:
+      return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
+    case 2:
+      return `col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-${Math.min(2, lgColSpan)} xl:col-span-${Math.min(2, lgColSpan)}`;
+    case 3:
+      return `col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-${Math.min(3, lgColSpan)} xl:col-span-${Math.min(3, lgColSpan)}`;
+    case 4:
+      return `col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-${lgColSpan} xl:col-span-${lgColSpan}`;
+    default:
+      return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
+  }
+};
+
 export default function Dashboard() {
   const [charts, setCharts] = useState<ChartData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
   const [fileModalOpen, setFileModalOpen] = useState(false);
+  const [dashboardColumns] = useAtom(dashboardColumnsAtom);
 
   useEffect(() => {
     console.log('대시보드 컴포넌트가 마운트되었습니다.');
@@ -220,22 +242,6 @@ export default function Dashboard() {
     }
   };
 
-  // 반응형 열 크기 클래스 조정
-  const getColumnClass = (colSpan = 1) => {
-    switch (colSpan) {
-      case 1:
-        return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
-      case 2:
-        return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-2 xl:col-span-2';
-      case 3:
-        return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-3 xl:col-span-3';
-      case 4:
-        return 'col-span-1 sm:col-span-2 md:col-span-4 lg:col-span-4 xl:col-span-4';
-      default:
-        return 'col-span-1 sm:col-span-2 md:col-span-2 lg:col-span-1 xl:col-span-1';
-    }
-  };
-
   return (
     <DashboardShell
       pageTitle="ESG 대시보드"
@@ -267,9 +273,9 @@ export default function Dashboard() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-4">
+        <div className={dashboardColumns === 3 ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-3 xl:grid-cols-3' : 'grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4'}>
           {charts.map((chart) => (
-            <div key={chart.id} className={getColumnClass(chart.colSpan)}>
+            <div key={chart.id} className={getColumnClass(chart.colSpan, dashboardColumns)}>
               <TotalCharts chartData={chart} />
             </div>
           ))}
