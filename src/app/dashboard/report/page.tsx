@@ -265,7 +265,7 @@ export default function ReportPage() {
                       <div className="flex flex-wrap gap-4">
                         <Button 
                           onClick={() => handleDownload(selectedFramework, 'pdf')}
-                          disabled={isDownloading || selectedFramework.supportLevel === 'coming'}
+                          disabled={isDownloading || selectedFramework?.supportLevel !== 'full' && selectedFramework?.supportLevel !== 'partial'}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           PDF로 다운로드
@@ -273,7 +273,7 @@ export default function ReportPage() {
                         <Button 
                           variant="outline"
                           onClick={() => handleDownload(selectedFramework, 'docx')}
-                          disabled={isDownloading || selectedFramework.supportLevel === 'coming'}
+                          disabled={isDownloading || selectedFramework?.supportLevel !== 'full' && selectedFramework?.supportLevel !== 'partial'}
                         >
                           <FileText className="mr-2 h-4 w-4" />
                           DOCX로 다운로드
@@ -290,7 +290,7 @@ export default function ReportPage() {
                       <div className="flex flex-wrap gap-4">
                         <Button 
                           onClick={() => handleDownload(selectedFramework, 'pdf', true)}
-                          disabled={isDownloading || selectedFramework.supportLevel === 'coming'}
+                          disabled={isDownloading || selectedFramework?.supportLevel !== 'full' && selectedFramework?.supportLevel !== 'partial'}
                         >
                           <Building className="mr-2 h-4 w-4" />
                           회사 보고서 PDF
@@ -298,7 +298,7 @@ export default function ReportPage() {
                         <Button 
                           variant="outline"
                           onClick={() => handleDownload(selectedFramework, 'docx', true)}
-                          disabled={isDownloading || selectedFramework.supportLevel === 'coming'}
+                          disabled={isDownloading || selectedFramework?.supportLevel !== 'full' && selectedFramework?.supportLevel !== 'partial'}
                         >
                           <Building className="mr-2 h-4 w-4" />
                           회사 보고서 DOCX
