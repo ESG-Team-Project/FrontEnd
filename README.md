@@ -59,7 +59,7 @@ NEXT_PUBLIC_API_URL=http://localhost:8080/api
 NEXT_PUBLIC_BYPASS_AUTH=false
 
 # API URL 설정
-NEXT_PUBLIC_API_URL=http://192.168.0.224:8080/api
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 **.env.production** (프로덕션 환경)
@@ -69,7 +69,7 @@ NEXT_PUBLIC_API_URL=http://192.168.0.224:8080/api
 NEXT_PUBLIC_BYPASS_AUTH=false
 
 # API URL 설정
-NEXT_PUBLIC_API_URL=http://192.168.0.224:8080/api
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 ```
 
 **주요 환경 변수**:

@@ -13,7 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const esgIndicators = {
+export const esgIndicators = {
   environment: [
     { id: '301-1', label: '사용된 원료의 중량과 부피' },
     { id: '301-2', label: '재활용 투입재 사용' },
@@ -246,7 +246,7 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
                     </CommandItem>
                   ))
                 ) : (
-                  <ScrollArea className="h-72 w-48 overflow-auto rounded-md border">
+                  <ScrollArea className="w-48 overflow-auto border rounded-md h-72">
                     <div className="p-4">
                       {indicators.map(option => (
                         <CommandItem
@@ -294,7 +294,7 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
               <CommandInput placeholder="지표 검색" />
               <CommandList>
                 <CommandEmpty>결과 없음</CommandEmpty>
-                <ScrollArea className="h-72 w-full overflow-auto rounded-md border">
+                <ScrollArea className="w-full overflow-auto border rounded-md h-72">
                   <CommandGroup>
                     {indicators.map(option => (
                       <CommandItem
