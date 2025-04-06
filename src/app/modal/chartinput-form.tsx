@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { v4 as uuidv4 } from 'uuid';
 import { Value } from '@radix-ui/react-select';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { ESGCombobox, esgIndicators } from './combobox';
 import DataTable from './datatable';
@@ -37,6 +37,81 @@ import type {
 } from '@/types/chart';
 import type { CompanyGRICategoryValue, CompanyGRIData } from '@/types/companyGriData';
 
+// 단계 타입 정의
+type ChartStep = 'info' | 'dataSource' | 'esgSelect' | 'datatable' | 'griSelect';
+
+// 단계 관리 훅
+function useChartStepManager(initialStep: ChartStep = 'info') {
+  const [step, setStep] = useState<ChartStep>(initialStep);
+  const [dataSource, setDataSource] = useState<'gri' | 'direct' | 'csv'>('direct');
+  
+  // 다음 단계로 이동하는 함수
+  const goToNextStep = useCallback((
+    currentSelectedGriCategory: string | null = null,
+    prepareGriChartDataFn?: () => void
+  ) => {
+    if (step === 'info') {
+      setStep('dataSource');
+    } else if (step === 'dataSource') {
+      if (dataSource === 'gri') {
+        setStep('griSelect');
+      } else {
+        setStep('esgSelect');
+      }
+    } else if (step === 'esgSelect') {
+      setStep('datatable');
+    } else if (step === 'griSelect') {
+      if (!currentSelectedGriCategory) {
+        alert('GRI 카테고리를 선택해주세요.');
+        return false;
+      }
+      // GRI 차트 데이터 준비 함수 호출
+      if (prepareGriChartDataFn) {
+        prepareGriChartDataFn();
+      }
+      setStep('datatable');
+    }
+    return true;
+  }, [step, dataSource]);
+  
+  // 이전 단계로 이동하는 함수
+  const goToPreviousStep = useCallback(() => {
+    if (step === 'dataSource') {
+      setStep('info');
+    } else if (step === 'esgSelect') {
+      setStep('dataSource');
+    } else if (step === 'griSelect') {
+      setStep('dataSource');
+    } else if (step === 'datatable') {
+      if (dataSource === 'gri') {
+        setStep('griSelect');
+      } else {
+        setStep('esgSelect');
+      }
+    }
+  }, [step, dataSource]);
+  
+  // 단계별 다음 버튼 텍스트 결정
+  const getNextButtonText = useCallback(() => {
+    return step === 'datatable' ? '저장' : '다음';
+  }, [step]);
+  
+  // 특정 단계로 직접 이동
+  const goToStep = useCallback((newStep: ChartStep) => {
+    setStep(newStep);
+  }, []);
+  
+  return {
+    step,
+    dataSource,
+    setDataSource,
+    goToNextStep,
+    goToPreviousStep,
+    getNextButtonText,
+    goToStep,
+  };
+}
+
 interface ESGChartDialogProps {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -44,10 +119,17 @@ interface ESGChartDialogProps {
 }
 
 export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProps) {
-  // 단계 상태를 더 세분화
-  const [step, setStep] = useState<'info' | 'dataSource' | 'esgSelect' | 'datatable' | 'griSelect'>(
-    'info'
-  );
+  // 단계 관리 훅 사용
+  const {
+    step,
+    dataSource,
+    setDataSource,
+    goToNextStep,
+    goToPreviousStep,
+    getNextButtonText,
+    goToStep,
+  } = useChartStepManager();
+  
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [chartTitle, setChartTitle] = useState('');
   const [chartDescription, setChartDescription] = useState('');
@@ -56,14 +138,11 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [labels, setLabels] = useState<string[] | number[]>([]);
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<{ label: string; key: number; unit?: string }[]>([]);
+  const [csvError, setCsvError] = useState<string | null>(null);
   const [file, setFile] = useState<File>();
   const [tableKey, setTableKey] = useState(0);
   const prevDataLength = useRef({ labels: 0, datasets: 0 });
   const [worker, setWorker] = useState<Worker | null>(null);
-
-  // 데이터 소스 선택을 위한 상태 추가
-  const [dataSource, setDataSource] = useState<'gri' | 'direct' | 'csv'>('direct');
 
   // GRI 데이터 관련 상태
   const { companyId } = useDashboard(); // 회사 ID 가져오기
@@ -73,12 +152,14 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [selectedGriCategory, setSelectedGriCategory] = useState<string | null>(null);
 
   // 수치화된 GRI 카테고리만 필터링
-  const quantitativeGriCategories = griCategories.filter(
-    (category) =>
-      category.isQuantitative ||
-      category.defaultDataType === 'numeric' ||
-      category.defaultDataType === 'timeSeries'
-  );
+  const quantitativeGriCategories = useMemo(() => {
+    return griCategories.filter(
+      (category) =>
+        category.isQuantitative ||
+        category.defaultDataType === 'numeric' ||
+        category.defaultDataType === 'timeSeries'
+    );
+  }, []); // 의존성 없음 - 한 번만 계산
 
   // Web Worker 초기화
   useEffect(() => {
@@ -88,7 +169,22 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     });
 
     csvWorker.onmessage = event => {
-      const { labels, datasets } = event.data;
+      const { labels, datasets, error, message } = event.data;
+      
+      // 오류 처리
+      if (error) {
+        setCsvError(message || 'CSV 파일 처리 중 오류가 발생했습니다.');
+        return;
+      }
+      
+      // 데이터 유효성 검사
+      if (!labels || !datasets || labels.length === 0 || datasets.length === 0) {
+        setCsvError('CSV 파일에서 유효한 데이터를 추출할 수 없습니다.');
+        return;
+      }
+      
+      // 성공적으로 데이터를 받은 경우
+      setCsvError(null);
       setLabels(labels);
       setDatasets(datasets);
     };
@@ -100,6 +196,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     };
   }, []);
 
+  // 데이터 변경 시 테이블 키 업데이트
   useEffect(() => {
     if (!datasets || !labels) return;
     if (
@@ -138,9 +235,30 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   // CSV 파일 처리를 위한 드롭존 설정
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
-    if (file && worker) {
-      setFile(file);
+    if (!file) {
+      setCsvError('파일이 선택되지 않았습니다.');
+      return;
+    }
+    
+    // 파일 크기 제한 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setCsvError('파일 크기는 10MB를 초과할 수 없습니다.');
+      return;
+    }
+    
+    // 파일 확장자 확인
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setCsvError('CSV 파일만 업로드할 수 있습니다.');
+      return;
+    }
+    
+    setCsvError(null);
+    setFile(file);
+    
+    if (worker) {
       worker.postMessage(file);
+    } else {
+      setCsvError('CSV 처리기가 초기화되지 않았습니다. 페이지를 새로고침해 주세요.');
     }
   }, [worker]);
 
@@ -149,19 +267,23 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     accept: { 'text/csv': ['.csv'] },
   });
 
-  const handleDataSourceChange = (source: 'gri' | 'direct' | 'csv') => {
+  // 데이터 소스 변경 핸들러
+  const handleDataSourceChange = useCallback((source: 'gri' | 'direct' | 'csv') => {
     setDataSource(source);
-  };
+  }, [setDataSource]);
 
-  const handleESGChange = (value: string | null) => {
+  // ESG 항목 변경 핸들러
+  const handleESGChange = useCallback((value: string | null) => {
     setSelectedESG(value);
-  };
+  }, []);
 
-  const handleGriCategoryChange = (value: string) => {
+  // GRI 카테고리 변경 핸들러
+  const handleGriCategoryChange = useCallback((value: string) => {
     setSelectedGriCategory(value);
-  };
+  }, []);
 
-  const prepareGriChartData = () => {
+  // GRI 차트 데이터 준비
+  const prepareGriChartData = useCallback(() => {
     if (!griData || !selectedGriCategory) return;
 
     // GRI 카테고리에 해당하는 데이터 가져오기
@@ -192,7 +314,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
       setLabels(labels);
       setDatasets(datasets);
-      setStep('datatable');
+      goToStep('datatable');
     } else if (categoryData.dataType === 'numeric' && categoryData.numericValue !== null && categoryData.numericValue !== undefined) {
       // 단일 숫자 데이터 처리
       const labels = [selectedGriCategory];
@@ -205,69 +327,32 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
       setLabels(labels);
       setDatasets(datasets);
-      setStep('datatable');
+      goToStep('datatable');
     } else {
       // 텍스트 데이터나 데이터가 없는 경우
       alert('이 카테고리는 차트로 표시할 수 있는 데이터가 없습니다.');
     }
-  };
+  }, [griData, selectedGriCategory, goToStep]);
 
-  const handleDataChange = (newLabels: string[] | number[], newDatasets: ChartData['datasets']) => {
+  // 데이터 변경 핸들러
+  const handleDataChange = useCallback((newLabels: string[] | number[], newDatasets: ChartData['datasets']) => {
     setLabels(newLabels);
     setDatasets(newDatasets);
-  };
+  }, []);
 
-  const handleNext = () => {
-    if (step === 'info') {
-      // 기본 정보 입력 후 데이터 소스 선택 단계로
-      setStep('dataSource');
-    } else if (step === 'dataSource') {
-      // 데이터 소스 선택 후 다음 단계 결정
-      if (dataSource === 'gri') {
-        // GRI 데이터는 GRI 카테고리 선택 단계로
-        setStep('griSelect');
-      } else if (dataSource === 'csv') {
-        // CSV 업로드는 ESG 항목 선택 단계로
-        setStep('esgSelect');
-      } else {
-        // 직접 추가는 ESG 항목 선택 단계로
-        setStep('esgSelect');
-      }
-    } else if (step === 'esgSelect') {
-      // ESG 항목 선택 후 데이터 테이블로
-      setStep('datatable');
-    } else if (step === 'griSelect') {
-      // GRI 카테고리 선택 후 데이터 테이블로
-      if (!selectedGriCategory) {
-        alert('GRI 카테고리를 선택해주세요.');
-        return;
-      }
-      // 선택된 GRI 카테고리의 데이터를 차트 데이터로 변환
-      prepareGriChartData();
-      setStep('datatable');
-    } else {
+  // 다음 버튼 핸들러
+  const handleNext = useCallback(() => {
+    if (step === 'datatable') {
       // 데이터 테이블 입력 후 저장
       handleSave();
+    } else {
+      // 다음 단계로 이동
+      goToNextStep(selectedGriCategory, prepareGriChartData);
     }
-  };
+  }, [step, selectedGriCategory, goToNextStep, prepareGriChartData]);
 
-  const handleBack = () => {
-    if (step === 'dataSource') {
-      setStep('info');
-    } else if (step === 'esgSelect') {
-      setStep('dataSource');
-    } else if (step === 'griSelect') {
-      setStep('dataSource');
-    } else if (step === 'datatable') {
-      if (dataSource === 'gri') {
-        setStep('griSelect');
-      } else {
-        setStep('esgSelect');
-      }
-    }
-  };
-
-  const handleSave = async () => {
+  // 저장 핸들러
+  const handleSave = useCallback(async () => {
     if (!chartTitle) {
       alert('차트 제목을 입력해주세요');
       return;
@@ -279,11 +364,10 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
 
     if (
-      step === 'datatable' &&
-      (labels.length === 0 ||
-        datasets === undefined ||
-        datasets.length === 0 ||
-        datasets.some((ds) => !ds || ds.data.length === 0))
+      labels.length === 0 ||
+      !datasets ||
+      datasets.length === 0 ||
+      datasets.some((ds) => !ds || ds.data.length === 0)
     ) {
       alert('차트 데이터를 입력해주세요.');
       return;
@@ -330,9 +414,21 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    chartTitle, 
+    dataSource, 
+    selectedESG, 
+    labels, 
+    datasets, 
+    chartDescription, 
+    chartType, 
+    colSpan, 
+    onChartAdd, 
+    setOpen
+  ]);
 
-  const resetForm = () => {
+  // 폼 초기화
+  const resetForm = useCallback(() => {
     setChartTitle('');
     setChartDescription('');
     setChartType('bar');
@@ -340,7 +436,59 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setSelectedESG(null);
     setLabels([]);
     setDatasets([]);
-  };
+    goToStep('info');
+  }, [goToStep]);
+
+  // 렌더링을 위한 함수들 추가
+  const renderCsvUploadSection = useCallback(() => (
+    <div>
+      <div
+        {...getRootProps()}
+        className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
+      >
+        <input {...getInputProps()} />
+        <div className="flex flex-col items-center w-full">
+          <Upload className="w-full h-10 text-gray-500 dark:text-gray-400" />
+          <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
+            CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
+          </p>
+        </div>
+      </div>
+      
+      {csvError && (
+        <div className="mt-2 p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded">
+          <p>오류: {csvError}</p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-1" 
+            onClick={() => setCsvError(null)}
+          >
+            다시 시도
+          </Button>
+        </div>
+      )}
+      
+      {file && !csvError && (
+        <div className="mt-2 p-2 flex items-center justify-between bg-green-50 border border-green-200 rounded">
+          <span className="text-sm text-green-700">
+            {file.name} ({(file.size / 1024).toFixed(1)}KB)
+          </span>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => {
+              setFile(undefined);
+              setLabels([]);
+              setDatasets([]);
+            }}
+          >
+            제거
+          </Button>
+        </div>
+      )}
+    </div>
+  ), [getInputProps, getRootProps, csvError, file]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -502,30 +650,20 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
-          {step === 'datatable' && (
-            <div
-              {...getRootProps()}
-              className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
-            >
-              <input {...getInputProps()} />
-              <div className="flex flex-col items-center w-full">
-                <Upload className="w-full h-10 text-gray-500 dark:text-gray-400" />
-                <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
-                  CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
-                </p>
-              </div>
-            </div>
-          )}
+          {step === 'datatable' && renderCsvUploadSection()}
         </div>
 
         <div className="flex justify-between mt-6">
           {step === 'datatable' && (
-            <Button variant="outline" onClick={handleBack}>
+            <Button variant="outline" onClick={goToPreviousStep}>
               이전
             </Button>
           )}
-          <Button onClick={handleNext} disabled={isLoading}>
-            {step !== 'datatable' ? '다음' : '저장'}
+          <Button 
+            onClick={handleNext} 
+            disabled={isLoading || (step === 'datatable' && csvError !== null)}
+          >
+            {getNextButtonText()}
           </Button>
         </div>
       </DialogContent>
