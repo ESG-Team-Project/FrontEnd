@@ -82,24 +82,23 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
   // Web Worker 초기화
   useEffect(() => {
-    if (dataSource === 'csv') {
-      const csvWorker = new Worker(new URL('../../worker/csvWorker.ts', import.meta.url), {
-        type: 'module',
-      });
+    // 항상 Worker를 초기화하여 모든 데이터 소스에서 활용할 수 있도록 변경
+    const csvWorker = new Worker(new URL('../../worker/csvWorker.ts', import.meta.url), {
+      type: 'module',
+    });
 
-      csvWorker.onmessage = event => {
-        const { labels, datasets } = event.data;
-        setLabels(labels);
-        setDatasets(datasets);
-      };
+    csvWorker.onmessage = event => {
+      const { labels, datasets } = event.data;
+      setLabels(labels);
+      setDatasets(datasets);
+    };
 
-      setWorker(csvWorker);
+    setWorker(csvWorker);
 
-      return () => {
-        csvWorker.terminate();
-      };
-    }
-  }, [dataSource]);
+    return () => {
+      csvWorker.terminate();
+    };
+  }, []);
 
   useEffect(() => {
     if (!datasets || !labels) return;
@@ -136,11 +135,86 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   }, [open, dataSource, griData, loadGriData]);
 
-  const handleFile = (acceptedFiles: File[]) => {
+  // CSV 파일 처리를 위한 드롭존 설정
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
     if (file && worker) {
+      setFile(file);
       worker.postMessage(file);
     }
+  }, [worker]);
+
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: { 'text/csv': ['.csv'] },
+  });
+
+  const handleDataSourceChange = (source: 'gri' | 'direct' | 'csv') => {
+    setDataSource(source);
+  };
+
+  const handleESGChange = (value: string | null) => {
+    setSelectedESG(value);
+  };
+
+  const handleGriCategoryChange = (value: string) => {
+    setSelectedGriCategory(value);
+  };
+
+  const prepareGriChartData = () => {
+    if (!griData || !selectedGriCategory) return;
+
+    // GRI 카테고리에 해당하는 데이터 가져오기
+    const categoryData = griData.griValues[selectedGriCategory];
+    if (!categoryData) {
+      alert('선택한 GRI 카테고리에 데이터가 없습니다.');
+      return;
+    }
+
+    // 데이터 유형에 따라 레이블과 데이터셋 생성
+    if (categoryData.dataType === 'timeSeries' && categoryData.timeSeriesData && categoryData.timeSeriesData.length > 0) {
+      // 시계열 데이터 처리
+      const labels = categoryData.timeSeriesData.map(item => item.year.toString());
+      const datasets = [
+        {
+          label: selectedGriCategory,
+          data: categoryData.timeSeriesData.map(item => {
+            // 문자열이면 숫자로 변환, 변환 불가능하면 0으로 대체
+            if (typeof item.value === 'string') {
+              const num = Number(item.value);
+              return Number.isNaN(num) ? 0 : num;
+            }
+            // 이미 숫자라면 그대로 사용
+            return item.value as number;
+          }) as number[],
+        },
+      ];
+
+      setLabels(labels);
+      setDatasets(datasets);
+      setStep('datatable');
+    } else if (categoryData.dataType === 'numeric' && categoryData.numericValue !== null && categoryData.numericValue !== undefined) {
+      // 단일 숫자 데이터 처리
+      const labels = [selectedGriCategory];
+      const datasets = [
+        {
+          label: selectedGriCategory,
+          data: [categoryData.numericValue] as number[],
+        },
+      ];
+
+      setLabels(labels);
+      setDatasets(datasets);
+      setStep('datatable');
+    } else {
+      // 텍스트 데이터나 데이터가 없는 경우
+      alert('이 카테고리는 차트로 표시할 수 있는 데이터가 없습니다.');
+    }
+  };
+
+  const handleDataChange = (newLabels: string[] | number[], newDatasets: ChartData['datasets']) => {
+    setLabels(newLabels);
+    setDatasets(newDatasets);
   };
 
   const handleNext = () => {
@@ -193,102 +267,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   };
 
-  // GRI 데이터를 차트 데이터로 변환하는 함수
-  const prepareGriChartData = () => {
-    if (!griData || !selectedGriCategory) return;
-
-    const category = griCategories.find((cat) => cat.id === selectedGriCategory);
-    if (!category) return;
-
-    const griValue = griData.griValues[selectedGriCategory];
-    if (!griValue) return;
-
-    // 차트 제목과 설명을 GRI 카테고리 정보로 설정
-    if (!chartTitle) {
-      setChartTitle(`${category.name}: ${category.description}`);
-    }
-    if (!chartDescription) {
-      setChartDescription(`GRI ${category.id} - ${category.description} 데이터`);
-    }
-
-    // 데이터 유형에 따라 차트 데이터 준비
-    if (
-      griValue.dataType === 'timeSeries' &&
-      griValue.timeSeriesData &&
-      griValue.timeSeriesData.length > 0
-    ) {
-      // 시계열 데이터 처리
-      const newLabels = griValue.timeSeriesData.map((item) => item.year.toString());
-      const newData = griValue.timeSeriesData.map((item) => Number(item.value));
-
-      setLabels(newLabels);
-      setDatasets([
-        {
-          label: category.description,
-          data: newData,
-          backgroundColor: '#3b82f6' as string,
-          borderColor: '#1d4ed8' as string,
-          borderWidth: 1,
-          fill: false,
-        },
-      ]);
-    } else if (
-      griValue.dataType === 'numeric' &&
-      griValue.numericValue !== null &&
-      griValue.numericValue !== undefined
-    ) {
-      // 단일 숫자 데이터 처리
-      setLabels([category.description]);
-      setDatasets([
-        {
-          label: category.description,
-          data: [Number(griValue.numericValue)],
-          backgroundColor: '#3b82f6' as string,
-          borderColor: '#1d4ed8' as string,
-          borderWidth: 1,
-          fill: false,
-        },
-      ]);
-    }
-  };
-
-  const handleDataChange = useCallback(
-    (newLabels: string[] | number[], newDatasets: ChartData['datasets']) => {
-      setLabels(newLabels);
-      setDatasets(newDatasets);
-    },
-    []
-  );
-
-  const handleESGChange = useCallback((value: string | null) => {
-    setSelectedESG(value);
-  }, []);
-
-  // GRI 카테고리 변경 핸들러
-  const handleGriCategoryChange = (categoryId: string) => {
-    setSelectedGriCategory(categoryId);
-  };
-
-  // 데이터 소스 변경 핸들러
-  const handleDataSourceChange = (source: 'gri' | 'direct' | 'csv') => {
-    setDataSource(source);
-
-    // GRI 선택 시 데이터 로드
-    if (source === 'gri' && !griData) {
-      loadGriData();
-    }
-  };
-
-  function findESGCategoryByLabel(id: string): 'environment' | 'social' | 'governance' | null {
-    for (const category in esgIndicators) {
-      const indicators = esgIndicators[category as keyof typeof esgIndicators];
-      if (indicators.some((indicator) => indicator.id === id)) {
-        return category as 'environment' | 'social' | 'governance';
-      }
-    }
-    return null; // 못 찾은 경우
-  }
-
   const handleSave = async () => {
     if (!chartTitle) {
       alert('차트 제목을 입력해주세요');
@@ -317,9 +295,9 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       id: uuidv4(),
       title: chartTitle,
       description: chartDescription,
-      type: chartType,
+      chartType: chartType,
       colSpan: colSpan,
-      esg: selectedESG,
+      esg: selectedESG ?? undefined,
       labels: labels,
       datasets: datasets,
       createdAt: new Date(),
@@ -363,56 +341,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setLabels([]);
     setDatasets([]);
   };
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    setFile(file);
-    if (file) {
-      const reader = new FileReader();
-
-      reader.onload = (event) => {
-        if (!event.target?.result) return;
-        const csvText = event.target.result as string;
-        const parsedData = parseCSV(csvText);
-
-        const dataset: ChartData['datasets'] = [];
-        parsedData.data.forEach((val, index) => {
-          dataset.push(
-            {
-              label: `${index + 1}`, // Provide a default string label
-              data: val, // Use the data array
-            }
-          );
-        });
-        setLabels(parsedData.labels);
-        setDatasets(dataset);
-      };
-      console.log(labels, datasets);
-      reader.readAsText(file, "UTF-8");
-      handleDataChange(labels, datasets);
-    }
-  }, [labels, datasets]);
-
-  const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
-    accept: { 'text/csv': ['.csv'], },
-  });
-
-  const parseCSV = (csvText: string) => {
-    const rows = csvText.split("\n").map(row => row.trim()).filter(row => row); // 줄바꿈 기준으로 분리
-    const labels = Array.from({ length: rows.length }, (_, i) => i);
-    const beforedata: number[][] = [];
-    for (let i = 0; i < rows.length; i++) {  // 첫 번째 줄은 헤더이므로 건너뜀
-      const value = rows[i].split(",").map(row => parseValue(row));
-      beforedata.push(value); // 숫자로 변환
-    }
-    const data = beforedata[0].map((_, colIndex) =>
-      beforedata.map(row => row[colIndex])
-    );
-    return { labels, data };
-  };
-
-  const parseValue = (value: any) => isNaN(value) ? value : Number(value);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -597,7 +525,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </Button>
           )}
           <Button onClick={handleNext} disabled={isLoading}>
-            {step === 'combobox' ? '다음' : '저장'}
+            {step !== 'datatable' ? '다음' : '저장'}
           </Button>
         </div>
       </DialogContent>
