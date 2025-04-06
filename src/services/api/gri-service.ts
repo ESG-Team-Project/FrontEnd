@@ -295,9 +295,9 @@ export interface PageResponse<T> {
 }
 
 // 페이지 요청 함수
-export async function getGriDataPaginated(pageRequest: PageRequest): Promise<PageResponse<BackendGRIDataItem>> {
+export async function getGriDataPaginated(companyId: string, pageRequest: PageRequest): Promise<PageResponse<BackendGRIDataItem>> {
   try {
-    const response = await axiosInstance.get('/api/gri/paged', {
+    const response = await axiosInstance.get(`/api/company/${companyId}/gri/paged`, {
       params: {
         page: pageRequest.page,
         size: pageRequest.size,

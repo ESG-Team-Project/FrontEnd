@@ -51,8 +51,8 @@ export default function DashboardGriEditPage() {
         sort: 'standardCode,asc'
       };
       
-      // 새로운 페이지네이션 API 호출
-      const pageResponse = await getGriDataPaginated(pageRequest);
+      // 새로운 페이지네이션 API 호출 - companyId 전달
+      const pageResponse = await getGriDataPaginated(companyId, pageRequest);
       
       // 페이지네이션 정보 업데이트
       setTotalPages(pageResponse.totalPages);
