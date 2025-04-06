@@ -77,34 +77,44 @@ export default function ReportPage() {
       setDownloadStatus(`${selectedFramework?.name || frameworkId} ${isCompanyReport ? '회사 보고서' : '문서'}를 ${format.toUpperCase()} 형식으로 다운로드 중입니다...`);
       
       let blob: Blob;
-      let response: Response;
-
+      let filename: string;
+      
+      // API 서비스 통해 문서 다운로드
       if (isCompanyReport) {
         blob = await api.documents.downloadCompanyReport(frameworkId, format as 'pdf' | 'docx');
-        // 응답 헤더를 얻기 위해 fetch를 한번 더 호출
-        response = await fetch(`/api/documents/company/${frameworkId}?format=${format}`, {
+        
+        // 파일명 얻기 위한 헤더 정보 요청
+        const response = await fetch(`/api/documents/company/${frameworkId}?format=${format}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
           }
         });
+        
+        // 파일명 추출
+        const contentDisposition = response.headers.get('Content-Disposition');
+        filename = api.documents.getFilenameFromContentDisposition(
+          contentDisposition,
+          `${frameworkId}_company_report.${format}`
+        );
       } else {
         blob = await api.documents.downloadFrameworkDocument(frameworkId, format as 'pdf' | 'docx');
-        // 응답 헤더를 얻기 위해 fetch를 한번 더 호출
-        response = await fetch(`/api/documents/${frameworkId}?format=${format}`, {
+        
+        // 파일명 얻기 위한 헤더 정보 요청
+        const response = await fetch(`/api/documents/${frameworkId}?format=${format}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
           }
         });
+        
+        // 파일명 추출
+        const contentDisposition = response.headers.get('Content-Disposition');
+        filename = api.documents.getFilenameFromContentDisposition(
+          contentDisposition,
+          `${frameworkId}_document.${format}`
+        );
       }
-      
-      // 파일명 가져오기
-      const contentDisposition = response.headers.get('Content-Disposition');
-      const filename = api.documents.getFilenameFromContentDisposition(
-        contentDisposition,
-        `${frameworkId}_${isCompanyReport ? 'company_report' : 'document'}.${format}`
-      );
       
       // 파일 다운로드
       api.documents.downloadBlob(blob, filename);
@@ -113,11 +123,10 @@ export default function ReportPage() {
         description: `${filename} 파일이 다운로드되었습니다.`,
       });
     } catch (error) {
-      console.error('문서 다운로드 중 오류 발생:', error);
-      toast({
-        variant: "destructive",
+      // 오류 처리 유틸리티 사용
+      api.error.handleApiError(error, {
         title: "다운로드 실패",
-        description: error instanceof Error ? error.message : '문서 다운로드 중 오류가 발생했습니다.',
+        showToast: true
       });
     } finally {
       setIsDownloading(false);

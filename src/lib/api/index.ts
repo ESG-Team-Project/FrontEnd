@@ -7,6 +7,8 @@ import * as fileService from './file';
 import * as griService from './gri';
 import * as userService from './user';
 import documentsService from './documents';
+import reportsService from './reports';
+import errorUtils from './error';
 
 // 타입 재export
 export type {
@@ -39,6 +41,7 @@ export * from './chart';
 export * from './file';
 export * from './user';
 export * from './gri';
+export * from './error';
 
 // 직접 export 부분 제거
 export const getCurrentUser = userService.getCurrentUser;
@@ -178,6 +181,8 @@ const apiService = {
   user: userService,
   gri: griService,
   documents: documentsService,
+  reports: reportsService,
+  error: errorUtils,
 };
 
 export default apiService;
