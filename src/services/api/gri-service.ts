@@ -160,8 +160,8 @@ function transformFrontendDataToBackend(frontendData: CompanyGRIData): BackendGR
 export async function getCompanyGriData(companyId: string): Promise<CompanyGRIData> {
   console.log(`Fetching GRI data for company: ${companyId}`);
   try {
-    // 실제 API 호출 구현 - 수정된 엔드포인트 사용
-    const response = await axiosInstance.get(`/api/company/${companyId}/gri`);
+    // 실제 API 호출 구현 - 수정된 엔드포인트 사용 (/api 제거)
+    const response = await axiosInstance.get(`/company/${companyId}/gri`);
     
     if (response.status !== 200) {
       throw new Error(`GRI 데이터 조회 실패: ${response.status}`);
@@ -172,11 +172,12 @@ export async function getCompanyGriData(companyId: string): Promise<CompanyGRIDa
   } catch (error) {
     console.error('GRI 데이터 조회 중 오류:', error);
     
-    // 더 상세한 오류 메시지 제공
-    if (error.response) {
+    // 더 상세한 오류 메시지 제공 - 타입 오류 수정
+    const err = error as any;
+    if (err.response) {
       // 서버 응답이 있는 오류
-      console.error(`서버 오류 (${error.response.status}): ${error.response.data.message || '알 수 없는 오류'}`);
-    } else if (error.request) {
+      console.error(`서버 오류 (${err.response.status}): ${err.response.data?.message || '알 수 없는 오류'}`);
+    } else if (err.request) {
       // 서버 응답이 없는 오류
       console.error('서버 응답 없음: 네트워크 오류 가능성');
     }
@@ -208,8 +209,8 @@ export async function saveCompanyGriData(data: CompanyGRIData): Promise<boolean>
     // 프론트엔드 데이터를 백엔드 형식으로 변환
     const backendData = transformFrontendDataToBackend(data);
     
-    // 실제 API 호출 구현 - 수정된 엔드포인트와 메서드 사용
-    const response = await axiosInstance.put(`/api/company/${data.companyId}/gri`, backendData);
+    // 실제 API 호출 구현 - 수정된 엔드포인트와 메서드 사용 (/api 제거)
+    const response = await axiosInstance.put(`/company/${data.companyId}/gri`, backendData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 데이터 저장 실패: ${response.status}`);
@@ -246,8 +247,8 @@ export async function saveSingleGriCategory(
       return false;
     }
     
-    // 수정된 엔드포인트 사용
-    const response = await axiosInstance.put(`/api/company/${companyId}/gri`, backendData);
+    // 수정된 엔드포인트 사용 (/api 제거)
+    const response = await axiosInstance.put(`/company/${companyId}/gri`, backendData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
@@ -263,7 +264,8 @@ export async function saveSingleGriCategory(
 // 감사 로그 조회 함수 추가
 export async function getAuditLogs(entityType: string, entityId: string): Promise<any[]> {
   try {
-    const response = await axiosInstance.get(`/api/audit-logs`, {
+    // 템플릿 리터럴 제거
+    const response = await axiosInstance.get('/audit-logs', {
       params: {
         entityType,
         entityId
@@ -297,7 +299,8 @@ export interface PageResponse<T> {
 // 페이지 요청 함수
 export async function getGriDataPaginated(companyId: string, pageRequest: PageRequest): Promise<PageResponse<BackendGRIDataItem>> {
   try {
-    const response = await axiosInstance.get(`/api/company/${companyId}/gri/paged`, {
+    // /api 제거
+    const response = await axiosInstance.get(`/company/${companyId}/gri/paged`, {
       params: {
         page: pageRequest.page,
         size: pageRequest.size,
