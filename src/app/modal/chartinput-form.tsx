@@ -27,7 +27,7 @@ import DataTable from './datatable';
 import { useDashboard } from '@/contexts/dashboard-context';
 import { griCategories } from '@/data/griCategories';
 import api from '@/lib/api';
-import { getCompanyGriData } from '@/services/api/gri-service';
+import { getCompanyGriDataFormatted } from '@/lib/api/gri';
 import type {
   ApiChartData,
   ApiChartDataItem,
@@ -215,7 +215,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     try {
       setIsLoadingGriData(true);
       setGriDataError(null);
-      const data = await getCompanyGriData(companyId);
+      const data = await getCompanyGriDataFormatted(companyId);
       setGriData(data);
     } catch (err) {
       console.error('GRI 데이터 로드 중 오류:', err);

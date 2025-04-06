@@ -15,12 +15,12 @@ import { useDashboard } from '@/contexts/dashboard-context';
 import { griCategories } from '@/data/griCategories';
 import { griGroups } from '@/data/griGroups';
 import { 
-  getCompanyGriData, 
+  getCompanyGriDataFormatted, 
   getGriDataPaginated, 
-  saveCompanyGriData,
+  saveCompanyGriDataFormatted,
   type PageRequest,
   type PageResponse  
-} from '@/services/api/gri-service';
+} from '@/lib/api/gri';
 import type { CompanyGRIData } from '@/types/companyGriData';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -61,7 +61,7 @@ export default function DashboardGriEditPage() {
       // 페이지네이션 응답을 CompanyGRIData 형식으로 변환
       // 기존 함수를 재사용하려면 백엔드와 포맷을 맞춰야 함
       // 간단한 구현을 위해 기존 메서드 호출
-      const data = await getCompanyGriData(companyId);
+      const data = await getCompanyGriDataFormatted(companyId);
       setCompanyData(data);
     } catch (err) {
       console.error('Error loading GRI data:', err);
