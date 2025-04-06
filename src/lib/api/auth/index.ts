@@ -78,6 +78,10 @@ export const login = async (credentials: LoginRequest): Promise<LoginResponse> =
         companyCode: '',
         companyPhoneNumber: ''
       };
+    } else if (!response.data.user.role) {
+      // 사용자 정보는 있지만 role 필드가 없는 경우 추가
+      console.warn('[API Auth] 사용자 정보에 role 필드가 없음, 기본값 추가');
+      response.data.user.role = 'user';
     }
 
     // 응답 데이터 반환

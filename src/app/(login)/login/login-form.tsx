@@ -28,11 +28,16 @@ export function LoginForm() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);
   const [, login] = useAtom(loginAtom);
 
+  // 초기 마운트 시 로그인 상태 확인
   useEffect(() => {
+    console.log('[Login Form] 초기 마운트 - 로그인 상태 확인:', isLoggedIn);
+    
+    // 이미 로그인되어 있으면 대시보드로 이동
     if (isLoggedIn) {
+      console.log('[Login Form] 이미 로그인되어 있음, 리디렉션 시도');
       router.push(redirectPath);
     }
-  }, [isLoggedIn, redirectPath, router]);
+  }, []);
 
   // LoginResponse 타입인지 확인하는 타입 가드 함수
   const isLoginResponse = (data: any): data is LoginResponse => {
@@ -56,9 +61,13 @@ export function LoginForm() {
       id: String(apiResponse.user.id),
       name: apiResponse.user.name,
       email: apiResponse.user.email,
-      role: 'user',
-      phone: apiResponse.user.phoneNumber,
+      role: apiResponse.user.role || 'user',
       company: apiResponse.user.companyName,
+      phoneNumber: apiResponse.user.phoneNumber,
+      companyName: apiResponse.user.companyName,
+      ceoName: apiResponse.user.ceoName,
+      companyCode: apiResponse.user.companyCode,
+      companyPhoneNumber: apiResponse.user.companyPhoneNumber
     };
   };
 
@@ -69,6 +78,13 @@ export function LoginForm() {
     try {
       setIsLoading(true);
       setError(null);
+      
+      // 로컬 스토리지의 기존 로그인 정보를 제거 (충돌 방지)
+      if (typeof window !== 'undefined') {
+        console.log('[Login Form] 기존 로그인 정보 정리');
+        localStorage.removeItem('auth');
+        localStorage.removeItem('auth_token');
+      }
       
       // 백엔드에서 기대하는 정확한 형식으로 데이터 구성
       const loginData = {
@@ -90,12 +106,16 @@ export function LoginForm() {
       console.log('[Login Form] 로그인 성공:', `토큰: ${response.token.substring(0, 10)}...`);
       console.log('[Login Form] 사용자 정보:', response.user);
       
+      // User 인터페이스와 호환되는 객체로 변환
+      const userForState = mapApiResponseToUser(response);
+      console.log('[Login Form] 변환된 사용자 정보:', userForState);
+      
       // 로컬 스토리지에 토큰 직접 저장 (추가 안전 장치)
       if (typeof window !== 'undefined') {
         console.log('[Login Form] 로컬 스토리지에 인증 정보 저장');
         localStorage.setItem('auth', JSON.stringify({
           token: response.token,
-          user: response.user,
+          user: userForState,
           isLoggedIn: true,
           isLoading: false
         }));
@@ -104,8 +124,8 @@ export function LoginForm() {
         localStorage.setItem('auth_token', response.token);
       }
       
-      // 상태 관리에 로그인 정보 저장
-      login({ token: response.token, user: response.user });
+      // 상태 관리에 로그인 정보 저장 (변환된 사용자 정보 사용)
+      login({ token: response.token, user: userForState });
       
       // 성공 메시지
       toast({
@@ -157,7 +177,7 @@ export function LoginForm() {
     }
   };
 
-  // 로그인 상태가 바뀌면 리디렉션
+  // 로그인 상태가 바뀌면 리디렉션 (별도 useEffect로 분리)
   useEffect(() => {
     console.log('[Login Form] 로그인 상태 변경 감지:', isLoggedIn);
     

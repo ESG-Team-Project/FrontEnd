@@ -24,6 +24,7 @@ export interface LoginResponse {
     companyId: number;
     createdAt: string;
     updatedAt: string;
+    role?: string;
   };
 }
 
