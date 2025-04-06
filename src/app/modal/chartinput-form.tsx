@@ -215,7 +215,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     try {
       setIsLoadingGriData(true);
       setGriDataError(null);
-      const data = await getCompanyGriDataFormatted(companyId);
+      const data = await getCompanyGriDataFormatted();
       setGriData(data);
     } catch (err) {
       console.error('GRI 데이터 로드 중 오류:', err);

@@ -98,23 +98,22 @@ export const getAllGriData = async (): Promise<GriDataItem[]> => {
 /**
  * 특정 회사의 GRI 데이터 항목 가져오기
  *
- * 이 함수는 특정 회사 ID를 기반으로 GRI 데이터 항목을 가져옵니다.
+ * 이 함수는 로그인한 사용자의 회사 GRI 데이터 항목을 가져옵니다.
  *
- * @param {string} companyId - 회사 ID
  * @returns {Promise<GriDataItem[]>} 회사의 GRI 데이터 항목 배열
  *
  * 사용 예시:
  * ```
- * const companyGriItems = await getCompanyGriData('123');
+ * const companyGriItems = await getCompanyGriData();
  * console.log('회사의 GRI 데이터:', companyGriItems);
  * ```
  */
-export const getCompanyGriData = async (companyId: string): Promise<GriDataItem[]> => {
+export const getCompanyGriData = async (): Promise<GriDataItem[]> => {
   try {
-    const response: AxiosResponse<GriDataItem[]> = await get(`/company/${companyId}/gri`);
+    const response: AxiosResponse<GriDataItem[]> = await get('/company/gri');
     return response.data;
   } catch (error) {
-    console.error(`[API GRI] 회사(ID: ${companyId})의 GRI 데이터 가져오기 오류:`, error);
+    console.error('[API GRI] 회사의 GRI 데이터 가져오기 오류:', error);
     throw error;
   }
 };
@@ -122,16 +121,22 @@ export const getCompanyGriData = async (companyId: string): Promise<GriDataItem[
 /**
  * 회사의 GRI 데이터를 가져와 프론트엔드 형식으로 변환
  *
- * @param companyId 회사 ID
  * @returns 프론트엔드에서 사용하는 CompanyGRIData 형식
  */
-export async function getCompanyGriDataFormatted(companyId: string): Promise<CompanyGRIData> {
-  console.log(`Fetching GRI data for company: ${companyId}`);
+export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
+  console.log('Fetching GRI data for company');
   try {
-    const response = await axiosInstance.get(`/company/${companyId}/gri`);
+    const response = await axiosInstance.get('/company/gri');
     
     if (response.status !== 200) {
       throw new Error(`GRI 데이터 조회 실패: ${response.status}`);
+    }
+    
+    // 회사 ID 얻기 (응답에서 추출 또는 인증 상태에서 가져오기)
+    // 여기서는 응답의 첫 번째 아이템에서 회사 ID를 얻는다고 가정
+    let companyId = "current";
+    if (response.data && response.data.length > 0 && response.data[0].companyId) {
+      companyId = response.data[0].companyId.toString();
     }
     
     // 백엔드 데이터를 프론트엔드 형식으로 변환
@@ -150,7 +155,7 @@ export async function getCompanyGriDataFormatted(companyId: string): Promise<Com
     }
     
     // 오류 발생 시 초기 데이터 생성하여 반환
-    return createInitialGriData(companyId);
+    return createInitialGriData("current");
   }
 }
 
@@ -196,13 +201,13 @@ export const saveGriData = async (data: GriDataItem | GriDataItem[]): Promise<bo
  * 회사 GRI 데이터 저장하는 함수 (구조화된 형식)
  */
 export async function saveCompanyGriDataFormatted(data: CompanyGRIData): Promise<boolean> {
-  console.log(`Saving GRI data for company: ${data.companyId}`);
+  console.log('Saving GRI data for company');
   try {
     // 프론트엔드 데이터를 백엔드 형식으로 변환
     const backendData = transformFrontendDataToBackend(data);
     
     // API 호출
-    const response = await axiosInstance.put(`/company/${data.companyId}/gri`, backendData);
+    const response = await axiosInstance.put('/company/gri', backendData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 데이터 저장 실패: ${response.status}`);
@@ -219,15 +224,14 @@ export async function saveCompanyGriDataFormatted(data: CompanyGRIData): Promise
  * 개별 GRI 카테고리 데이터만 저장하는 함수
  */
 export async function saveSingleGriCategory(
-  companyId: string,
   categoryId: string,
   categoryValue: CompanyGRICategoryValue
 ): Promise<boolean> {
-  console.log(`Saving single GRI category ${categoryId} for company: ${companyId}`);
+  console.log(`Saving single GRI category ${categoryId}`);
   try {
     // 임시 데이터 객체 생성
     const tempData: CompanyGRIData = {
-      companyId,
+      companyId: "current", // 현재 사용자 회사 ID (백엔드에서 토큰으로 결정)
       griValues: {
         [categoryId]: categoryValue
       }
@@ -242,7 +246,7 @@ export async function saveSingleGriCategory(
     }
     
     // API 호출
-    const response = await axiosInstance.put(`/company/${companyId}/gri`, backendData);
+    const response = await axiosInstance.put('/company/gri', backendData);
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
@@ -301,11 +305,10 @@ export async function getAuditLogs(entityType: string, entityId: string): Promis
  * 페이지네이션이 적용된 GRI 데이터 조회
  */
 export async function getGriDataPaginated(
-  companyId: string, 
   pageRequest: PageRequest
 ): Promise<PageResponse<BackendGRIDataItem>> {
   try {
-    const response = await axiosInstance.get(`/company/${companyId}/gri/paged`, {
+    const response = await axiosInstance.get('/company/gri/paged', {
       params: {
         page: pageRequest.page,
         size: pageRequest.size,

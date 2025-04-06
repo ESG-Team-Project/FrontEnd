@@ -51,17 +51,15 @@ export default function DashboardGriEditPage() {
         sort: 'standardCode,asc'
       };
       
-      // 새로운 페이지네이션 API 호출 - companyId 전달
-      const pageResponse = await getGriDataPaginated(companyId, pageRequest);
+      // 새로운 페이지네이션 API 호출 - JWT 토큰에서 회사 ID 자동 사용
+      const pageResponse = await getGriDataPaginated(pageRequest);
       
       // 페이지네이션 정보 업데이트
       setTotalPages(pageResponse.totalPages);
       setTotalElements(pageResponse.totalElements);
       
-      // 페이지네이션 응답을 CompanyGRIData 형식으로 변환
-      // 기존 함수를 재사용하려면 백엔드와 포맷을 맞춰야 함
-      // 간단한 구현을 위해 기존 메서드 호출
-      const data = await getCompanyGriDataFormatted(companyId);
+      // 데이터 가져오기
+      const data = await getCompanyGriDataFormatted();
       setCompanyData(data);
     } catch (err) {
       console.error('Error loading GRI data:', err);

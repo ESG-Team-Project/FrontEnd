@@ -176,7 +176,7 @@ export default function GriEditForm({
 
       // 서버 API 호출하여 데이터 저장
       const { saveSingleGriCategory } = await import('@/lib/api/gri');
-      const success = await saveSingleGriCategory(initialData.companyId, categoryId, updatedValue);
+      const success = await saveSingleGriCategory(categoryId, updatedValue);
 
       if (success) {
         // 성공 시 로컬 상태 업데이트
