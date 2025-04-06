@@ -136,16 +136,14 @@ export const callApi = async <T>(
 };
 
 /**
- * 오류 처리 함수 모음
+ * 상세 API 오류 로깅 함수
+ * 
+ * API 오류 발생 시 상세 정보를 콘솔에 기록합니다.
+ * 
+ * @param error API 오류 객체
+ * @param context 오류가 발생한 컨텍스트 설명
  */
-export const errorUtils = {
-  getErrorMessage,
-  handleApiError,
-  callApi,
-  logApiResponseDetails
-};
-
-export const logApiResponseDetails = (error: any, context: string = ''): void => {
+export const logApiResponseDetails = (error: any, context = ''): void => {
   console.error(`[API 상세 로그] ${context || '오류'} 발생:`);
   
   if (!error) {
@@ -224,6 +222,16 @@ export const logApiResponseDetails = (error: any, context: string = ''): void =>
   } catch (logError) {
     console.error('  - 오류 로깅 중 추가 예외 발생:', logError);
   }
+};
+
+/**
+ * 오류 처리 함수 모음
+ */
+export const errorUtils = {
+  getErrorMessage,
+  handleApiError,
+  callApi,
+  logApiResponseDetails
 };
 
 export default errorUtils; 
