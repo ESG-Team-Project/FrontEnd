@@ -35,6 +35,8 @@ export const getTokenFromAtom = (): string | null => {
     const store = getDefaultStore();
     const auth = store.get(authAtom);
 
+    console.log('[AXIOS] Jotai에서 토큰 확인:', auth?.token ? '있음' : '없음');
+
     // Jotai에 토큰이 있으면 사용
     if (auth?.token) {
       return auth.token;
@@ -45,12 +47,25 @@ export const getTokenFromAtom = (): string | null => {
     if (authJson) {
       try {
         const authData = JSON.parse(authJson);
+        console.log('[AXIOS] 로컬 스토리지에서 토큰 확인:', authData?.token ? '있음' : '없음');
         if (authData?.token) {
+          // 토큰을 찾았으면 Jotai 저장소에도 설정 (동기화)
+          if (authData.user) {
+            console.log('[AXIOS] 로컬 스토리지 토큰을 Jotai에 동기화 시도');
+            store.set(authAtom, {
+              isLoggedIn: true,
+              token: authData.token,
+              user: authData.user,
+              isLoading: false
+            });
+          }
           return authData.token;
         }
       } catch (e) {
         console.error('[AXIOS] 로컬 스토리지 JSON 파싱 오류:', e);
       }
+    } else {
+      console.log('[AXIOS] 로컬 스토리지에 토큰 없음');
     }
 
     return null;
@@ -88,20 +103,17 @@ axiosInstance.interceptors.request.use(
   (config) => {
     // 토큰 가져오기
     const token = getTokenFromAtom();
-
-    // 토큰이 있으면 Authorization 헤더에 추가
+    console.log('[AXIOS] 요청 인터셉터:', config.url, token ? '토큰 있음' : '토큰 없음');
+    
+    // 토큰이 있으면 헤더에 추가
     if (token) {
-      // Bearer 접두사와 공백이 있는지 확인
-      const formattedToken = token.startsWith('Bearer ') 
-        ? token 
-        : `Bearer ${token}`;  // 'Bearer ' 문자열과 공백 포함 필수
-      config.headers.Authorization = formattedToken;
+      config.headers.Authorization = `Bearer ${token}`;
     }
-
+    
     return config;
   },
   (error) => {
-    // 요청 전송 중 오류가 발생하면 Promise.reject로 오류를 전파
+    console.error('[AXIOS] 요청 인터셉터 오류:', error);
     return Promise.reject(error);
   }
 );

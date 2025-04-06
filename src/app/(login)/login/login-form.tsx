@@ -63,44 +63,71 @@ export function LoginForm() {
   };
 
   // 로그인 처리 함수
-  const handleLogin = async (data: z.infer<typeof formSchema>) => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
     try {
       setIsLoading(true);
+      setError(null);
       
       // 백엔드에서 기대하는 정확한 형식으로 데이터 구성
       const loginData = {
-        email: data.email,
-        password: data.password
+        email,
+        password
       };
       
-      console.log('로그인 시도:', loginData);
+      console.log('[Login Form] 로그인 시도:', { email });
       
       // 로그인 API 호출
       const response = await authService.login(loginData);
+      
+      console.log('[Login Form] 로그인 응답:', response);
       
       if (!response || !response.token) {
         throw new Error('로그인 실패: 응답에 토큰이 없습니다.');
       }
       
-      console.log('로그인 성공:', `${response.token.substring(0, 10)}...`);
+      console.log('[Login Form] 로그인 성공:', `토큰: ${response.token.substring(0, 10)}...`);
+      console.log('[Login Form] 사용자 정보:', response.user);
+      
+      // 로컬 스토리지에 토큰 직접 저장 (추가 안전 장치)
+      if (typeof window !== 'undefined') {
+        console.log('[Login Form] 로컬 스토리지에 인증 정보 저장');
+        localStorage.setItem('auth', JSON.stringify({
+          token: response.token,
+          user: response.user,
+          isLoggedIn: true,
+          isLoading: false
+        }));
+        
+        // auth_token 키에도 저장 (일부 API 호출에 사용)
+        localStorage.setItem('auth_token', response.token);
+      }
       
       // 상태 관리에 로그인 정보 저장
       login({ token: response.token, user: response.user });
       
-      // 성공 메시지와 리디렉션
+      // 성공 메시지
       toast({
         title: '로그인 성공',
         description: '대시보드로 이동합니다.',
       });
       
-      // 리디렉션 처리
-      if (redirectPath) {
-        router.push(decodeURIComponent(redirectPath));
-      } else {
-        router.push('/dashboard');
-      }
+      console.log('[Login Form] 리디렉션 경로:', redirectPath);
+      
+      // 리디렉션 처리 - 시간 지연 추가
+      setTimeout(() => {
+        if (redirectPath) {
+          console.log('[Login Form] 리디렉션:', decodeURIComponent(redirectPath));
+          router.push(decodeURIComponent(redirectPath));
+        } else {
+          console.log('[Login Form] 리디렉션: /dashboard');
+          router.push('/dashboard');
+        }
+      }, 1000); // 1초 지연으로 상태 업데이트 시간 제공
+      
     } catch (error) {
-      console.error('로그인 오류:', error);
+      console.error('[Login Form] 로그인 오류:', error);
       
       // 403 오류 특별 처리
       if (error instanceof AxiosError && error.response?.status === 403) {
@@ -109,21 +136,40 @@ export function LoginForm() {
           title: '접근 권한 오류',
           description: '계정에 로그인 권한이 없습니다. 관리자에게 문의하세요.',
         });
+        setError('계정에 로그인 권한이 없습니다. 관리자에게 문의하세요.');
         return;
       }
       
       // 일반 오류 처리
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : '로그인 처리 중 오류가 발생했습니다.';
+      
       toast({
         variant: 'destructive',
         title: '로그인 실패',
-        description: error instanceof Error 
-          ? error.message 
-          : '로그인 처리 중 오류가 발생했습니다.',
+        description: errorMessage,
       });
+      
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // 로그인 상태가 바뀌면 리디렉션
+  useEffect(() => {
+    console.log('[Login Form] 로그인 상태 변경 감지:', isLoggedIn);
+    
+    if (isLoggedIn) {
+      console.log('[Login Form] 로그인 상태로 변경되어 리디렉션');
+      if (redirectPath) {
+        router.push(decodeURIComponent(redirectPath));
+      } else {
+        router.push('/dashboard');
+      }
+    }
+  }, [isLoggedIn, redirectPath, router]);
 
   return (
     <AuthContainer
