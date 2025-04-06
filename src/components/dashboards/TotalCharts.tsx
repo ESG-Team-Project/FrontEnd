@@ -6,7 +6,7 @@ import {
   LineChart as LineChartIcon,
   AreaChart as AreaChartIcon,
 } from 'lucide-react';
-import type { ChartData } from '@/types/chart';
+import type { ChartData, DrawChartData } from '@/types/chart';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -39,7 +39,7 @@ ChartJS.register(
 );
 
 interface TotalChartsProps {
-  chartData: ChartData;
+  chartData: DrawChartData;
 }
 
 // 차트 아이콘 반환 함수 (유지)
@@ -61,7 +61,7 @@ const getChartIcon = (type: string) => {
 };
 
 // 차트 콘텐츠를 렌더링하는 함수 (page.tsx 로직 가져오기)
-const renderChartContent = (chart: ChartData) => {
+const renderChartContent = (chart: DrawChartData) => {
   const baseOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -156,7 +156,7 @@ const renderChartContent = (chart: ChartData) => {
       default: {
         // 컴파일 타임 체크는 어려우므로 런타임 메시지 표시
         return (
-          <p className="text-sm text-gray-600 flex items-center justify-center h-full">
+          <p className="flex items-center justify-center h-full text-sm text-gray-600">
             지원되지 않는 차트 유형입니다: {chart.type}
           </p>
         );
@@ -165,7 +165,7 @@ const renderChartContent = (chart: ChartData) => {
   } catch (error) {
     console.error('Error rendering chart:', chart.id, chart.type, error);
     return (
-      <p className="text-sm text-red-600 flex items-center justify-center h-full">
+      <p className="flex items-center justify-center h-full text-sm text-red-600">
         차트를 렌더링하는 중 오류가 발생했습니다.
       </p>
     );
@@ -177,19 +177,19 @@ const TotalCharts: React.FC<TotalChartsProps> = ({ chartData }) => {
   const isValidData = chartData && chartData.labels && chartData.datasets;
 
   return (
-    <Card className="overflow-hidden shadow-sm transition-all duration-200 hover:shadow-md flex flex-col h-full">
-      <CardHeader className="pb-1 p-3 md:p-4">
+    <Card className="flex flex-col h-full overflow-hidden transition-all duration-200 shadow-sm hover:shadow-md">
+      <CardHeader className="p-3 pb-1 md:p-4">
         <CardTitle className="flex items-center text-sm md:text-base lg:text-lg line-clamp-1">
           {getChartIcon(chartData.type)}
           <span className="truncate">{chartData.title}</span>
         </CardTitle>
         {chartData.description && (
-          <CardDescription className="truncate text-xs md:text-sm line-clamp-1 mt-1">
+          <CardDescription className="mt-1 text-xs truncate md:text-sm line-clamp-1">
             {chartData.description}
           </CardDescription>
         )}
       </CardHeader>
-      <CardContent className="p-2 md:p-4 flex-grow">
+      <CardContent className="flex-grow p-2 md:p-4">
         {/* 데이터가 유효할 때만 차트 렌더링 */}
         {isValidData ? (
           renderChartContent(chartData)

@@ -1,8 +1,8 @@
 'use client';
 
-import axios, { type AxiosError, type AxiosInstance } from 'axios';
+import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { getDefaultStore } from 'jotai';
-import { authAtom } from '@/lib/atoms';
+import { authAtom } from '@/lib/atoms/auth';
 
 /**
  * 백엔드 API의 기본 주소 설정
@@ -10,7 +10,7 @@ import { authAtom } from '@/lib/atoms';
  * 환경 변수에서 API URL을 가져오거나, 기본값을 사용합니다.
  * 개발 환경과 배포 환경에서 다른 URL을 사용할 수 있습니다.
  */
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://192.168.0.224:8080/api';
+const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 console.log('[AXIOS] API 기본 URL:', baseURL);
 
 // 로컬 스토리지에 인증 정보를 저장할 때 사용하는 키
@@ -125,7 +125,13 @@ axiosInstance.interceptors.response.use(
         error
       );
       
-      window.location.href = '/login';
+      // 주석 처리된 리다이렉션 로직 (필요시 활성화 가능)
+      // 현재는 ProtectedRoute 컴포넌트에서 처리하도록 설계됨
+      // if (typeof window !== 'undefined') {
+      //   const currentPath = window.location.pathname;
+      //   const redirectPath = encodeURIComponent(currentPath);
+      //   window.location.href = `/login?redirectTo=${redirectPath}`;
+      // }
     }
     
     // 모든 오류는 호출한 컴포넌트에서 처리할 수 있도록 전파
