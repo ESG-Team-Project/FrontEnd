@@ -186,47 +186,42 @@ export default function GriEditForm({
   const handleOpenModal = (category: GRICategory) => {
     // formData에서 현재 카테고리 데이터 가져오기 (useEffect에서 생성 보장)
     const currentValue = formData[category.id];
-    const dataType = currentValue.dataType as GRIDataType;
+    
+    console.log(`카테고리 ${category.id} 모달 열기 - 현재 값:`, JSON.stringify({
+      categoryId: currentValue.categoryId,
+      dataType: currentValue.dataType,
+      textValue: currentValue.textValue,
+      numericValue: currentValue.numericValue,
+      timeSeriesLength: currentValue.timeSeriesData?.length || 0
+    }));
 
-    setEditingCategory({ category, currentValue });
-
-    // dataType에 따라 모달 상태 초기화
-    switch (dataType) {
-      case 'text':
-        setModalTextValue(currentValue.textValue ?? '');
-        setModalTimeSeriesData([]); // 다른 타입 상태 초기화
-        setModalNumericValue(null);
-        setModalNumericUnit('');
-        setModalDecimalPlaces(0);
-        break;
-
-      case 'timeSeries': {
-        // timeSeriesData가 배열이 아니면 빈 배열로 초기화
-        const timeSeriesData = Array.isArray(currentValue.timeSeriesData)
-          ? [...currentValue.timeSeriesData.map((d) => ({ ...d }))]
-          : [];
-
-        setModalTimeSeriesData(timeSeriesData); // 깊은 복사
-        setModalTextValue(''); // 다른 타입 상태 초기화
-        setModalNumericValue(null);
-        setModalNumericUnit('');
-        setModalDecimalPlaces(0);
-        break;
-      }
-
-      case 'numeric':
-        setModalNumericValue(
-          currentValue.numericValue !== undefined ? currentValue.numericValue : null
-        );
-        setModalNumericUnit(currentValue.numericUnit || '');
-        setModalDecimalPlaces(
-          currentValue.decimalPlaces !== undefined ? currentValue.decimalPlaces : 0
-        );
-        setModalTextValue(''); // 다른 타입 상태 초기화
-        setModalTimeSeriesData([]);
-        break;
+    // 현재 값이 없으면 기본값 생성
+    if (!currentValue) {
+      console.warn(`카테고리 ${category.id}에 대한 현재 값이 없습니다. 기본값 생성합니다.`);
+      
+      // 카테고리 기본 데이터 타입에 맞는 빈 값 생성
+      const defaultValue: CompanyGRICategoryValue = {
+        categoryId: category.id,
+        dataType: category.defaultDataType as 'timeSeries' | 'text' | 'numeric' || 'text',
+        timeSeriesData: category.defaultDataType === 'timeSeries' ? [] : undefined,
+        textValue: category.defaultDataType === 'text' ? '' : null,
+        numericValue: category.defaultDataType === 'numeric' ? 0 : null
+      };
+      
+      // 수정 중인 카테고리 설정
+      setEditingCategory({ 
+        category, 
+        currentValue: defaultValue 
+      });
+    } else {
+      // 수정 중인 카테고리 설정
+      setEditingCategory({ 
+        category, 
+        currentValue: { ...currentValue } // 깊은 복사로 참조 문제 방지
+      });
     }
-
+    
+    // 모달 열기
     setIsModalOpen(true);
   };
 
@@ -234,7 +229,7 @@ export default function GriEditForm({
   const handleModalOpenChange = (open: boolean) => {
     setIsModalOpen(open);
     if (!open) {
-      // 모달이 닫힐 때 editingCategory 초기화
+      // 모달이 닫힐 때 editing 상태 초기화
       setEditingCategory(null);
     }
   };
@@ -551,6 +546,7 @@ export default function GriEditForm({
         onOpenChange={handleModalOpenChange}
         editingCategory={editingCategory}
         onSave={handleSave}
+        isOnline={isOnline}
       />
     </form>
   );
