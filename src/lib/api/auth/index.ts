@@ -1,5 +1,5 @@
 import type { AuthState, User } from '@/lib/atoms';
-import type { LoginRequest, LoginResponse, SignUpRequest, SignUpResponse } from '@/types/auth';
+import type { LoginRequest, LoginResponse, SignUpRequest, SignUpResponse, TokenVerificationRequest, TokenVerificationResponse } from '@/types/auth';
 import type { AxiosResponse } from 'axios';
 import type { SetStateAction } from 'react';
 import type { ErrorResponse } from '@/types/api';
@@ -163,13 +163,34 @@ export const signup = async (userData: SignUpRequest): Promise<SignUpResponse> =
     // 오류 응답의 상세 정보 로깅
     if (error.response) {
       const status = error.response.status;
-      const errorData = error.response.data as ErrorResponse;
       
-      console.error(`[API Auth] 회원가입 오류 (${status}):`, errorData);
-      
-      if (errorData.errors && errorData.errors.length > 0) {
-        const fields = errorData.errors.map(e => `${e.field}: ${e.message}`).join(', ');
-        console.error(`[API Auth] 유효성 검증 오류: ${fields}`);
+      // 백엔드 응답 데이터 분석
+      try {
+        const errorData = error.response.data as ErrorResponse;
+        console.error(`[API Auth] 회원가입 오류 (${status}):`, errorData);
+        
+        // 유효성 검증 오류가 있는 경우 자세히 로깅
+        if (errorData.errors && errorData.errors.length > 0) {
+          const fields = errorData.errors.map(e => `${e.field}: ${e.message}`).join(', ');
+          console.error(`[API Auth] 유효성 검증 오류: ${fields}`);
+        }
+        
+        // 백엔드 응답이 일반 문자열만 포함하는 경우
+        if (typeof errorData === 'string') {
+          console.error(`[API Auth] 오류 메시지: ${errorData}`);
+        }
+        
+        // 백엔드 응답에 오류 세부 정보가 없는 경우의 fallback 처리
+        if (!errorData.errors && !errorData.message && status === 400) {
+          console.error('[API Auth] 유효성 검증 실패 - 세부 정보 없음');
+          
+          // 가장 일반적인 유효성 검증 오류 (추론)
+          const fields = Object.keys(userData);
+          console.error('[API Auth] 확인이 필요한 필드:', fields);
+        }
+      } catch (parseError) {
+        console.error('[API Auth] 오류 응답 파싱 실패:', parseError);
+        console.error('[API Auth] 원본 오류 응답:', error.response.data);
       }
     }
     
@@ -229,13 +250,50 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
 
     console.log(`[AUTH] 토큰 검증 - 토큰 확인: ${auth.token.substring(0, 10)}...`);
 
-    // 토큰 검증 API 호출 (axios 인스턴스가 자동으로 토큰을 헤더에 추가)
-    const response = await axiosInstance.get('/auth/verify');
+    // GET에서 POST로 변경하고 요청 본문에 토큰 포함
+    const requestData: TokenVerificationRequest = {
+      token: auth.token
+    };
 
-    console.log(`[AUTH] 토큰 검증 결과: ${response.status === 200 ? '성공' : '실패'}`);
-    return response.status === 200;
-  } catch (error) {
+    console.log('[AUTH] 토큰 검증 요청 전송:', {
+      method: 'POST',
+      url: '/auth/verify',
+      token: `${auth.token.substring(0, 10)}...` // 로그에는 토큰 일부만 표시
+    });
+
+    // 토큰 검증 API 호출 (POST 메서드로 변경)
+    const response = await axiosInstance.post<TokenVerificationResponse>(
+      '/auth/verify',
+      requestData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    const isValid = response.status === 200 && response.data.valid === true;
+    console.log(`[AUTH] 토큰 검증 결과: ${isValid ? '성공' : '실패'}`);
+    
+    if (isValid && response.data.exp) {
+      // 만료 시간 정보가 있는 경우, 만료까지 남은 시간 계산
+      const expiresAt = new Date(response.data.exp * 1000);
+      const now = new Date();
+      const timeLeft = Math.floor((expiresAt.getTime() - now.getTime()) / 1000 / 60); // 분 단위
+      console.log(`[AUTH] 토큰 만료 시간: ${timeLeft}분 남음`);
+    }
+
+    return isValid;
+  } catch (error: any) {
     console.error('[AUTH] 토큰 검증 오류:', error);
+    
+    // 오류 응답 로깅
+    if (error.response) {
+      console.error('[AUTH] 토큰 검증 응답 상태:', error.response.status);
+      console.error('[AUTH] 토큰 검증 응답 데이터:', error.response.data);
+    }
+    
     return false;
   }
 };

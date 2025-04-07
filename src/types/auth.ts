@@ -70,3 +70,20 @@ export interface SignUpResponse {
   updatedAt: string; // 계정 정보 업데이트 일시
   token?: string; // 인증 토큰 (선택적)
 }
+
+/**
+ * 토큰 검증 API 요청 형식
+ */
+export interface TokenVerificationRequest {
+  token: string; // 검증할 인증 토큰
+}
+
+/**
+ * 토큰 검증 API 응답 형식
+ */
+export interface TokenVerificationResponse {
+  valid: boolean; // 토큰 유효성 여부
+  userId?: number; // 토큰에서 추출한 사용자 ID (유효한 경우)
+  email?: string; // 토큰에서 추출한 이메일 (유효한 경우)
+  exp?: number; // 토큰 만료 시간 (Unix timestamp)
+}

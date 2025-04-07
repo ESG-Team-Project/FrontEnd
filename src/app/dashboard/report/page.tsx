@@ -59,11 +59,11 @@ export default function ReportPage() {
   const getSupportLevelBadge = (supportLevel: SupportLevel) => {
     switch (supportLevel) {
       case 'full':
-        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap min-w-[70px]">완전 지원</span>;
+        return <span className="inline-block text-center rounded-full px-3 py-1 text-xs font-semibold bg-green-100 text-green-800 whitespace-nowrap min-w-[80px]">완전 지원</span>;
       case 'partial':
-        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap min-w-[70px]">부분 지원</span>;
+        return <span className="inline-block text-center rounded-full px-3 py-1 text-xs font-semibold bg-yellow-100 text-yellow-800 whitespace-nowrap min-w-[80px]">부분 지원</span>;
       case 'coming':
-        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap min-w-[60px]">준비중</span>;
+        return <span className="inline-block text-center rounded-full px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-800 whitespace-nowrap min-w-[70px]">준비중</span>;
       default:
         return null;
     }
@@ -177,63 +177,67 @@ export default function ReportPage() {
           {frameworks.map((framework) => (
             <Card
               key={framework.id}
-              className={`cursor-pointer transition-all hover:shadow-md ${
+              className={`cursor-pointer transition-all hover:shadow-md hover:border-primary/50 flex flex-col h-full ${
                 selectedFramework?.id === framework.id ? 'border-primary shadow-lg' : ''
               }`}
               onClick={() => setSelectedFramework(framework)}
             >
-              <CardHeader>
-                <div className="flex items-center justify-between mb-1">
-                  <CardTitle className="text-lg truncate mr-2">{framework.name}</CardTitle>
-                  <div className="flex-shrink-0">
-                    {getSupportLevelBadge(framework.supportLevel)}
-                  </div>
+              <CardHeader className="pb-2">
+                <div className="mb-1">
+                  {getSupportLevelBadge(framework.supportLevel)}
                 </div>
-                <CardDescription>{framework.description}</CardDescription>
+                <CardTitle className="text-lg font-semibold break-words leading-tight">
+                  {framework.name}
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      disabled={framework.supportLevel === 'coming'}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                      }}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      문서 다운로드
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-2">
-                    <div className="flex flex-col gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="justify-start"
+              <CardContent className="flex flex-col h-full">
+                <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                  {framework.description}
+                </p>
+                <div className="mt-auto pt-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={framework.supportLevel === 'coming'}
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDownload(framework, 'pdf');
                         }}
                       >
-                        <FileText className="mr-2 h-4 w-4" /> PDF 형식
+                        <Download className="mr-2 h-4 w-4" />
+                        문서 다운로드
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="justify-start"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDownload(framework, 'docx');
-                        }}
-                      >
-                        <FileText className="mr-2 h-4 w-4" /> DOCX 형식
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-2">
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(framework, 'pdf');
+                          }}
+                        >
+                          <FileText className="mr-2 h-4 w-4" /> PDF 형식
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="justify-start"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(framework, 'docx');
+                          }}
+                        >
+                          <FileText className="mr-2 h-4 w-4" /> DOCX 형식
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </CardContent>
             </Card>
           ))}

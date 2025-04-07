@@ -176,6 +176,27 @@ axiosInstance.interceptors.response.use(
       if (errorData.errors && errorData.errors.length > 0) {
         console.error('[AXIOS] 유효성 검증 오류:', errorData.errors);
       }
+    } else if (error.response?.data) {
+      // 백엔드가 ErrorResponse 형식이 아닌 데이터를 반환한 경우
+      console.error('[AXIOS] 응답 데이터(형식화되지 않음):', error.response.data);
+      
+      // 응답이 문자열인 경우
+      if (typeof error.response.data === 'string') {
+        console.error('[AXIOS] 오류 메시지(문자열):', error.response.data);
+      }
+      
+      // JSON 객체이지만 ErrorResponse 형식이 아닌 경우
+      if (typeof error.response.data === 'object') {
+        const unknownErrorData = error.response.data;
+        
+        // 가능한 오류 메시지 필드 시도
+        const possibleMessageFields = ['message', 'error', 'errorMessage', 'detail', 'description'];
+        for (const field of possibleMessageFields) {
+          if (unknownErrorData[field]) {
+            console.error(`[AXIOS] 가능한 오류 메시지 (${field}):`, unknownErrorData[field]);
+          }
+        }
+      }
     }
     
     // 401 Unauthorized 오류 (인증 만료) 또는 403 Forbidden 오류 (권한 부족)
