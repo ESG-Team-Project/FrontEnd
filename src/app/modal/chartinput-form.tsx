@@ -156,7 +156,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     return griCategories.filter(
       (category) =>
         category.isQuantitative ||
-        category.defaultDataType === 'numeric' ||
         category.defaultDataType === 'timeSeries'
     );
   }, []); // 의존성 없음 - 한 번만 계산
@@ -315,19 +314,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       setLabels(labels);
       setDatasets(datasets);
       goToStep('datatable');
-    } else if (categoryData.dataType === 'numeric' && categoryData.numericValue !== null && categoryData.numericValue !== undefined) {
-      // 단일 숫자 데이터 처리
-      const labels = [selectedGriCategory];
-      const datasets = [
-        {
-          label: selectedGriCategory,
-          data: [categoryData.numericValue] as number[],
-        },
-      ];
-
-      setLabels(labels);
-      setDatasets(datasets);
-      goToStep('datatable');
     } else {
       // 텍스트 데이터나 데이터가 없는 경우
       alert('이 카테고리는 차트로 표시할 수 있는 데이터가 없습니다.');
@@ -389,21 +375,16 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     };
 
     try {
-      const response = await fetch('/api/charts', {
-        method: 'POST',
+      // axios를 사용하여 API 호출
+      const axiosInstance = (await import('@/lib/api/core/axios')).default;
+      const response = await axiosInstance.post('/charts', newChart, {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newChart),
+          'Content-Type': 'application/json'
+        }
       });
-
-      if (!response.ok) {
-        throw new Error(`API 오류: ${response.statusText}`);
-      }
-
-      const savedChart = await response.json();
+      
       if (onChartAdd) {
-        onChartAdd(savedChart);
+        onChartAdd(response.data);
       }
 
       resetForm();

@@ -196,7 +196,7 @@ export default function DataTable({
       <div className="relative w-full h-[400px] border border-gray-200 overflow-y-auto overflow-x-auto">
         <div className="w-max" style={{ minWidth: '100%' }}>
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 bg-white z-10 border-b">
               <TableRow>
                 {columns.map((col, colIndex) => (
                   <TableHead
@@ -219,9 +219,19 @@ export default function DataTable({
                   </TableHead>
                 ))}
                 <TableHead className="min-w-[100px]">
-                  <button type="button" onClick={addColumn} className="text-blue-500">
-                    <Plus size={32} />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={addColumn} className="text-blue-500" title="컬럼 추가">
+                      <Plus size={24} />
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={addRow} 
+                      className="text-green-500 ml-2" 
+                      title="행 추가"
+                    >
+                      <Plus size={24} className="transform rotate-90" />
+                    </button>
+                  </div>
                 </TableHead>
               </TableRow>
             </TableHeader>
