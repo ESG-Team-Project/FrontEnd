@@ -242,6 +242,7 @@ export default function GriEditForm({
   // 모달에서 저장 이벤트 처리
   const handleSave = async (categoryId: string, updatedValue: CompanyGRICategoryValue) => {
     try {
+      console.log(`저장 요청 시작: 카테고리 ${categoryId}`);
       setIsSaving(true);
 
       // 폼 데이터 업데이트
@@ -250,31 +251,36 @@ export default function GriEditForm({
         [categoryId]: updatedValue,
       };
 
+      // 로컬 상태 즉시 업데이트 (낙관적 UI 업데이트)
+      setFormData(updatedFormData);
+      
+      // 부모 컴포넌트에 먼저 알림 (UI를 즉시 반영)
+      if (onChange) {
+        console.log("UI 낙관적 업데이트");
+        const updatedData: CompanyGRIData = {
+          ...initialData,
+          griValues: updatedFormData,
+        };
+        onChange(updatedData);
+      }
+
       // enhancedService가 있으면 사용
       if (enhancedService) {
+        console.log("enhancedService 사용하여 저장");
         // 개선된 서비스로 저장
         const result = await enhancedService.saveCategory(
           categoryId, 
           updatedValue,
           (newData: CompanyGRIData) => {
             // 콜백: 서버 응답 후 UI 업데이트
+            console.log("저장 후 콜백 실행");
             if (onChange) {
               onChange(newData);
             }
           }
         );
 
-        // 로컬 상태 즉시 업데이트
-        setFormData(updatedFormData);
-
-        // 부모 컴포넌트에 알림
-        if (onChange) {
-          const updatedData: CompanyGRIData = {
-            ...initialData,
-            griValues: updatedFormData,
-          };
-          onChange(updatedData);
-        }
+        console.log("저장 결과:", result);
 
         // 결과에 따른 메시지
         if (result.success) {
@@ -304,66 +310,64 @@ export default function GriEditForm({
         return true;
       } else {
         // 기존 방식으로 저장 (fallback)
+        console.log("기존 API 방식으로 저장");
         const { saveSingleGriCategory, getCompanyGriDataFormatted } = await import('@/lib/api/gri');
         const success = await saveSingleGriCategory(categoryId, updatedValue);
+        console.log("저장 결과:", success);
 
         if (success) {
-          // 성공 시 로컬 상태 업데이트 (먼저 업데이트)
-          setFormData(updatedFormData);
-
-          // 부모 컴포넌트에 알림
-          if (onChange) {
-            const updatedData: CompanyGRIData = {
-              ...initialData,
-              griValues: updatedFormData,
-            };
-            onChange(updatedData);
+          // 성공 시 로컬 상태 업데이트 (이미 낙관적으로 업데이트됨)
+          
+          try {
+            // 서버에서 최신 데이터를 다시 가져오기
+            console.log("서버에서 최신 데이터를 다시 로드합니다.");
+            const refreshedData = await getCompanyGriDataFormatted();
             
-            try {
-              // 서버에서 최신 데이터를 다시 가져오기
-              console.log("서버에서 최신 데이터를 다시 로드합니다.");
-              const refreshedData = await getCompanyGriDataFormatted();
-              
-              // 데이터 일관성 검증
-              const isConsistent = await verifyDataConsistency(categoryId, updatedValue);
-              
-              if (isConsistent) {
-                // 성공 메시지 표시
-                toast({
-                  title: "저장 성공",
-                  description: "데이터가 성공적으로 저장되었습니다.",
-                  variant: "default",
-                });
-                
-                // 최신 데이터 설정 (방금 수정한 항목은 유지)
-                const mergedData = {
-                  ...refreshedData,
-                  griValues: {
-                    ...refreshedData.griValues,
-                    [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
-                  }
-                };
-                onChange(mergedData);
-              } else {
-                // 경고 메시지 표시
-                toast({
-                  title: "일부 불일치 감지",
-                  description: "데이터가 저장되었으나 서버와 일부 불일치가 감지되었습니다.",
-                  variant: "destructive",
-                });
-                
-                // 최신 데이터로 강제 업데이트
-                onChange(refreshedData);
-              }
-            } catch (refreshError) {
-              console.error("데이터 새로고침 실패:", refreshError);
-              // 새로고침 실패 시 오류 알림
+            // 데이터 일관성 검증
+            const isConsistent = await verifyDataConsistency(categoryId, updatedValue);
+            console.log("데이터 일관성 검증 결과:", isConsistent);
+            
+            if (isConsistent) {
+              // 성공 메시지 표시
               toast({
-                title: "데이터 갱신 오류",
-                description: "저장 후 최신 데이터를 불러오는 중 오류가 발생했습니다.",
+                title: "저장 성공",
+                description: "데이터가 성공적으로 저장되었습니다.",
+                variant: "default",
+              });
+              
+              // 최신 데이터 설정 (방금 수정한 항목은 유지)
+              const mergedData = {
+                ...refreshedData,
+                griValues: {
+                  ...refreshedData.griValues,
+                  [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
+                }
+              };
+              
+              if (onChange) {
+                onChange(mergedData);
+              }
+            } else {
+              // 경고 메시지 표시
+              toast({
+                title: "일부 불일치 감지",
+                description: "데이터가 저장되었으나 서버와 일부 불일치가 감지되었습니다.",
                 variant: "destructive",
               });
+              
+              // 최신 데이터로 강제 업데이트
+              if (onChange) {
+                onChange(refreshedData);
+              }
             }
+          } catch (refreshError) {
+            console.error("데이터 새로고침 실패:", refreshError);
+            // 새로고침 실패 시 오류 알림
+            toast({
+              title: "데이터 갱신 오류",
+              description: "저장 후 최신 데이터를 불러오는 중 오류가 발생했습니다.",
+              variant: "destructive",
+            });
           }
 
           return true;
@@ -382,6 +386,7 @@ export default function GriEditForm({
       
       // 오프라인 상태에서 발생한 오류인 경우 
       if (!isOnline) {
+        console.log("오프라인 상태에서 로컬 저장");
         // 성공적으로 로컬에 저장됨
         setFormData(prev => ({
           ...prev,
@@ -421,6 +426,7 @@ export default function GriEditForm({
       });
       return false;
     } finally {
+      console.log("저장 프로세스 완료");
       setIsSaving(false);
     }
   };

@@ -83,6 +83,9 @@ export function GriEditModal({
   const [modalDecimalPlaces, setModalDecimalPlaces] = useState<number>(0);
   const [dataType, setDataType] = useState<GRIDataType>('text');
 
+  // 클릭 방지 상태
+  const [isButtonClicked, setIsButtonClicked] = useState(false);
+
   // editingCategory가 변경될 때 모달 상태 초기화
   useEffect(() => {
     if (!editingCategory) return;
@@ -269,8 +272,10 @@ export function GriEditModal({
 
   // 모달에서 저장 버튼 클릭 시 호출되는 함수
   const handleModalSave = async () => {
-    if (!editingCategory) return;
+    if (!editingCategory || isButtonClicked) return;
 
+    // 중복 클릭 방지
+    setIsButtonClicked(true);
     setIsSaving(true);
     setSaveMessage(null);
 
@@ -298,8 +303,12 @@ export function GriEditModal({
           break;
       }
 
+      console.log("저장 요청 시작:", categoryId);
+      
       // 상위 컴포넌트의 저장 함수 호출
       const success = await onSave(categoryId, updatedValue);
+      
+      console.log("저장 요청 완료:", success);
 
       if (success) {
         // 오프라인 상태인 경우 다른 메시지 표시
@@ -361,6 +370,10 @@ export function GriEditModal({
       });
     } finally {
       setIsSaving(false);
+      // 3초 후에 버튼 클릭 상태 초기화 (중복 방지 해제)
+      setTimeout(() => {
+        setIsButtonClicked(false);
+      }, 3000);
     }
   };
 
@@ -701,8 +714,21 @@ export function GriEditModal({
                   <span>저장 중...</span>
                 </div>
               ) : (
-                <CustomButton type="button" onClick={handleModalSave} disabled={isSaving}>
+                <CustomButton 
+                  type="button" 
+                  onClick={() => {
+                    console.log("저장 버튼 클릭됨");
+                    if (!isButtonClicked) handleModalSave();
+                  }} 
+                  disabled={isSaving || isButtonClicked}
+                  className="relative"
+                >
                   저장
+                  {isButtonClicked && !isSaving && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-primary/10 rounded">
+                      처리 중...
+                    </span>
+                  )}
                 </CustomButton>
               )}
             </div>
