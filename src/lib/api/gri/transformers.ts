@@ -15,104 +15,168 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
   griCategories.forEach(cat => {
     griValues[cat.id] = {
       categoryId: cat.id,
-      dataType: cat.defaultDataType as 'timeSeries' | 'text' | 'numeric' || 'text',
+      dataType: cat.defaultDataType as 'timeSeries' | 'text' || 'text',
       timeSeriesData: cat.defaultDataType === 'timeSeries' ? [] : undefined,
       textValue: cat.defaultDataType === 'text' ? '' : null,
-      numericValue: cat.defaultDataType === 'numeric' ? 0 : null
     };
   });
 
   // 2. 백엔드 데이터로 값 채우기
-  // API 응답 형식 변경에 따른 처리
-  const dataArray = Array.isArray(backendData) ? backendData : 
-                  (backendData && backendData.content ? backendData.content : 
-                  (backendData && typeof backendData === 'object' ? [backendData] : []));
-  
-  console.log('GRI 데이터 변환 시작: ', dataArray.length, '개 항목');
-  
-  // 처리된 카테고리 ID 추적 (중복 감지용)
-  const processedCategories = new Set<string>();
-  
-  dataArray.forEach((item, index) => {
-    if (!item || !item.standardCode || !item.disclosureCode) {
-      console.warn(`[Item ${index}] GRI 데이터 항목 처리 중 누락된 정보:`, item);
-      return;
-    }
-    
-    const categoryId = `${item.standardCode}-${item.disclosureCode}`;
-    
-    // 이미 처리된 카테고리인지 확인 (중복 감지)
-    if (processedCategories.has(categoryId)) {
-      console.warn(`[Item ${index}] 이미 처리된 카테고리 스킵: ${categoryId}, ID=${item.id}`);
-      return;
-    }
-    
-    processedCategories.add(categoryId);
-    
-    // 카테고리가 존재하는지 확인
-    if (griValues[categoryId]) {
-      console.log(`[Item ${index}] 카테고리 데이터 채우기: ${categoryId}, ID=${item.id}`);
-      const existingData = griValues[categoryId];
-      
-      // 시계열 데이터인 경우
-      if (existingData.dataType === 'timeSeries') {
-        if (!existingData.timeSeriesData) {
-          existingData.timeSeriesData = [];
-        }
+  // 응답 데이터 형식 확인 및 로깅
+  console.log('[변환] 백엔드 데이터 형식 체크:', 
+    Array.isArray(backendData) ? '배열' : 
+    (backendData && typeof backendData === 'object' ? '객체' : '기타'),
+    '첫 번째 키:', Object.keys(backendData || {}).slice(0, 3)
+  );
 
-        // 시계열 데이터 포맷 추출 시도
-        try {
-          // 시계열 데이터가 JSON 문자열로 저장되어 있는지 확인
-          if (item.disclosureValue && item.disclosureValue.startsWith('[') && item.disclosureValue.endsWith(']')) {
-            try {
-              // JSON 문자열을 파싱하여 시계열 데이터로 변환
-              const timeSeriesData = JSON.parse(item.disclosureValue) as TimeSeriesDataPoint[];
-              
-              if (Array.isArray(timeSeriesData)) {
-                console.log(`[${categoryId}] 파싱된 시계열 데이터: ${timeSeriesData.length}개 항목`);
-                existingData.timeSeriesData = timeSeriesData;
-              } else {
-                console.warn(`[${categoryId}] 시계열 데이터가 배열이 아닙니다:`, item.disclosureValue);
-              }
-            } catch (parseError) {
-              console.error(`[${categoryId}] JSON 파싱 오류:`, parseError);
-              console.error('파싱 시도한 JSON:', item.disclosureValue);
-            }
-          } else {
-            // 단일 값이고 특정 연도 정보가 있는 경우
-            if (item.reportingPeriodStart && item.numericValue !== null) {
-              const year = new Date(item.reportingPeriodStart).getFullYear();
-              const newPoint: TimeSeriesDataPoint = {
-                id: `${categoryId}-${year}`,
-                year,
-                value: item.numericValue,
-                unit: item.unit || ''
-              };
-              console.log(`[${categoryId}] 단일 시계열 포인트 생성: 연도=${year}, 값=${item.numericValue}`);
-              existingData.timeSeriesData.push(newPoint);
-            }
+  // 객체 형식의 데이터 직접 처리 ({"102-1": {...}, "102-2": {...}} 형식)
+  if (backendData && typeof backendData === 'object' && !Array.isArray(backendData) && 
+      Object.keys(backendData).some(key => key.includes('-'))) {
+    
+    console.log('[변환] 객체 형식 데이터 처리:', Object.keys(backendData).length, '개 항목');
+    
+    // 각 키(GRI 코드)에 대해 처리
+    Object.keys(backendData).forEach(categoryId => {
+      // GRI 카테고리 ID가 유효하면 처리
+      if (griValues[categoryId]) {
+        const item = backendData[categoryId];
+        const existingData = griValues[categoryId];
+        
+        console.log(`[변환] 카테고리 ${categoryId} 객체 데이터 매핑:`, item.id || '(ID 없음)');
+        
+        // 데이터 타입에 맞게 처리
+        if (existingData.dataType === 'text') {
+          existingData.textValue = item.disclosureValue || '';
+          console.log(`- 텍스트 값 설정: ${existingData.textValue?.substring(0, 30) || ''}${existingData.textValue?.length > 30 ? '...' : ''}`);
+        } 
+        else if (existingData.dataType === 'timeSeries') {
+          if (!existingData.timeSeriesData) {
+            existingData.timeSeriesData = [];
           }
-        } catch (error) {
-          console.error(`[${categoryId}] 시계열 데이터 변환 오류:`, error);
+
+          try {
+            // 시계열 데이터가 JSON 문자열로 저장되어 있는지 확인
+            if (item.disclosureValue && item.disclosureValue.startsWith('[') && item.disclosureValue.endsWith(']')) {
+              try {
+                // JSON 문자열을 파싱하여 시계열 데이터로 변환
+                const timeSeriesData = JSON.parse(item.disclosureValue) as TimeSeriesDataPoint[];
+                
+                if (Array.isArray(timeSeriesData)) {
+                  console.log(`- 시계열 데이터 파싱: ${timeSeriesData.length}개 항목`);
+                  existingData.timeSeriesData = timeSeriesData;
+                } else {
+                  console.warn(`- 시계열 데이터가 배열이 아닙니다:`, item.disclosureValue);
+                }
+              } catch (parseError) {
+                console.error(`- JSON 파싱 오류:`, parseError);
+              }
+            } else {
+              // 단일 값이고 특정 연도 정보가 있는 경우
+              if (item.reportingPeriodStart && item.numericValue !== null) {
+                const year = new Date(item.reportingPeriodStart).getFullYear();
+                const newPoint: TimeSeriesDataPoint = {
+                  id: `${categoryId}-${year}`,
+                  year,
+                  value: item.numericValue,
+                  unit: item.unit || ''
+                };
+                console.log(`- 단일 시계열 포인트 생성: 연도=${year}, 값=${item.numericValue}`);
+                existingData.timeSeriesData.push(newPoint);
+              }
+            }
+          } catch (error) {
+            console.error(`- 시계열 데이터 변환 오류:`, error);
+          }
         }
-      } 
-      // 텍스트 데이터인 경우
-      else if (existingData.dataType === 'text') {
-        existingData.textValue = item.disclosureValue || '';
-        console.log(`[${categoryId}] 텍스트 값 설정: ${existingData.textValue.substring(0, 50)}${existingData.textValue.length > 50 ? '...' : ''}`);
-      } 
-      // 숫자 데이터인 경우
-      else if (existingData.dataType === 'numeric') {
-        existingData.numericValue = item.numericValue;
-        if (item.unit) {
-          existingData.numericUnit = item.unit;
-        }
-        console.log(`[${categoryId}] 숫자 값 설정: ${existingData.numericValue} ${existingData.numericUnit || ''}`);
+      } else {
+        console.warn(`[변환] 정의되지 않은 카테고리 ID 스킵: ${categoryId}`);
       }
-    } else {
-      console.warn(`[Item ${index}] 정의되지 않은 카테고리 ID: ${categoryId}`);
-    }
-  });
+    });
+  }
+  // 기존 배열 처리 로직
+  else {
+    const dataArray = Array.isArray(backendData) ? backendData : 
+                    (backendData && backendData.content ? backendData.content : 
+                    (backendData && typeof backendData === 'object' ? [backendData] : []));
+    
+    console.log('GRI 데이터 변환 시작: ', dataArray.length, '개 항목');
+    
+    // 처리된 카테고리 ID 추적 (중복 감지용)
+    const processedCategories = new Set<string>();
+    
+    dataArray.forEach((item, index) => {
+      if (!item || !item.standardCode || !item.disclosureCode) {
+        console.warn(`[Item ${index}] GRI 데이터 항목 처리 중 누락된 정보:`, item);
+        return;
+      }
+      
+      const categoryId = `${item.standardCode}-${item.disclosureCode}`;
+      
+      // 이미 처리된 카테고리인지 확인 (중복 감지)
+      if (processedCategories.has(categoryId)) {
+        console.warn(`[Item ${index}] 이미 처리된 카테고리 스킵: ${categoryId}, ID=${item.id}`);
+        return;
+      }
+      
+      processedCategories.add(categoryId);
+      
+      // 카테고리가 존재하는지 확인
+      if (griValues[categoryId]) {
+        console.log(`[Item ${index}] 카테고리 데이터 채우기: ${categoryId}, ID=${item.id}`);
+        const existingData = griValues[categoryId];
+        
+        // 시계열 데이터인 경우
+        if (existingData.dataType === 'timeSeries') {
+          if (!existingData.timeSeriesData) {
+            existingData.timeSeriesData = [];
+          }
+
+          // 시계열 데이터 포맷 추출 시도
+          try {
+            // 시계열 데이터가 JSON 문자열로 저장되어 있는지 확인
+            if (item.disclosureValue && item.disclosureValue.startsWith('[') && item.disclosureValue.endsWith(']')) {
+              try {
+                // JSON 문자열을 파싱하여 시계열 데이터로 변환
+                const timeSeriesData = JSON.parse(item.disclosureValue) as TimeSeriesDataPoint[];
+                
+                if (Array.isArray(timeSeriesData)) {
+                  console.log(`[${categoryId}] 파싱된 시계열 데이터: ${timeSeriesData.length}개 항목`);
+                  existingData.timeSeriesData = timeSeriesData;
+                } else {
+                  console.warn(`[${categoryId}] 시계열 데이터가 배열이 아닙니다:`, item.disclosureValue);
+                }
+              } catch (parseError) {
+                console.error(`[${categoryId}] JSON 파싱 오류:`, parseError);
+                console.error('파싱 시도한 JSON:', item.disclosureValue);
+              }
+            } else {
+              // 단일 값이고 특정 연도 정보가 있는 경우
+              if (item.reportingPeriodStart && item.numericValue !== null) {
+                const year = new Date(item.reportingPeriodStart).getFullYear();
+                const newPoint: TimeSeriesDataPoint = {
+                  id: `${categoryId}-${year}`,
+                  year,
+                  value: item.numericValue,
+                  unit: item.unit || ''
+                };
+                console.log(`[${categoryId}] 단일 시계열 포인트 생성: 연도=${year}, 값=${item.numericValue}`);
+                existingData.timeSeriesData.push(newPoint);
+              }
+            }
+          } catch (error) {
+            console.error(`[${categoryId}] 시계열 데이터 변환 오류:`, error);
+          }
+        } 
+        // 텍스트 데이터인 경우
+        else if (existingData.dataType === 'text') {
+          existingData.textValue = item.disclosureValue || '';
+          console.log(`[${categoryId}] 텍스트 값 설정: ${existingData.textValue.substring(0, 50)}${existingData.textValue.length > 50 ? '...' : ''}`);
+        }
+      } else {
+        console.warn(`[Item ${index}] 정의되지 않은 카테고리 ID: ${categoryId}`);
+      }
+    });
+  }
 
   // 3. 최종 검증 및 특정 카테고리의 값 확인
   const debugCategories = ['102-1', '102-2', '102-3'];
@@ -122,7 +186,6 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
       console.log(`[Debug] 카테고리 ${catId} 최종 데이터:`, {
         dataType: cat.dataType,
         textValue: cat.textValue?.substring(0, 50),
-        numericValue: cat.numericValue,
         timeSeriesLength: cat.timeSeriesData?.length || 0
       });
     } else {
@@ -214,31 +277,6 @@ export function transformFrontendDataToBackend(frontendData: CompanyGRIData): Ba
           numericValue: null
         };
         backendItems.push(backendItem);
-      } 
-      // 숫자 데이터인 경우
-      else if (griValue.dataType === 'numeric') {
-        let numericValue: number | null = null;
-        
-        // 숫자 값이 있는 경우만 처리
-        if (griValue.numericValue !== null && griValue.numericValue !== undefined) {
-          // 문자열인 경우 변환 시도
-          if (typeof griValue.numericValue === 'string') {
-            numericValue = Number.parseFloat(griValue.numericValue);
-            if (Number.isNaN(numericValue)) numericValue = null;
-          } else {
-            numericValue = griValue.numericValue;
-          }
-        }
-        
-        const backendItem: BackendGRIDataItem = {
-          standardCode,
-          disclosureCode,
-          companyId,
-          disclosureValue: numericValue !== null ? String(numericValue) : '0',
-          numericValue,
-          unit: griValue.numericUnit || ''
-        };
-        backendItems.push(backendItem);
       }
     } catch (error) {
       console.error(`GRI 항목 변환 오류 (${griValue.categoryId}):`, error);
@@ -261,10 +299,9 @@ export function createInitialGriData(companyId: string): CompanyGRIData {
   for (const cat of griCategories) {
     initialData[cat.id] = {
       categoryId: cat.id,
-      dataType: cat.defaultDataType as 'timeSeries' | 'text' | 'numeric' || 'text',
+      dataType: cat.defaultDataType as 'timeSeries' | 'text' || 'text',
       timeSeriesData: cat.defaultDataType === 'timeSeries' ? [] : undefined,
       textValue: cat.defaultDataType === 'text' ? '' : null,
-      numericValue: cat.defaultDataType === 'numeric' ? 0 : null
     };
   }
 

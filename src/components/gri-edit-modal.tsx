@@ -36,7 +36,7 @@ import { toast } from '@/components/ui/use-toast';
 import { Badge } from './ui/badge';
 
 // GRI 데이터 타입 정의
-type GRIDataType = 'text' | 'timeSeries' | 'numeric';
+type GRIDataType = 'text' | 'timeSeries';
 
 // 간단한 UUID v4 생성 함수
 const generateId = (): string => {
@@ -78,9 +78,6 @@ export function GriEditModal({
   // 모달 데이터 상태
   const [modalTextValue, setModalTextValue] = useState<string | null>('');
   const [modalTimeSeriesData, setModalTimeSeriesData] = useState<TimeSeriesDataPoint[]>([]);
-  const [modalNumericValue, setModalNumericValue] = useState<number | null>(null);
-  const [modalNumericUnit, setModalNumericUnit] = useState<string>('');
-  const [modalDecimalPlaces, setModalDecimalPlaces] = useState<number>(0);
   const [dataType, setDataType] = useState<GRIDataType>('text');
 
   // 클릭 방지 상태
@@ -99,9 +96,6 @@ export function GriEditModal({
       case 'text':
         setModalTextValue(currentValue.textValue ?? '');
         setModalTimeSeriesData([]);
-        setModalNumericValue(null);
-        setModalNumericUnit('');
-        setModalDecimalPlaces(0);
         break;
 
       case 'timeSeries': {
@@ -112,23 +106,8 @@ export function GriEditModal({
 
         setModalTimeSeriesData(timeSeriesData);
         setModalTextValue('');
-        setModalNumericValue(null);
-        setModalNumericUnit('');
-        setModalDecimalPlaces(0);
         break;
       }
-
-      case 'numeric':
-        setModalNumericValue(
-          currentValue.numericValue !== undefined ? currentValue.numericValue : null
-        );
-        setModalNumericUnit(currentValue.numericUnit || '');
-        setModalDecimalPlaces(
-          currentValue.decimalPlaces !== undefined ? currentValue.decimalPlaces : 0
-        );
-        setModalTextValue('');
-        setModalTimeSeriesData([]);
-        break;
     }
   }, [editingCategory]);
 
@@ -228,48 +207,6 @@ export function GriEditModal({
     setModalTimeSeriesData(modalTimeSeriesData.filter((point) => point.id !== idToRemove));
   };
 
-  // 숫자 입력 값 변경 핸들러
-  const handleNumericValueChange = (value: string) => {
-    if (value === '') {
-      setModalNumericValue(null);
-      return;
-    }
-
-    // 소수점 제한이 있는 경우
-    if (modalDecimalPlaces === 0) {
-      // 정수만 허용
-      const parsedValue = Number.parseInt(value, 10);
-      if (!Number.isNaN(parsedValue)) {
-        setModalNumericValue(parsedValue);
-      }
-    } else {
-      // 소수점 허용
-      const parsedValue = Number.parseFloat(value);
-      if (!Number.isNaN(parsedValue)) {
-        // 소수점 자릿수 제한
-        setModalNumericValue(Number(parsedValue.toFixed(modalDecimalPlaces)));
-      }
-    }
-  };
-
-  // 숫자 단위 변경 핸들러
-  const handleNumericUnitChange = (value: string) => {
-    setModalNumericUnit(value);
-  };
-
-  // 소수점 자릿수 변경 핸들러
-  const handleDecimalPlacesChange = (value: string) => {
-    const places = Number.parseInt(value, 10);
-    if (!Number.isNaN(places) && places >= 0) {
-      setModalDecimalPlaces(places);
-
-      // 현재 값이 있으면 소수점 자릿수에 맞게 변환
-      if (modalNumericValue !== null) {
-        setModalNumericValue(Number(modalNumericValue.toFixed(places)));
-      }
-    }
-  };
-
   // 모달에서 저장 버튼 클릭 시 호출되는 함수
   const handleModalSave = async () => {
     if (!editingCategory || isButtonClicked) return;
@@ -292,11 +229,6 @@ export function GriEditModal({
       switch (dataType) {
         case 'text':
           updatedValue.textValue = modalTextValue;
-          break;
-        case 'numeric':
-          updatedValue.numericValue = modalNumericValue;
-          updatedValue.numericUnit = modalNumericUnit;
-          updatedValue.decimalPlaces = modalDecimalPlaces;
           break;
         case 'timeSeries':
           updatedValue.timeSeriesData = modalTimeSeriesData;
@@ -405,7 +337,6 @@ export function GriEditModal({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="text">텍스트 (단일 값)</SelectItem>
-                <SelectItem value="numeric">수치 데이터</SelectItem>
                 <SelectItem value="timeSeries">시계열 데이터</SelectItem>
               </SelectContent>
             </Select>
@@ -442,68 +373,6 @@ export function GriEditModal({
                       onChange={handleModalTextChange}
                       rows={10}
                     />
-                  </div>
-                );
-
-              case 'numeric':
-                return (
-                  <div className="grid gap-4 py-2">
-                    <div>
-                      <Label htmlFor="modal-numeric-value">수치 값</Label>
-                      <div className="mt-2 flex gap-2">
-                        <Input
-                          id="modal-numeric-value"
-                          type="number"
-                          value={modalNumericValue !== null ? modalNumericValue : ''}
-                          onChange={(e) => handleNumericValueChange(e.target.value)}
-                          step={
-                            modalDecimalPlaces > 0
-                              ? `0.${'0'.repeat(modalDecimalPlaces - 1)}1`
-                              : '1'
-                          }
-                          placeholder="숫자 값 입력"
-                          className="flex-1"
-                        />
-                        <Input
-                          value={modalNumericUnit}
-                          onChange={(e) => handleNumericUnitChange(e.target.value)}
-                          placeholder="단위"
-                          className="w-20 sm:w-24"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="mt-2">
-                      <Label htmlFor="modal-decimal-places">소수점 자릿수</Label>
-                      <div className="mt-2 flex gap-2 items-center">
-                        <Input
-                          id="modal-decimal-places"
-                          type="number"
-                          min="0"
-                          max="10"
-                          value={modalDecimalPlaces}
-                          onChange={(e) => handleDecimalPlacesChange(e.target.value)}
-                          className="w-20 sm:w-24"
-                        />
-                        <span className="text-sm text-muted-foreground ml-2">
-                          {modalDecimalPlaces === 0
-                            ? '정수만 입력 가능'
-                            : `소수점 ${modalDecimalPlaces}자리까지 허용`}
-                        </span>
-                      </div>
-                    </div>
-
-                    {modalNumericValue !== null && (
-                      <div className="mt-4 p-3 bg-muted rounded-md">
-                        <p className="font-medium">미리보기:</p>
-                        <p className="text-lg mt-1">
-                          {modalDecimalPlaces > 0
-                            ? modalNumericValue.toFixed(modalDecimalPlaces)
-                            : modalNumericValue.toString()}
-                          {modalNumericUnit ? ` ${modalNumericUnit}` : ''}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 );
               default:
@@ -633,17 +502,12 @@ export function GriEditModal({
                                   </TableCell>
                                   <TableCell>
                                     <Input
-                                      type={
-                                        editingCategory?.category.isQuantitative ? 'number' : 'text'
-                                      }
+                                      type="text"
                                       value={point.value ?? ''}
                                       onChange={(e) =>
                                         handleModalTimeSeriesChange(index, 'value', e.target.value)
                                       }
                                       className="w-full"
-                                      step={
-                                        editingCategory?.category.isQuantitative ? 'any' : undefined
-                                      }
                                       placeholder="값 입력"
                                     />
                                   </TableCell>

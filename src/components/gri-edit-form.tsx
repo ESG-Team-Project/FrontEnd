@@ -43,7 +43,7 @@ interface EditingCategory {
 }
 
 // 타입 수정 - 서로 겹치지 않는 리터럴 타입으로 명확하게 정의
-type GRIDataType = 'text' | 'timeSeries' | 'numeric';
+type GRIDataType = 'text' | 'timeSeries';
 
 // GRI 그룹 ID를 카테고리 ID에서 추출하는 헬퍼 함수
 const getGroupIdFromCategoryId = (categoryId: string): string => {
@@ -83,14 +83,6 @@ const verifyDataConsistency = async (
         console.warn('데이터 일관성 문제: 텍스트 값이 일치하지 않습니다.', {
           saved: updatedValue.textValue,
           fresh: freshValue.textValue
-        });
-        return false;
-      }
-    } else if (updatedValue.dataType === 'numeric') {
-      if (freshValue.numericValue !== updatedValue.numericValue) {
-        console.warn('데이터 일관성 문제: 숫자 값이 일치하지 않습니다.', {
-          saved: updatedValue.numericValue,
-          fresh: freshValue.numericValue
         });
         return false;
       }
@@ -149,12 +141,9 @@ export default function GriEditForm({
     text: string;
   } | null>(null); // 저장 메시지 상태 추가
 
-  // 모달 상태 분리: 텍스트용, 시계열용, 수치용
+  // 모달 상태 분리: 텍스트용, 시계열용
   const [modalTextValue, setModalTextValue] = useState<string | null>('');
   const [modalTimeSeriesData, setModalTimeSeriesData] = useState<TimeSeriesDataPoint[]>([]);
-  const [modalNumericValue, setModalNumericValue] = useState<number | null>(null);
-  const [modalNumericUnit, setModalNumericUnit] = useState<string>('');
-  const [modalDecimalPlaces, setModalDecimalPlaces] = useState<number>(0);
 
   // 데이터 검증을 위한 useEffect 추가
   useEffect(() => {
@@ -181,7 +170,6 @@ export default function GriEditForm({
       key,
       dataType: formData[key]?.dataType,
       textValue: formData[key]?.textValue,
-      numericValue: formData[key]?.numericValue,
       timeSeriesLength: formData[key]?.timeSeriesData?.length || 0
     })));
   }, [formData]);
@@ -200,16 +188,14 @@ export default function GriEditForm({
         console.log(`카테고리 ${cat.id} 기존 데이터 복사:`, {
           dataType: existingValue.dataType,
           textValue: existingValue.textValue,
-          numericValue: existingValue.numericValue
         });
       } else {
         // 새 카테고리라면 빈 데이터 생성
         initialFormValues[cat.id] = {
           categoryId: cat.id,
-          dataType: cat.defaultDataType as 'timeSeries' | 'text' | 'numeric',
+          dataType: cat.defaultDataType as 'timeSeries' | 'text',
           timeSeriesData: cat.defaultDataType === 'timeSeries' ? [] : undefined,
           textValue: cat.defaultDataType === 'text' ? '' : null,
-          numericValue: cat.defaultDataType === 'numeric' ? 0 : null
         };
         console.log(`카테고리 ${cat.id} 새 데이터 생성:`, initialFormValues[cat.id]);
       }
@@ -229,7 +215,6 @@ export default function GriEditForm({
       categoryId: currentValue.categoryId,
       dataType: currentValue.dataType,
       textValue: currentValue.textValue,
-      numericValue: currentValue.numericValue,
       timeSeriesLength: currentValue.timeSeriesData?.length || 0
     }));
 
@@ -240,10 +225,9 @@ export default function GriEditForm({
       // 카테고리 기본 데이터 타입에 맞는 빈 값 생성
       const defaultValue: CompanyGRICategoryValue = {
         categoryId: category.id,
-        dataType: category.defaultDataType as 'timeSeries' | 'text' | 'numeric' || 'text',
+        dataType: category.defaultDataType as 'timeSeries' | 'text',
         timeSeriesData: category.defaultDataType === 'timeSeries' ? [] : undefined,
         textValue: category.defaultDataType === 'text' ? '' : null,
-        numericValue: category.defaultDataType === 'numeric' ? 0 : null
       };
       
       // 수정 중인 카테고리 설정
@@ -501,22 +485,6 @@ export default function GriEditForm({
         console.log(`시계열 데이터: 항목 없음`);
         return '항목 없음';
 
-      case 'numeric':
-        if (value.numericValue !== null && value.numericValue !== undefined) {
-          const formattedValue =
-            value.decimalPlaces !== undefined && value.decimalPlaces > 0
-              ? value.numericValue.toFixed(value.decimalPlaces)
-              : value.numericValue.toString();
-          console.log(`숫자 값:`, { 
-            값: value.numericValue, 
-            단위: value.numericUnit,
-            서식: formattedValue
-          });
-          return `${formattedValue}${value.numericUnit ? ` ${value.numericUnit}` : ''}`;
-        }
-        console.log(`숫자 값: null 또는 undefined`);
-        return '-';
-
       default:
         console.warn(`알 수 없는 데이터 타입:`, dataType);
         return '-';
@@ -582,8 +550,6 @@ export default function GriEditForm({
                     <div className="text-xs text-gray-400 mb-1">
                       {formData[category.id]?.dataType === 'text' ? 
                         `텍스트: "${formData[category.id]?.textValue?.substring(0, 15) || '-'}"` : 
-                      formData[category.id]?.dataType === 'numeric' ?
-                        `숫자: ${formData[category.id]?.numericValue || '-'}` :
                       formData[category.id]?.dataType === 'timeSeries' ?
                         `시계열(${formData[category.id]?.timeSeriesData?.length || 0}개)` : '-'
                       }

@@ -164,13 +164,34 @@ export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
     }
     
     // 응답 데이터 구조 로깅
+    const isArray = Array.isArray(response.data);
+    const isPaginationObject = response.data?.content !== undefined;
+    const isKeyValueObject = !isArray && !isPaginationObject && typeof response.data === 'object';
+    
     console.log('API 응답 구조: ', 
-      Array.isArray(response.data) ? '배열' : 
-      (response.data?.content ? 'Pagination 객체' : '객체'),
+      isArray ? '배열' : 
+      isPaginationObject ? 'Pagination 객체' :
+      isKeyValueObject ? 'Key-Value 객체' : '기타 객체',
       '총 항목 수: ', 
-      Array.isArray(response.data) ? response.data.length : 
-      (response.data?.content ? response.data.content.length : '알 수 없음')
+      isArray ? response.data.length : 
+      isPaginationObject ? response.data.content.length : 
+      isKeyValueObject ? Object.keys(response.data).length : '알 수 없음'
     );
+    
+    // Key-Value 객체일 경우 첫 번째 키값 로깅
+    if (isKeyValueObject && Object.keys(response.data).length > 0) {
+      const sampleKeys = Object.keys(response.data).slice(0, 3);
+      console.log('객체 키 샘플:', sampleKeys);
+      
+      if (sampleKeys.length > 0) {
+        const firstKey = sampleKeys[0];
+        console.log(`첫 번째 키(${firstKey}) 샘플 값:`, {
+          id: response.data[firstKey].id,
+          disclosureValue: response.data[firstKey].disclosureValue?.substring(0, 30),
+          numericValue: response.data[firstKey].numericValue
+        });
+      }
+    }
     
     // 응답 데이터의 구체적인 구조 로깅 (첫 번째 항목)
     if (Array.isArray(response.data) && response.data.length > 0) {
@@ -234,6 +255,12 @@ export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
     } else if (response.data?.companyId) {
       // 단일 객체인 경우 직접 추출
       companyId = String(response.data.companyId);
+    } else if (isKeyValueObject && Object.keys(response.data).length > 0) {
+      // Key-Value 객체인 경우 첫 번째 항목 확인
+      const firstKey = Object.keys(response.data)[0];
+      if (response.data[firstKey]?.companyId) {
+        companyId = String(response.data[firstKey].companyId);
+      }
     }
     
     console.log('GRI 데이터 변환에 사용할 회사 ID:', companyId);

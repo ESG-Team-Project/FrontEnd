@@ -14,12 +14,9 @@ export interface TimeSeriesDataPoint {
 // 각 GRI 카테고리에 대한 데이터 값 구조 정의
 export interface CompanyGRICategoryValue {
   categoryId: string; // GRI 카테고리 ID (예: '305-1')
-  dataType: 'timeSeries' | 'text' | 'numeric'; // 데이터 유형 구분
+  dataType: 'timeSeries' | 'text'; // 데이터 유형 구분 (단순 수치 데이터 타입 제거)
   timeSeriesData?: TimeSeriesDataPoint[]; // 시계열 데이터 배열 (dataType이 'timeSeries'일 때 사용)
   textValue?: string | null; // 텍스트 데이터 (dataType이 'text'일 때 사용)
-  numericValue?: number | null; // 숫자 데이터 (dataType이 'numeric'일 때 사용)
-  numericUnit?: string; // 숫자 데이터의 단위 (옵션)
-  decimalPlaces?: number; // 소수점 자릿수 (null이면 정수)
 }
 
 // 회사 전체의 GRI 데이터 구조
