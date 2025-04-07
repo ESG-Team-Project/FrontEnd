@@ -15,16 +15,16 @@ import { useDashboard } from '@/contexts/dashboard-context';
 import { griCategories } from '@/data/griCategories';
 import { griGroups } from '@/data/griGroups';
 import { 
-  getCompanyGriDataFormatted, 
   getGriDataPaginated,
-  saveCompanyGriDataFormatted,
   type PageRequest,
   type PageResponse  
 } from '@/lib/api/gri';
+import enhancedGriService from '@/lib/api/gri/persistence';
 import type { CompanyGRIData } from '@/types/companyGriData';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
-import { RefreshCw } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle2, Cloud, CloudOff, RefreshCw } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function DashboardGriEditPage() {
   const { companyId } = useDashboard();
@@ -43,6 +43,32 @@ export default function DashboardGriEditPage() {
   
   // 데이터 상태 추적
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [pendingChangesCount, setPendingChangesCount] = useState<number>(0);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
+
+  // 네트워크 상태 감지
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    // 초기 상태 설정
+    setIsOnline(navigator.onLine);
+    
+    // 주기적으로 보류 중인 변경사항 개수 업데이트
+    const intervalId = setInterval(() => {
+      setPendingChangesCount(enhancedGriService.getPendingChangesCount());
+    }, 5000);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   // 데이터 로딩 함수
   const loadData = useCallback(async (showToast: boolean = false) => {
@@ -60,28 +86,36 @@ export default function DashboardGriEditPage() {
       }
       setDataError(null);
       
-      // 페이지네이션된 데이터 요청
+      // 페이지네이션된 데이터 요청 (기존 방식 유지)
       const pageRequest: PageRequest = {
         page: currentPage,
         size: pageSize,
         sort: 'standardCode,asc'
       };
       
-      // 새로운 페이지네이션 API 호출 - JWT 토큰에서 회사 ID 자동 사용
-      const pageResponse = await getGriDataPaginated(pageRequest);
+      // 온라인 상태에서만 페이지네이션 API 호출
+      if (isOnline) {
+        try {
+          const pageResponse = await getGriDataPaginated(pageRequest);
+          // 페이지네이션 정보 업데이트
+          setTotalPages(pageResponse.totalPages);
+          setTotalElements(pageResponse.totalElements);
+        } catch (pageError) {
+          console.error('페이지네이션 데이터 로드 실패:', pageError);
+          // 페이지네이션 실패는 치명적이지 않으므로 계속 진행
+        }
+      }
       
-      // 페이지네이션 정보 업데이트
-      setTotalPages(pageResponse.totalPages);
-      setTotalElements(pageResponse.totalElements);
-      
-      // 기존 데이터 초기화 후 새 데이터 가져오기 (캐시 무시)
-      setCompanyData(null);
-      const data = await getCompanyGriDataFormatted();
+      // 개선된 서비스를 사용하여 GRI 데이터 로드 (로컬 캐시 지원)
+      const data = await enhancedGriService.getData();
       setCompanyData(data);
       
       // 데이터 업데이트 시간 기록
       const updateTime = new Date();
       setLastDataUpdate(updateTime);
+      
+      // 보류 중인 변경사항 개수 업데이트
+      setPendingChangesCount(enhancedGriService.getPendingChangesCount());
       
       if (showToast) {
         toast({
@@ -117,22 +151,61 @@ export default function DashboardGriEditPage() {
     loadData(true);
   };
   
+  // 보류 중인 변경사항 동기화 핸들러
+  const handleSyncPendingChanges = async () => {
+    if (!isOnline) {
+      toast({
+        title: "오프라인 상태",
+        description: "인터넷 연결이 필요합니다. 연결 상태를 확인하세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setIsSyncing(true);
+    
+    try {
+      const result = await enhancedGriService.syncPendingChanges();
+      
+      setPendingChangesCount(result.remaining);
+      
+      if (result.success) {
+        toast({
+          title: "동기화 완료",
+          description: `${result.synced}개 항목이 성공적으로 동기화되었습니다.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "일부 동기화 완료",
+          description: `${result.synced}개 성공, ${result.failed}개 실패, ${result.remaining}개 남음`,
+          variant: "default",
+        });
+      }
+      
+      // 동기화 후 데이터 새로고침
+      await loadData(false);
+    } catch (error) {
+      console.error('동기화 중 오류 발생:', error);
+      toast({
+        title: "동기화 실패",
+        description: "변경사항 동기화 중 오류가 발생했습니다.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+  
   // GRI 데이터 변경 핸들러
   const handleGriDataChange = useCallback((updatedData: CompanyGRIData) => {
     // 로컬 상태 즉시 업데이트 (화면에 변경사항 바로 반영)
     setCompanyData(updatedData);
     // 데이터 업데이트 시간 기록
     setLastDataUpdate(new Date());
-    
-    // 5초 후에 서버에서 데이터를 다시 로드하여 변경 사항이 서버에 반영되었는지 확인
-    const timeoutId = setTimeout(() => {
-      console.log("변경 후 자동 새로고침 실행");
-      loadData();
-    }, 5000);
-    
-    // 컴포넌트 언마운트 시 타이머 해제
-    return () => clearTimeout(timeoutId);
-  }, [loadData]);
+    // 보류 중인 변경사항 개수 업데이트
+    setPendingChangesCount(enhancedGriService.getPendingChangesCount());
+  }, []);
 
   // companyId가 변경될 때 데이터 로드
   useEffect(() => {
@@ -145,7 +218,7 @@ export default function DashboardGriEditPage() {
   useEffect(() => {
     const refreshInterval = 5 * 60 * 1000; // 5분
     const intervalId = setInterval(() => {
-      if (companyId) {
+      if (companyId && isOnline) {
         console.log('자동 데이터 갱신 실행 중...');
         loadData();
       }
@@ -153,7 +226,32 @@ export default function DashboardGriEditPage() {
     
     // 컴포넌트 언마운트 시 인터벌 정리
     return () => clearInterval(intervalId);
-  }, [companyId, loadData]);
+  }, [companyId, loadData, isOnline]);
+  
+  // 보류 중인 변경사항이 있고 온라인 상태가 되면 자동 동기화 시도
+  useEffect(() => {
+    if (isOnline && pendingChangesCount > 0 && !isSyncing) {
+      console.log('온라인 상태 감지: 보류 중인 변경사항 자동 동기화 시도');
+      handleSyncPendingChanges();
+    }
+  }, [isOnline, pendingChangesCount]);
+
+  // 동기화 버튼 렌더링
+  const renderSyncButton = () => {
+    if (pendingChangesCount === 0) return null;
+    
+    return (
+      <CustomButton
+        onClick={handleSyncPendingChanges}
+        variant="outline"
+        disabled={isSyncing || !isOnline}
+        className="flex items-center ml-2"
+      >
+        <Cloud className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-pulse' : ''}`} />
+        {isSyncing ? '동기화 중...' : `동기화 (${pendingChangesCount})`}
+      </CustomButton>
+    );
+  };
 
   return (
     <DashboardShell
@@ -162,26 +260,61 @@ export default function DashboardGriEditPage() {
       isLoading={isLoadingData}
       error={dataError}
       onRetry={loadData}
+      rightMenuItems={
+        <div className="flex">
+          <CustomButton 
+            onClick={handleManualRefresh} 
+            variant="outline" 
+            disabled={isRefreshing || !isOnline}
+            className="flex items-center"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? '새로고침 중...' : '새로고침'}
+          </CustomButton>
+          {renderSyncButton()}
+          {!isOnline && (
+            <div className="flex items-center ml-2 text-amber-500">
+              <CloudOff className="h-4 w-4 mr-1" />
+              <span className="text-xs">오프라인</span>
+            </div>
+          )}
+        </div>
+      }
     >
+      {pendingChangesCount > 0 && (
+        <Alert variant="warning" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>저장되지 않은 변경사항</AlertTitle>
+          <AlertDescription>
+            {pendingChangesCount}개의 변경사항이 서버에 완전히 저장되지 않았습니다. 
+            {isOnline ? (
+              <span> 동기화 버튼을 클릭하여 저장을 완료하세요.</span>
+            ) : (
+              <span> 인터넷 연결이 복원되면 자동으로 동기화됩니다.</span>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {!isOnline && (
+        <Alert variant="warning" className="mb-4">
+          <CloudOff className="h-4 w-4" />
+          <AlertTitle>오프라인 모드</AlertTitle>
+          <AlertDescription>
+            현재 오프라인 상태입니다. 변경사항은 로컬에 저장되며 인터넷 연결이 복원되면 서버와 동기화됩니다.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       {companyData && (
         <>
-          <div className="flex justify-end mb-4">
-            <CustomButton 
-              onClick={handleManualRefresh} 
-              variant="outline" 
-              disabled={isRefreshing}
-              className="flex items-center"
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? '새로고침 중...' : '데이터 새로고침'}
-            </CustomButton>
-          </div>
-          
           <GriEditForm
             initialData={companyData}
             griCategories={griCategories}
             griGroups={griGroups}
             onChange={handleGriDataChange}
+            enhancedService={enhancedGriService}
+            isOnline={isOnline}
           />
           
           {/* 페이지네이션 UI 추가 */}

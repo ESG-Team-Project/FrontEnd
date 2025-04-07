@@ -32,6 +32,8 @@ interface GriEditFormProps {
   griCategories: GRICategory[];
   griGroups: GRIGroup[];
   onChange?: (data: CompanyGRIData) => void;
+  enhancedService?: any; // enhancedGriService
+  isOnline?: boolean;
 }
 
 // 모달에서 편집할 데이터의 타입
@@ -132,6 +134,8 @@ export default function GriEditForm({
   griCategories,
   griGroups,
   onChange,
+  enhancedService,
+  isOnline = true
 }: GriEditFormProps) {
   const [formData, setFormData] = useState<Record<string, CompanyGRICategoryValue>>(
     initialData.griValues
@@ -141,7 +145,7 @@ export default function GriEditForm({
   const [editingCategory, setEditingCategory] = useState<EditingCategory | null>(null);
   const [isSaving, setIsSaving] = useState(false); // 저장 상태 추가
   const [saveMessage, setSaveMessage] = useState<{
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'warning';
     text: string;
   } | null>(null); // 저장 메시지 상태 추가
 
@@ -246,12 +250,21 @@ export default function GriEditForm({
         [categoryId]: updatedValue,
       };
 
-      // 서버 API 호출하여 데이터 저장
-      const { saveSingleGriCategory, getCompanyGriDataFormatted } = await import('@/lib/api/gri');
-      const success = await saveSingleGriCategory(categoryId, updatedValue);
+      // enhancedService가 있으면 사용
+      if (enhancedService) {
+        // 개선된 서비스로 저장
+        const result = await enhancedService.saveCategory(
+          categoryId, 
+          updatedValue,
+          (newData: CompanyGRIData) => {
+            // 콜백: 서버 응답 후 UI 업데이트
+            if (onChange) {
+              onChange(newData);
+            }
+          }
+        );
 
-      if (success) {
-        // 성공 시 로컬 상태 업데이트 (먼저 업데이트)
+        // 로컬 상태 즉시 업데이트
         setFormData(updatedFormData);
 
         // 부모 컴포넌트에 알림
@@ -261,66 +274,145 @@ export default function GriEditForm({
             griValues: updatedFormData,
           };
           onChange(updatedData);
-          
-          try {
-            // 서버에서 최신 데이터를 다시 가져오기
-            console.log("서버에서 최신 데이터를 다시 로드합니다.");
-            const refreshedData = await getCompanyGriDataFormatted();
-            
-            // 데이터 일관성 검증
-            const isConsistent = await verifyDataConsistency(categoryId, updatedValue);
-            
-            if (isConsistent) {
-              // 성공 메시지 표시
-              toast({
-                title: "저장 성공",
-                description: "데이터가 성공적으로 저장되었습니다.",
-                variant: "default",
-              });
-              
-              // 최신 데이터 설정 (방금 수정한 항목은 유지)
-              const mergedData = {
-                ...refreshedData,
-                griValues: {
-                  ...refreshedData.griValues,
-                  [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
-                }
-              };
-              onChange(mergedData);
-            } else {
-              // 경고 메시지 표시
-              toast({
-                title: "일부 불일치 감지",
-                description: "데이터가 저장되었으나 서버와 일부 불일치가 감지되었습니다.",
-                variant: "destructive",
-              });
-              
-              // 최신 데이터로 강제 업데이트
-              onChange(refreshedData);
-            }
-          } catch (refreshError) {
-            console.error("데이터 새로고침 실패:", refreshError);
-            // 새로고침 실패 시 오류 알림
-            toast({
-              title: "데이터 갱신 오류",
-              description: "저장 후 최신 데이터를 불러오는 중 오류가 발생했습니다.",
-              variant: "destructive",
-            });
-          }
+        }
+
+        // 결과에 따른 메시지
+        if (result.success) {
+          setSaveMessage({
+            type: 'success',
+            text: result.message || '데이터가 저장되었습니다.',
+          });
+
+          toast({
+            title: "저장 성공",
+            description: result.message || '데이터가 저장되었습니다.',
+            variant: "default",
+          });
+        } else {
+          setSaveMessage({
+            type: 'warning',
+            text: result.message || '데이터 저장 중 문제가 발생했습니다.',
+          });
+
+          toast({
+            title: "일부 저장",
+            description: result.message || '데이터 저장 중 문제가 발생했습니다.',
+            variant: "warning",
+          });
         }
 
         return true;
-      }
+      } else {
+        // 기존 방식으로 저장 (fallback)
+        const { saveSingleGriCategory, getCompanyGriDataFormatted } = await import('@/lib/api/gri');
+        const success = await saveSingleGriCategory(categoryId, updatedValue);
 
-      // 저장 실패 시 알림
-      toast({
-        title: "저장 실패",
-        description: "데이터 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
-        variant: "destructive",
-      });
-      return false;
+        if (success) {
+          // 성공 시 로컬 상태 업데이트 (먼저 업데이트)
+          setFormData(updatedFormData);
+
+          // 부모 컴포넌트에 알림
+          if (onChange) {
+            const updatedData: CompanyGRIData = {
+              ...initialData,
+              griValues: updatedFormData,
+            };
+            onChange(updatedData);
+            
+            try {
+              // 서버에서 최신 데이터를 다시 가져오기
+              console.log("서버에서 최신 데이터를 다시 로드합니다.");
+              const refreshedData = await getCompanyGriDataFormatted();
+              
+              // 데이터 일관성 검증
+              const isConsistent = await verifyDataConsistency(categoryId, updatedValue);
+              
+              if (isConsistent) {
+                // 성공 메시지 표시
+                toast({
+                  title: "저장 성공",
+                  description: "데이터가 성공적으로 저장되었습니다.",
+                  variant: "default",
+                });
+                
+                // 최신 데이터 설정 (방금 수정한 항목은 유지)
+                const mergedData = {
+                  ...refreshedData,
+                  griValues: {
+                    ...refreshedData.griValues,
+                    [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
+                  }
+                };
+                onChange(mergedData);
+              } else {
+                // 경고 메시지 표시
+                toast({
+                  title: "일부 불일치 감지",
+                  description: "데이터가 저장되었으나 서버와 일부 불일치가 감지되었습니다.",
+                  variant: "destructive",
+                });
+                
+                // 최신 데이터로 강제 업데이트
+                onChange(refreshedData);
+              }
+            } catch (refreshError) {
+              console.error("데이터 새로고침 실패:", refreshError);
+              // 새로고침 실패 시 오류 알림
+              toast({
+                title: "데이터 갱신 오류",
+                description: "저장 후 최신 데이터를 불러오는 중 오류가 발생했습니다.",
+                variant: "destructive",
+              });
+            }
+          }
+
+          return true;
+        }
+
+        // 저장 실패 시 알림
+        toast({
+          title: "저장 실패",
+          description: "데이터 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
+          variant: "destructive",
+        });
+        return false;
+      }
     } catch (error) {
       console.error('데이터 저장 중 오류 발생:', error);
+      
+      // 오프라인 상태에서 발생한 오류인 경우 
+      if (!isOnline) {
+        // 성공적으로 로컬에 저장됨
+        setFormData(prev => ({
+          ...prev,
+          [categoryId]: updatedValue
+        }));
+        
+        if (onChange) {
+          const updatedData: CompanyGRIData = {
+            ...initialData,
+            griValues: {
+              ...formData,
+              [categoryId]: updatedValue
+            }
+          };
+          onChange(updatedData);
+        }
+        
+        setSaveMessage({
+          type: 'warning',
+          text: '오프라인 상태: 변경사항이 로컬에 저장되었습니다.'
+        });
+        
+        toast({
+          title: "오프라인 저장",
+          description: "변경사항이 로컬에 저장되었습니다. 인터넷 연결 시 동기화됩니다.",
+          variant: "warning",
+        });
+        
+        return true;
+      }
+      
       // 오류 알림
       toast({
         title: "저장 실패",

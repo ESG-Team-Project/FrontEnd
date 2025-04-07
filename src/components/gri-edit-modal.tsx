@@ -30,9 +30,10 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { GRICategory } from '@/data/griCategories';
 import type { CompanyGRICategoryValue, TimeSeriesDataPoint } from '@/types/companyGriData';
-import { PlusCircle, Trash2 } from 'lucide-react';
+import { PlusCircle, Trash2, WifiOff } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
 import { toast } from '@/components/ui/use-toast';
+import { Badge } from './ui/badge';
 
 // GRI 데이터 타입 정의
 type GRIDataType = 'text' | 'timeSeries' | 'numeric';
@@ -57,13 +58,20 @@ interface GriEditModalProps {
   onOpenChange: (open: boolean) => void;
   editingCategory: EditingCategory | null;
   onSave: (categoryId: string, updatedValue: CompanyGRICategoryValue) => Promise<boolean>;
+  isOnline?: boolean;
 }
 
-export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: GriEditModalProps) {
+export function GriEditModal({ 
+  isOpen, 
+  onOpenChange, 
+  editingCategory, 
+  onSave,
+  isOnline = true
+}: GriEditModalProps) {
   // 모달 상태
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
-    type: 'success' | 'error';
+    type: 'success' | 'error' | 'warning';
     text: string;
   } | null>(null);
 
@@ -294,17 +302,30 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
       const success = await onSave(categoryId, updatedValue);
 
       if (success) {
-        setSaveMessage({
-          type: 'success',
-          text: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
-        });
-
-        // Toast 메시지 표시
-        toast({
-          title: "저장 완료",
-          description: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
-          variant: "default",
-        });
+        // 오프라인 상태인 경우 다른 메시지 표시
+        if (!isOnline) {
+          setSaveMessage({
+            type: 'success',
+            text: `${editingCategory.category.name} 데이터가 로컬에 저장되었습니다.`,
+          });
+          
+          toast({
+            title: "로컬 저장 완료",
+            description: `${editingCategory.category.name} 데이터가 로컬에 저장되었습니다.`,
+            variant: "default",
+          });
+        } else {
+          setSaveMessage({
+            type: 'success',
+            text: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
+          });
+          
+          toast({
+            title: "저장 완료",
+            description: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
+            variant: "default",
+          });
+        }
 
         // 성공 메시지 후 2.5초 후에 모달 닫기 (시간 연장)
         setTimeout(() => {
@@ -347,7 +368,15 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>{editingCategory?.category.name} 데이터 편집</DialogTitle>
+          <DialogTitle className="flex items-center justify-between">
+            <span>{editingCategory?.category.name} 데이터 편집</span>
+            {!isOnline && (
+              <Badge variant="outline" className="flex items-center gap-1 ml-2 bg-amber-50">
+                <WifiOff className="h-3 w-3" />
+                <span className="text-xs">오프라인 모드</span>
+              </Badge>
+            )}
+          </DialogTitle>
         </DialogHeader>
 
         {/* 데이터 타입 선택 */}
@@ -373,7 +402,13 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
         {/* 저장 메시지 표시 */}
         {saveMessage && (
           <div
-            className={`p-3 mb-2 rounded text-sm ${saveMessage.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+            className={`p-3 mb-2 rounded text-sm ${
+              saveMessage.type === 'success' 
+                ? 'bg-green-100 text-green-800' 
+                : saveMessage.type === 'warning'
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-red-100 text-red-800'
+            }`}
           >
             {saveMessage.text}
           </div>
@@ -648,6 +683,12 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
 
         <DialogFooter className="pt-2 border-t">
           <div className="flex items-center gap-2 w-full justify-between">
+            {!isOnline && (
+              <div className="text-amber-500 text-xs flex items-center">
+                <WifiOff className="h-3 w-3 mr-1" />
+                변경사항은 로컬에 저장됩니다
+              </div>
+            )}
             <DialogClose asChild>
               <CustomButton type="button" variant="secondary">
                 취소
