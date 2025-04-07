@@ -1,4 +1,5 @@
 'use client';
+
 import * as React from 'react';
 import {
   Table,
@@ -25,8 +26,6 @@ export default function DataTable({
   initialDatasets = [],
   onDataChange,
 }: DataTableProps) {
-
-  
   const [columns, setColumns] = React.useState<string[]>(() => {
     if (initialLabels.length > 0) {
       const datasetLabels = initialDatasets?.map(ds => ds?.label || '') || [];
@@ -294,7 +293,8 @@ export default function DataTable({
   </div>
 
   {/* Add Row 버튼 */}
-  <div className="fixed bottom-16 left-8">
+  <div className="fixed items-center bottom-15 left-8 flex flex-row">
+    열 추가
     <button onClick={addRow} className="text-blue-500">
       <Plus size={32} />
     </button>
