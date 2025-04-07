@@ -30,16 +30,28 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
   
   console.log('GRI 데이터 변환 시작: ', dataArray.length, '개 항목');
   
-  dataArray.forEach(item => {
+  // 처리된 카테고리 ID 추적 (중복 감지용)
+  const processedCategories = new Set<string>();
+  
+  dataArray.forEach((item, index) => {
     if (!item || !item.standardCode || !item.disclosureCode) {
-      console.warn('GRI 데이터 항목 처리 중 누락된 정보: ', item);
+      console.warn(`[Item ${index}] GRI 데이터 항목 처리 중 누락된 정보:`, item);
       return;
     }
     
     const categoryId = `${item.standardCode}-${item.disclosureCode}`;
     
+    // 이미 처리된 카테고리인지 확인 (중복 감지)
+    if (processedCategories.has(categoryId)) {
+      console.warn(`[Item ${index}] 이미 처리된 카테고리 스킵: ${categoryId}, ID=${item.id}`);
+      return;
+    }
+    
+    processedCategories.add(categoryId);
+    
     // 카테고리가 존재하는지 확인
     if (griValues[categoryId]) {
+      console.log(`[Item ${index}] 카테고리 데이터 채우기: ${categoryId}, ID=${item.id}`);
       const existingData = griValues[categoryId];
       
       // 시계열 데이터인 경우
@@ -52,9 +64,20 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
         try {
           // 시계열 데이터가 JSON 문자열로 저장되어 있는지 확인
           if (item.disclosureValue && item.disclosureValue.startsWith('[') && item.disclosureValue.endsWith(']')) {
-            // JSON 문자열을 파싱하여 시계열 데이터로 변환
-            const timeSeriesData = JSON.parse(item.disclosureValue) as TimeSeriesDataPoint[];
-            existingData.timeSeriesData = timeSeriesData;
+            try {
+              // JSON 문자열을 파싱하여 시계열 데이터로 변환
+              const timeSeriesData = JSON.parse(item.disclosureValue) as TimeSeriesDataPoint[];
+              
+              if (Array.isArray(timeSeriesData)) {
+                console.log(`[${categoryId}] 파싱된 시계열 데이터: ${timeSeriesData.length}개 항목`);
+                existingData.timeSeriesData = timeSeriesData;
+              } else {
+                console.warn(`[${categoryId}] 시계열 데이터가 배열이 아닙니다:`, item.disclosureValue);
+              }
+            } catch (parseError) {
+              console.error(`[${categoryId}] JSON 파싱 오류:`, parseError);
+              console.error('파싱 시도한 JSON:', item.disclosureValue);
+            }
           } else {
             // 단일 값이고 특정 연도 정보가 있는 경우
             if (item.reportingPeriodStart && item.numericValue !== null) {
@@ -65,16 +88,18 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
                 value: item.numericValue,
                 unit: item.unit || ''
               };
+              console.log(`[${categoryId}] 단일 시계열 포인트 생성: 연도=${year}, 값=${item.numericValue}`);
               existingData.timeSeriesData.push(newPoint);
             }
           }
         } catch (error) {
-          console.error(`시계열 데이터 변환 오류 (${categoryId}):`, error);
+          console.error(`[${categoryId}] 시계열 데이터 변환 오류:`, error);
         }
       } 
       // 텍스트 데이터인 경우
       else if (existingData.dataType === 'text') {
         existingData.textValue = item.disclosureValue || '';
+        console.log(`[${categoryId}] 텍스트 값 설정: ${existingData.textValue.substring(0, 50)}${existingData.textValue.length > 50 ? '...' : ''}`);
       } 
       // 숫자 데이터인 경우
       else if (existingData.dataType === 'numeric') {
@@ -82,9 +107,26 @@ export function transformBackendDataToFrontend(backendData: any, companyId: stri
         if (item.unit) {
           existingData.numericUnit = item.unit;
         }
+        console.log(`[${categoryId}] 숫자 값 설정: ${existingData.numericValue} ${existingData.numericUnit || ''}`);
       }
     } else {
-      console.warn(`카테고리 ID가 매칭되지 않음: ${categoryId}`);
+      console.warn(`[Item ${index}] 정의되지 않은 카테고리 ID: ${categoryId}`);
+    }
+  });
+
+  // 3. 최종 검증 및 특정 카테고리의 값 확인
+  const debugCategories = ['102-1', '102-2', '102-3'];
+  debugCategories.forEach(catId => {
+    if (griValues[catId]) {
+      const cat = griValues[catId];
+      console.log(`[Debug] 카테고리 ${catId} 최종 데이터:`, {
+        dataType: cat.dataType,
+        textValue: cat.textValue?.substring(0, 50),
+        numericValue: cat.numericValue,
+        timeSeriesLength: cat.timeSeriesData?.length || 0
+      });
+    } else {
+      console.warn(`[Debug] 카테고리 ${catId}가 griValues에 없습니다.`);
     }
   });
 

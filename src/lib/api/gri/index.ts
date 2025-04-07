@@ -172,6 +172,51 @@ export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
       (response.data?.content ? response.data.content.length : '알 수 없음')
     );
     
+    // 응답 데이터의 구체적인 구조 로깅 (첫 번째 항목)
+    if (Array.isArray(response.data) && response.data.length > 0) {
+      console.log('첫 번째 데이터 항목 구조:', 
+        JSON.stringify({
+          id: response.data[0].id,
+          standardCode: response.data[0].standardCode,
+          disclosureCode: response.data[0].disclosureCode,
+          companyId: response.data[0].companyId,
+          updatedAt: response.data[0].updatedAt
+        }, null, 2)
+      );
+      
+      // 중복 키 확인 및 처리
+      const categoryMap = new Map();
+      const duplicates = new Set();
+      
+      response.data.forEach((item) => {
+        const key = `${item.standardCode}-${item.disclosureCode}`;
+        if (categoryMap.has(key)) {
+          duplicates.add(key);
+          // 기존 항목과 새 항목 중 어느 것이 더 최신인지 확인
+          const existing = categoryMap.get(key);
+          const existingDate = existing.updatedAt ? new Date(existing.updatedAt) : new Date(0);
+          const newDate = item.updatedAt ? new Date(item.updatedAt) : new Date(0);
+          
+          // 새 항목이 더 최신이면 교체
+          if (newDate > existingDate) {
+            console.log(`중복 키 ${key} - 더 최신 항목으로 업데이트 (ID: ${existing.id} -> ${item.id})`);
+            categoryMap.set(key, item);
+          }
+        } else {
+          categoryMap.set(key, item);
+        }
+      });
+      
+      // 중복 키가 있으면 로그 출력
+      if (duplicates.size > 0) {
+        console.warn(`중복 키 ${duplicates.size}개 발견:`, Array.from(duplicates).join(', '));
+        console.log(`중복 제거 후 ${categoryMap.size}개 항목으로 처리`);
+        
+        // 중복 제거된 데이터로 설정
+        response.data = Array.from(categoryMap.values());
+      }
+    }
+    
     // 회사 ID 얻기
     let companyId = "current";
     
@@ -194,7 +239,9 @@ export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
     console.log('GRI 데이터 변환에 사용할 회사 ID:', companyId);
     
     // 백엔드 데이터를 프론트엔드 형식으로 변환
-    return transformBackendDataToFrontend(response.data, companyId);
+    const transformedData = transformBackendDataToFrontend(response.data, companyId);
+    console.log(`GRI 데이터 변환 완료: ${Object.keys(transformedData.griValues).length}개 카테고리`);
+    return transformedData;
   } catch (error) {
     console.error('GRI 데이터 조회 중 오류:', error);
     
