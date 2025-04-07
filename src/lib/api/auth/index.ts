@@ -1,5 +1,5 @@
 import type { AuthState, User } from '@/lib/atoms';
-import type { LoginRequest, LoginResponse, SignUpRequest, SignUpResponse, TokenVerificationRequest, TokenVerificationResponse } from '@/types/auth';
+import type { CheckEmailRequest, CheckEmailResponse, LoginRequest, LoginResponse, SignUpRequest, SignUpResponse, TokenVerificationRequest, TokenVerificationResponse } from '@/types/auth';
 import type { AxiosResponse } from 'axios';
 import type { SetStateAction } from 'react';
 import type { ErrorResponse } from '@/types/api';
@@ -300,7 +300,98 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
 
 // 현재 API 기본 URL 가져오는 함수
 export const getApiBaseUrl = (): string => {
-  return axiosInstance.defaults.baseURL || '';
+  return process.env.NEXT_PUBLIC_API_URL || '';
+};
+
+/**
+ * 이메일 중복 체크 기능 (GET 방식)
+ * 
+ * URL 쿼리 파라미터로 이메일을 전달하여 중복 여부를 확인합니다.
+ * 
+ * @param {string} email - 중복 체크할 이메일
+ * @returns {Promise<CheckEmailResponse>} 이메일 사용 가능 여부와 메시지
+ */
+export const checkEmailAvailabilityGet = async (email: string): Promise<CheckEmailResponse> => {
+  try {
+    console.log('[API Auth] 이메일 중복 체크 시도 (GET):', email);
+
+    // 이메일 인코딩
+    const encodedEmail = encodeURIComponent(email);
+
+    // API 요청 - GET /api/auth/check-email
+    const response: AxiosResponse<CheckEmailResponse> = await axiosInstance.get(
+      `/auth/check-email?email=${encodedEmail}`,
+      {
+        headers: {
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('[API Auth] 이메일 중복 체크 응답:', response.status);
+    console.log('[API Auth] 이메일 중복 체크 응답 데이터:', response.data);
+
+    return response.data;
+  } catch (error: any) {
+    console.error('[API Auth] 이메일 중복 체크 오류:', error);
+    
+    // 오류 응답 처리
+    if (error.response) {
+      console.error('[API Auth] 오류 상태 코드:', error.response.status);
+      console.error('[API Auth] 오류 응답 데이터:', 
+        typeof error.response.data === 'object' 
+          ? JSON.stringify(error.response.data) 
+          : error.response.data
+      );
+    }
+    
+    throw error;
+  }
+};
+
+/**
+ * 이메일 중복 체크 기능 (POST 방식)
+ * 
+ * 요청 본문에 이메일을 담아 중복 여부를 확인합니다.
+ * 
+ * @param {CheckEmailRequest} data - 이메일 정보 객체
+ * @returns {Promise<CheckEmailResponse>} 이메일 사용 가능 여부와 메시지
+ */
+export const checkEmailAvailabilityPost = async (data: CheckEmailRequest): Promise<CheckEmailResponse> => {
+  try {
+    console.log('[API Auth] 이메일 중복 체크 시도 (POST):', data.email);
+
+    // API 요청 - POST /api/auth/check-email
+    const response: AxiosResponse<CheckEmailResponse> = await axiosInstance.post(
+      '/auth/check-email',
+      data,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
+    );
+
+    console.log('[API Auth] 이메일 중복 체크 응답:', response.status);
+    console.log('[API Auth] 이메일 중복 체크 응답 데이터:', response.data);
+
+    return response.data;
+  } catch (error: any) {
+    console.error('[API Auth] 이메일 중복 체크 오류:', error);
+    
+    // 오류 응답 처리
+    if (error.response) {
+      console.error('[API Auth] 오류 상태 코드:', error.response.status);
+      console.error('[API Auth] 오류 응답 데이터:', 
+        typeof error.response.data === 'object' 
+          ? JSON.stringify(error.response.data) 
+          : error.response.data
+      );
+    }
+    
+    throw error;
+  }
 };
 
 // default export 추가
@@ -310,6 +401,8 @@ const authAPI = {
   logout,
   verifyToken,
   getApiBaseUrl,
+  checkEmailAvailabilityGet,
+  checkEmailAvailabilityPost,
 };
 
 export default authAPI;

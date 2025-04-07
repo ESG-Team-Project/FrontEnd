@@ -87,3 +87,18 @@ export interface TokenVerificationResponse {
   email?: string; // 토큰에서 추출한 이메일 (유효한 경우)
   exp?: number; // 토큰 만료 시간 (Unix timestamp)
 }
+
+/**
+ * 이메일 중복 체크 API 요청 형식
+ */
+export interface CheckEmailRequest {
+  email: string; // 중복 체크할 이메일
+}
+
+/**
+ * 이메일 중복 체크 API 응답 형식
+ */
+export interface CheckEmailResponse {
+  available: boolean; // 사용 가능 여부
+  message: string; // 결과 메시지
+}

@@ -83,6 +83,7 @@ export default function GriEditForm({
 
   // 컴포넌트 마운트 시 또는 initialData 변경 시 formData 초기화 강화
   useEffect(() => {
+    console.log("initialData 변경감지: formData 갱신 중");
     const initialFormValues: Record<string, CompanyGRICategoryValue> = {};
     
     for (const cat of griCategories) {
@@ -90,7 +91,7 @@ export default function GriEditForm({
       
       // 기존 데이터가 있으면 그대로 사용
       if (existingValue) {
-        initialFormValues[cat.id] = existingValue;
+        initialFormValues[cat.id] = {...existingValue};
       } else {
         // 새 카테고리라면 빈 데이터 생성
         initialFormValues[cat.id] = {
@@ -175,11 +176,11 @@ export default function GriEditForm({
       };
 
       // 서버 API 호출하여 데이터 저장
-      const { saveSingleGriCategory } = await import('@/lib/api/gri');
+      const { saveSingleGriCategory, getCompanyGriDataFormatted } = await import('@/lib/api/gri');
       const success = await saveSingleGriCategory(categoryId, updatedValue);
 
       if (success) {
-        // 성공 시 로컬 상태 업데이트
+        // 성공 시 로컬 상태 업데이트 (먼저 업데이트)
         setFormData(updatedFormData);
 
         // 부모 컴포넌트에 알림
@@ -189,6 +190,23 @@ export default function GriEditForm({
             griValues: updatedFormData,
           };
           onChange(updatedData);
+          
+          try {
+            // 저장 후 서버에서 최신 데이터를 다시 가져오기 (선택적)
+            console.log("서버에서 최신 데이터를 다시 로드합니다.");
+            const refreshedData = await getCompanyGriDataFormatted();
+            const mergedData = {
+              ...refreshedData,
+              griValues: {
+                ...refreshedData.griValues,
+                [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
+              }
+            };
+            onChange(mergedData);
+          } catch (refreshError) {
+            console.error("데이터 새로고침 실패:", refreshError);
+            // 새로고침 실패 시에는 무시하고 계속 진행
+          }
         }
 
         return true;

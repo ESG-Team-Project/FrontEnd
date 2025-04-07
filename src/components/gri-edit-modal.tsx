@@ -298,12 +298,12 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
           text: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
         });
 
-        // 성공 메시지는 자동으로 사라지게 설정
+        // 성공 메시지 후 2초 후에 모달 닫기 (시간을 늘려 사용자가 메시지를 확인할 시간 제공)
         setTimeout(() => {
           setSaveMessage(null);
           // 저장 성공 시 모달 닫기
           onOpenChange(false);
-        }, 1500);
+        }, 2000);
       } else {
         setSaveMessage({
           type: 'error',

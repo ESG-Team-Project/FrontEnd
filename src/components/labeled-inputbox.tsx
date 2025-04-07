@@ -9,6 +9,7 @@ export interface LabeledInputBoxProps {
   value?: string;
   children?: React.ReactNode;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: () => void;
   className?: string;
   type: string;
   direction?: 'row' | 'col';
@@ -24,6 +25,7 @@ export default function LabeledInputBox({
   value,
   children,
   onChange,
+  onBlur,
   className,
   type,
   direction = 'col',
@@ -55,6 +57,7 @@ export default function LabeledInputBox({
         )}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         required={required}
       />
       {error && (

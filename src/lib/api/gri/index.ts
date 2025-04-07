@@ -127,7 +127,18 @@ export const getCompanyGriData = async (): Promise<GriDataItem[]> => {
 export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
   console.log('Fetching GRI data for company');
   try {
-    const response = await axiosInstance.get('/company/gri');
+    // 캐싱 방지를 위해 타임스탬프 추가
+    const timestamp = new Date().getTime();
+    
+    const response = await axiosInstance.get('/company/gri', {
+      params: {
+        _t: timestamp // 캐싱 방지 파라미터
+      },
+      headers: {
+        'Cache-Control': 'no-cache, no-store',
+        'Pragma': 'no-cache'
+      }
+    });
     
     if (response.status !== 200) {
       throw new Error(`GRI 데이터 조회 실패: ${response.status}`);
@@ -293,13 +304,23 @@ export async function saveSingleGriCategory(
     
     // API 호출 - 객체 형식으로 전송
     try {
-      const response = await axiosInstance.put('/company/gri', objectData);
+      const response = await axiosInstance.put('/company/gri', objectData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store',
+          'Pragma': 'no-cache'
+        }
+      });
       
       if (response.status !== 200 && response.status !== 201) {
         throw new Error(`GRI 카테고리 데이터 저장 실패: ${response.status}`);
       }
       
       console.log('GRI 데이터 저장 성공:', response.status, response.data);
+      
+      // 데이터 저장 후 새로운 데이터 다시 로드 - 선택적으로 활성화
+      // await getCompanyGriDataFormatted();
+      
       return true;
     } catch (apiError) {
       // 상세 오류 로깅
@@ -363,11 +384,19 @@ export async function getGriDataPaginated(
   try {
     console.log(`페이지네이션 데이터 요청: page=${pageRequest.page}, size=${pageRequest.size}, sort=${pageRequest.sort || 'none'}`);
     
+    // 캐싱 방지를 위한 타임스탬프 추가
+    const timestamp = new Date().getTime();
+    
     const response = await axiosInstance.get('/company/gri/paged', {
       params: {
         page: pageRequest.page,
         size: pageRequest.size,
-        sort: pageRequest.sort
+        sort: pageRequest.sort,
+        _t: timestamp // 캐싱 방지용 파라미터
+      },
+      headers: {
+        'Cache-Control': 'no-cache, no-store',
+        'Pragma': 'no-cache'
       }
     });
     
