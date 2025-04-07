@@ -3,6 +3,7 @@
 import { authAtom } from '@/lib/atoms/auth';
 import axios, { type AxiosError, type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { getDefaultStore } from 'jotai';
+import { ErrorResponse } from '@/types/api';
 
 /**
  * 백엔드 API의 기본 주소 설정
@@ -10,7 +11,20 @@ import { getDefaultStore } from 'jotai';
  * 환경 변수에서 API URL을 가져오거나, 기본값을 사용합니다.
  * 개발 환경과 배포 환경에서 다른 URL을 사용할 수 있습니다.
  */
-const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+let baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+
+// 브라우저 환경에서 현재 접속한 호스트를 기반으로 API URL 설정
+if (typeof window !== 'undefined') {
+  // 환경 변수로 지정된 URL이 없거나 localhost를 포함하는 경우
+  if (!process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
+    const host = window.location.hostname;
+    // localhost가 아닌 경우, 현재 접속한 호스트를 사용
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      baseURL = `http://${host}:8080/api`;
+    }
+  }
+}
+
 console.log('[AXIOS] API 기본 URL:', baseURL);
 
 // 로컬 스토리지에 인증 정보를 저장할 때 사용하는 키
@@ -105,6 +119,18 @@ axiosInstance.interceptors.request.use(
     const token = getTokenFromAtom();
     console.log('[AXIOS] 요청 인터셉터:', config.url, token ? '토큰 있음' : '토큰 없음');
     
+    // 특정 경로인 경우 추가 디버깅 정보 출력
+    if (config.url && (config.url.includes('/auth/login') || config.url.includes('/auth/signup'))) {
+      console.log(`[AXIOS] ${config.url} 요청 상세:`, {
+        url: config.url,
+        method: config.method,
+        baseURL: config.baseURL,
+        headers: config.headers,
+        // 민감한 정보는 제외하고 로깅
+        data: config.data ? {...config.data, password: '***', checkPassword: '***'} : undefined
+      });
+    }
+    
     // 토큰이 있으면 헤더에 추가
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -133,8 +159,24 @@ axiosInstance.interceptors.response.use(
   (error) => {
     // 오류 응답에서 상태 코드 확인
     const status = error.response?.status;
+    const errorData = error.response?.data as ErrorResponse | undefined;
     
+    // 백엔드 에러 응답 형식에 맞게 로깅
     console.error(`[AXIOS] 응답 오류: ${status}`, error.config?.url);
+    
+    if (errorData) {
+      console.error(`[AXIOS] 오류 상세: 
+        코드: ${errorData.code || 'N/A'}
+        메시지: ${errorData.message || 'N/A'}
+        경로: ${errorData.path || 'N/A'}
+        타임스탬프: ${errorData.timestamp || 'N/A'}
+      `);
+      
+      // 유효성 검증 오류가 있는 경우 로깅
+      if (errorData.errors && errorData.errors.length > 0) {
+        console.error('[AXIOS] 유효성 검증 오류:', errorData.errors);
+      }
+    }
     
     // 401 Unauthorized 오류 (인증 만료) 또는 403 Forbidden 오류 (권한 부족)
     if (status === 401 || status === 403) {
@@ -158,7 +200,7 @@ axiosInstance.interceptors.response.use(
     
     // 500 Internal Server Error
     else if (status === 500) {
-      console.error('[AXIOS] 서버 오류:', error.response?.data);
+      console.error('[AXIOS] 서버 오류:', errorData || error.response?.data);
     }
     
     return Promise.reject(error);

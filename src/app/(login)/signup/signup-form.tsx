@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { authService } from '@/lib/api';
 import { loginAtom } from '@/lib/atoms';
 import type { SignUpRequest, SignUpResponse } from '@/types/auth';
+import { ErrorResponse, ValidationError } from '@/types/api';
 import { useAtom } from 'jotai';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -73,6 +74,11 @@ export function SignupForm() {
         phoneNumber: companyInfo.phoneNumber,
       };
 
+      // 디버깅용 로그 추가
+      console.log('회원가입 요청 데이터:', signupData);
+      console.log('회원가입 API URL:', authService.getApiBaseUrl ? authService.getApiBaseUrl() : '(URL 함수 없음)');
+      
+      // API 요청 전송
       const response = await authService.signup(signupData);
 
       // 응답 확인
@@ -100,26 +106,53 @@ export function SignupForm() {
     } catch (error: unknown) {
       // 오류 응답 처리
       const err = error as {
-        response?: { status: number; data?: { errors?: Record<string, string>; message?: string } };
+        response?: { 
+          status: number; 
+          data?: ErrorResponse;
+        };
+        message?: string;
       };
+      
+      // 상세 오류 로깅
+      console.error('회원가입 오류 전체:', error);
+      
       if (err.response) {
+        console.error('회원가입 응답 상태:', err.response.status);
+        console.error('회원가입 응답 데이터:', err.response.data);
+        
         // 409 오류: 이미 존재하는 이메일
         if (err.response.status === 409) {
           setError('이미 사용 중인 이메일입니다');
         }
         // 400 오류: 유효성 검증 실패
-        else if (err.response.status === 400 && err.response.data?.errors) {
-          const validationErrors = Object.values(err.response.data.errors).join(', ');
-          setError(`입력값 유효성 검증에 실패했습니다: ${validationErrors}`);
+        else if (err.response.status === 400) {
+          const errorData = err.response.data;
+          
+          // 백엔드의 ErrorResponse 형식에 맞게 처리
+          if (errorData?.errors && errorData.errors.length > 0) {
+            // ValidationError 배열 처리
+            const validationMessages = errorData.errors.map(
+              (ve: ValidationError) => `${ve.field}: ${ve.message}`
+            ).join(', ');
+            
+            setError(`입력값 유효성 검증에 실패했습니다: ${validationMessages}`);
+          } else if (errorData?.message) {
+            // 일반 오류 메시지 처리
+            setError(`요청 오류: ${errorData.message}`);
+          } else {
+            setError('입력 데이터 형식이 올바르지 않습니다. 모든 필드를 확인해주세요.');
+          }
         }
         // 그 외 서버 오류
         else {
-          setError(err.response.data?.message || '회원가입 처리 중 오류가 발생했습니다');
+          const errorData = err.response.data;
+          setError(errorData?.message || '회원가입 처리 중 오류가 발생했습니다');
         }
+      } else if (err.message) {
+        setError(err.message);
       } else {
-        setError((error as Error).message || '회원가입 처리 중 오류가 발생했습니다');
+        setError('회원가입 처리 중 오류가 발생했습니다');
       }
-      console.error(error);
     }
   };
 

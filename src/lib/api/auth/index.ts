@@ -2,6 +2,7 @@ import type { AuthState, User } from '@/lib/atoms';
 import type { LoginRequest, LoginResponse, SignUpRequest, SignUpResponse } from '@/types/auth';
 import type { AxiosResponse } from 'axios';
 import type { SetStateAction } from 'react';
+import type { ErrorResponse } from '@/types/api';
 import axiosInstance from '../core/axios';
 
 /**
@@ -121,13 +122,33 @@ export const signup = async (userData: SignUpRequest): Promise<SignUpResponse> =
   try {
     console.log('[API Auth] 회원가입 시도:', userData.email);
 
+    // 백엔드 요구사항에 맞게 데이터 형식 조정 (필요한 경우)
+    const requestData = {
+      ...userData,
+      // 필요한 추가 필드가 있다면 여기에 추가
+    };
+
+    // API 요청 전 디버깅 정보
+    console.log('[API Auth] 회원가입 요청 데이터:', {
+      ...requestData,
+      password: '***',
+      checkPassword: '***'
+    });
+
     // API 요청 - POST /auth/signup (최신 백엔드 엔드포인트)
     const response: AxiosResponse<SignUpResponse> = await axiosInstance.post(
       '/auth/signup',
-      userData
+      requestData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      }
     );
 
     console.log('[API Auth] 회원가입 응답:', response.status);
+    console.log('[API Auth] 회원가입 응답 데이터:', response.data);
     
     // 응답 구조 검사
     if (!response.data) {
@@ -136,8 +157,22 @@ export const signup = async (userData: SignUpRequest): Promise<SignUpResponse> =
     }
 
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API Auth] 회원가입 오류:', error);
+    
+    // 오류 응답의 상세 정보 로깅
+    if (error.response) {
+      const status = error.response.status;
+      const errorData = error.response.data as ErrorResponse;
+      
+      console.error(`[API Auth] 회원가입 오류 (${status}):`, errorData);
+      
+      if (errorData.errors && errorData.errors.length > 0) {
+        const fields = errorData.errors.map(e => `${e.field}: ${e.message}`).join(', ');
+        console.error(`[API Auth] 유효성 검증 오류: ${fields}`);
+      }
+    }
+    
     // 오류를 그대로 전파 (컴포넌트에서 처리)
     throw error;
   }
@@ -205,12 +240,18 @@ export const verifyToken = async (auth: AuthState): Promise<boolean> => {
   }
 };
 
+// 현재 API 기본 URL 가져오는 함수
+export const getApiBaseUrl = (): string => {
+  return axiosInstance.defaults.baseURL || '';
+};
+
 // default export 추가
 const authAPI = {
   login,
   signup,
   logout,
   verifyToken,
+  getApiBaseUrl,
 };
 
 export default authAPI;

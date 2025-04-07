@@ -37,15 +37,15 @@ const frameworks: Framework[] = [
     supportLevel: 'full'
   },
   {
-    id: 'sasb',
-    name: 'SASB (Sustainability Accounting Standards Board)',
-    description: '산업별 지속가능성 정보 공개를 위한 표준입니다.',
-    supportLevel: 'partial'
+    id: 'esrs',
+    name: 'ESRS (European Sustainability Reporting Standards)',
+    description: '유럽 지속가능성 보고 표준입니다.',
+    supportLevel: 'coming'
   },
   {
-    id: 'tcfd',
-    name: 'TCFD (Task Force on Climate-related Financial Disclosures)',
-    description: '기후변화 관련 재무정보 공개를 위한 프레임워크입니다.',
+    id: 'ifrs',
+    name: 'IFRS (International Financial Reporting Standards)',
+    description: '국제 재무 보고 표준입니다.',
     supportLevel: 'coming'
   }
 ];
@@ -59,11 +59,11 @@ export default function ReportPage() {
   const getSupportLevelBadge = (supportLevel: SupportLevel) => {
     switch (supportLevel) {
       case 'full':
-        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800">완전 지원</span>;
+        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap min-w-[70px]">완전 지원</span>;
       case 'partial':
-        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">부분 지원</span>;
+        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 whitespace-nowrap min-w-[70px]">부분 지원</span>;
       case 'coming':
-        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">준비중</span>;
+        return <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800 whitespace-nowrap min-w-[60px]">준비중</span>;
       default:
         return null;
     }
@@ -183,9 +183,11 @@ export default function ReportPage() {
               onClick={() => setSelectedFramework(framework)}
             >
               <CardHeader>
-                <div className="flex justify-between items-center mb-1">
-                  <CardTitle className="text-lg">{framework.name}</CardTitle>
-                  {getSupportLevelBadge(framework.supportLevel)}
+                <div className="flex items-center justify-between mb-1">
+                  <CardTitle className="text-lg truncate mr-2">{framework.name}</CardTitle>
+                  <div className="flex-shrink-0">
+                    {getSupportLevelBadge(framework.supportLevel)}
+                  </div>
                 </div>
                 <CardDescription>{framework.description}</CardDescription>
               </CardHeader>
