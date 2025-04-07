@@ -234,13 +234,9 @@ export function GriEditModal({
           updatedValue.timeSeriesData = modalTimeSeriesData;
           break;
       }
-
-      console.log("저장 요청 시작:", categoryId);
       
       // 상위 컴포넌트의 저장 함수 호출
       const success = await onSave(categoryId, updatedValue);
-      
-      console.log("저장 요청 완료:", success);
 
       if (success) {
         // 오프라인 상태인 경우 다른 메시지 표시
@@ -288,7 +284,6 @@ export function GriEditModal({
         });
       }
     } catch (error) {
-      console.error('데이터 저장 중 오류 발생:', error);
       setSaveMessage({
         type: 'error',
         text: '데이터 저장 중 오류가 발생했습니다.',
@@ -581,7 +576,6 @@ export function GriEditModal({
                 <CustomButton 
                   type="button" 
                   onClick={() => {
-                    console.log("저장 버튼 클릭됨");
                     if (!isButtonClicked) handleModalSave();
                   }} 
                   disabled={isSaving || isButtonClicked}

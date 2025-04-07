@@ -7,7 +7,7 @@ export interface GRICategory {
   // 수치화 가능 여부를 판단할 근거가 필요합니다.
   // 우선은 모든 항목을 텍스트로 처리하고, 추후 로직을 추가하여 구분할 수 있습니다.
   // isQuantitative?: boolean;
-  defaultDataType?: 'text' | 'timeSeries' | 'numeric'; // 기본 데이터 타입 추가
+  defaultDataType?: 'text' | 'timeSeries'; // 기본 데이터 타입 추가
 }
 
 // gri-cat.tsv 데이터를 파싱하여 생성
@@ -277,14 +277,14 @@ export const griCategories: GRICategory[] = [
     group: '102',
     name: '거버넌스',
     description: '연찬 총 보상 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '102-39',
     group: '102',
     name: '거버넌스',
     description: '연간 총 보상 인상율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '102-40',
@@ -298,7 +298,7 @@ export const griCategories: GRICategory[] = [
     group: '102',
     name: '이해관계자 참여',
     description: '전체 임직원 중 단체협약이 적용되는 임직원의 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '102-42',
@@ -439,7 +439,7 @@ export const griCategories: GRICategory[] = [
     group: '201',
     name: '경제성과',
     description: '기후변화가 조직의 활동에 미치는 재무적 영향 및 기타 위험과 기회',
-    defaultDataType: 'text',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '201-3',
@@ -462,7 +462,7 @@ export const griCategories: GRICategory[] = [
     name: '시장지위',
     description:
       '주요 사업장이 위치한 지역의 최저 임금과 비교한 성별 기본초임 임금기준, 최저임금 보상평가 방안 등 공개',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '202-2',
@@ -491,14 +491,14 @@ export const griCategories: GRICategory[] = [
     group: '204',
     name: '조달 관행',
     description: '주요 사업장에서 현지 공급업체에 지급하는 구매 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '205-1',
     group: '205',
     name: '반부패',
     description: '부패 위험을 평가한 사업장의 수 및 비율과 파악된 중요한 위험',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '205-2',
@@ -519,7 +519,7 @@ export const griCategories: GRICategory[] = [
     group: '206',
     name: '반경쟁적 행위',
     description: '경쟁저해행위, 독과점 등 불공정한 거래행위에 대한 법적 조치의 수와 그 결과',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '207-1',
@@ -756,14 +756,14 @@ export const griCategories: GRICategory[] = [
     group: '307',
     name: '컴플라이언스',
     description: '환경법 및 규정 위반으로 부과된 중요한 벌금의 액수 및 비금전적 제재조치의 수',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '308-1',
     group: '308',
     name: '공급업체 환경 평가',
     description: '환경 기준 심사를 거친 신규 공급업체',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '308-2',
@@ -850,21 +850,21 @@ export const griCategories: GRICategory[] = [
     group: '403',
     name: '산업안전보건',
     description: '산업안전보건 관리시스템의 적용을 받는 근로자',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '403-9',
     group: '403',
     name: '산업안전보건',
     description: '업무 관련 상해',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '403-10',
     group: '403',
     name: '산업안전보건',
     description: '업무 관련 질병',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '404-1',
@@ -886,7 +886,7 @@ export const griCategories: GRICategory[] = [
     group: '404',
     name: '훈련 및 교육',
     description: '업무성과 및 경력개발에 대한 정기적인 검토를 받은 근로자 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '405-1',
@@ -900,7 +900,7 @@ export const griCategories: GRICategory[] = [
     group: '405',
     name: '다양성과 기회균등',
     description: '남성 대비 여성의 기본급 및 보수 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '406-1',
@@ -935,21 +935,21 @@ export const griCategories: GRICategory[] = [
     group: '410',
     name: '보안관행',
     description: '인권 정책 및 절차에 관한 훈련을 받은 보안요원',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '411-1',
     group: '411',
     name: '원주민 권리',
     description: '원주민 권리 침해 사건의 수',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '412-1',
     group: '412',
     name: '인권평가',
     description: '인권검토 또는 인권영향평가 대상인 사업장의 수와 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '412-2',
@@ -970,7 +970,7 @@ export const griCategories: GRICategory[] = [
     group: '413',
     name: '지역사회',
     description: '지역사회 참여, 영향 평가 그리고 발전프로그램 운영 비율',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '413-2',
@@ -984,7 +984,7 @@ export const griCategories: GRICategory[] = [
     group: '414',
     name: '공급망 관리',
     description: '사회적 영향평가를 통해 스크리닝된 신규 협력회사',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '414-2',
@@ -998,7 +998,7 @@ export const griCategories: GRICategory[] = [
     group: '415',
     name: '공공정책',
     description: '국가별, 수령인/수혜자별 기부한 정치자금 총규모',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '416-1',
@@ -1012,7 +1012,7 @@ export const griCategories: GRICategory[] = [
     group: '416',
     name: '고객 안전보건',
     description: '제품 및 서비스의 안전보건 영향에 관한 규정 위반 사건',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '417-1',
@@ -1026,28 +1026,28 @@ export const griCategories: GRICategory[] = [
     group: '417',
     name: '마케팅 및 라벨링',
     description: '제품 및 서비스 정보와 라벨링에 관한 법률규정 및 자율규정을 위반한 사건',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '417-3',
     group: '417',
     name: '마케팅 및 라벨링',
     description: '마케팅 커뮤니케이션과 관련된 규정 위반',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '418-1',
     group: '418',
     name: '고객정보보호',
     description: '고객개인정보보호 위반 및 고객 데이터 분실 관련 제기된 불만 건수',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
   {
     id: '419-1',
     group: '419',
     name: '컴플라이언스',
     description: '사회 및 경제 측면의 관련 법규 및 규정 위반에 대한 주요 벌금의 액수',
-    defaultDataType: 'numeric',
+    defaultDataType: 'timeSeries',
   },
 ];
 

@@ -135,48 +135,18 @@ export default function GriEditForm({
   const [selectedGroup, setSelectedGroup] = useState<string>('all'); // 기본값: 전체 보기
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<EditingCategory | null>(null);
-  const [isSaving, setIsSaving] = useState(false); // 저장 상태 추가
+  const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{
     type: 'success' | 'error' | 'warning';
     text: string;
-  } | null>(null); // 저장 메시지 상태 추가
+  } | null>(null);
 
   // 모달 상태 분리: 텍스트용, 시계열용
   const [modalTextValue, setModalTextValue] = useState<string | null>('');
   const [modalTimeSeriesData, setModalTimeSeriesData] = useState<TimeSeriesDataPoint[]>([]);
 
-  // 데이터 검증을 위한 useEffect 추가
+  // 컴포넌트 마운트 시 또는 initialData 변경 시 formData 초기화
   useEffect(() => {
-    console.log("=== GRI 초기 데이터 검증 ===");
-    console.log("initialData:", initialData);
-    
-    // 샘플 카테고리 값 검증 (특정 항목들)
-    const debugCategories = ['102-1', '102-2', '102-3', '102-4', '102-5'];
-    debugCategories.forEach(catId => {
-      if (initialData.griValues[catId]) {
-        console.log(`${catId} 원본 데이터:`, initialData.griValues[catId]);
-      } else {
-        console.warn(`${catId} 데이터가 initialData에 없습니다`);
-      }
-    });
-  }, [initialData]);
-
-  // formData 업데이트 시 검증 로그 추가
-  useEffect(() => {
-    console.log("=== GRI formData 업데이트 감지 ===");
-    // 현재 formData 상태를 콘솔에 출력하여 데이터가 있는지 확인
-    const sampleKeys = Object.keys(formData).slice(0, 5); // 처음 5개 항목만 로깅
-    console.log("현재 formData 일부:", sampleKeys.map(key => ({
-      key,
-      dataType: formData[key]?.dataType,
-      textValue: formData[key]?.textValue,
-      timeSeriesLength: formData[key]?.timeSeriesData?.length || 0
-    })));
-  }, [formData]);
-
-  // 컴포넌트 마운트 시 또는 initialData 변경 시 formData 초기화 강화
-  useEffect(() => {
-    console.log("initialData 변경감지: formData 갱신 중");
     const initialFormValues: Record<string, CompanyGRICategoryValue> = {};
     
     for (const cat of griCategories) {
@@ -185,10 +155,6 @@ export default function GriEditForm({
       // 기존 데이터가 있으면 그대로 사용
       if (existingValue) {
         initialFormValues[cat.id] = {...existingValue};
-        console.log(`카테고리 ${cat.id} 기존 데이터 복사:`, {
-          dataType: existingValue.dataType,
-          textValue: existingValue.textValue,
-        });
       } else {
         // 새 카테고리라면 빈 데이터 생성
         initialFormValues[cat.id] = {
@@ -197,31 +163,19 @@ export default function GriEditForm({
           timeSeriesData: cat.defaultDataType === 'timeSeries' ? [] : undefined,
           textValue: cat.defaultDataType === 'text' ? '' : null,
         };
-        console.log(`카테고리 ${cat.id} 새 데이터 생성:`, initialFormValues[cat.id]);
       }
     }
     
-    console.log("formData 설정 전:", initialFormValues);
     setFormData(initialFormValues);
-    console.log("formData 설정 완료");
   }, [initialData, griCategories]);
 
   // 모달 열기
   const handleOpenModal = (category: GRICategory) => {
-    // formData에서 현재 카테고리 데이터 가져오기 (useEffect에서 생성 보장)
+    // formData에서 현재 카테고리 데이터 가져오기
     const currentValue = formData[category.id];
-    
-    console.log(`카테고리 ${category.id} 모달 열기 - 현재 값:`, JSON.stringify({
-      categoryId: currentValue.categoryId,
-      dataType: currentValue.dataType,
-      textValue: currentValue.textValue,
-      timeSeriesLength: currentValue.timeSeriesData?.length || 0
-    }));
 
     // 현재 값이 없으면 기본값 생성
     if (!currentValue) {
-      console.warn(`카테고리 ${category.id}에 대한 현재 값이 없습니다. 기본값 생성합니다.`);
-      
       // 카테고리 기본 데이터 타입에 맞는 빈 값 생성
       const defaultValue: CompanyGRICategoryValue = {
         categoryId: category.id,
@@ -259,7 +213,6 @@ export default function GriEditForm({
   // 모달에서 저장 이벤트 처리
   const handleSave = async (categoryId: string, updatedValue: CompanyGRICategoryValue) => {
     try {
-      console.log(`저장 요청 시작: 카테고리 ${categoryId}`);
       setIsSaving(true);
 
       // 폼 데이터 업데이트
@@ -273,7 +226,6 @@ export default function GriEditForm({
       
       // 부모 컴포넌트에 먼저 알림 (UI를 즉시 반영)
       if (onChange) {
-        console.log("UI 낙관적 업데이트");
         const updatedData: CompanyGRIData = {
           ...initialData,
           griValues: updatedFormData,
@@ -283,21 +235,17 @@ export default function GriEditForm({
 
       // enhancedService가 있으면 사용
       if (enhancedService) {
-        console.log("enhancedService 사용하여 저장");
         // 개선된 서비스로 저장
         const result = await enhancedService.saveCategory(
           categoryId, 
           updatedValue,
           (newData: CompanyGRIData) => {
             // 콜백: 서버 응답 후 UI 업데이트
-            console.log("저장 후 콜백 실행");
             if (onChange) {
               onChange(newData);
             }
           }
         );
-
-        console.log("저장 결과:", result);
 
         // 결과에 따른 메시지
         if (result.success) {
@@ -327,22 +275,16 @@ export default function GriEditForm({
         return true;
       } else {
         // 기존 방식으로 저장 (fallback)
-        console.log("기존 API 방식으로 저장");
         const { saveSingleGriCategory, getCompanyGriDataFormatted } = await import('@/lib/api/gri');
         const success = await saveSingleGriCategory(categoryId, updatedValue);
-        console.log("저장 결과:", success);
 
         if (success) {
-          // 성공 시 로컬 상태 업데이트 (이미 낙관적으로 업데이트됨)
-          
           try {
             // 서버에서 최신 데이터를 다시 가져오기
-            console.log("서버에서 최신 데이터를 다시 로드합니다.");
             const refreshedData = await getCompanyGriDataFormatted();
             
             // 데이터 일관성 검증
             const isConsistent = await verifyDataConsistency(categoryId, updatedValue);
-            console.log("데이터 일관성 검증 결과:", isConsistent);
             
             if (isConsistent) {
               // 성공 메시지 표시
@@ -378,7 +320,6 @@ export default function GriEditForm({
               }
             }
           } catch (refreshError) {
-            console.error("데이터 새로고침 실패:", refreshError);
             // 새로고침 실패 시 오류 알림
             toast({
               title: "데이터 갱신 오류",
@@ -399,11 +340,8 @@ export default function GriEditForm({
         return false;
       }
     } catch (error) {
-      console.error('데이터 저장 중 오류 발생:', error);
-      
       // 오프라인 상태에서 발생한 오류인 경우 
       if (!isOnline) {
-        console.log("오프라인 상태에서 로컬 저장");
         // 성공적으로 로컬에 저장됨
         setFormData(prev => ({
           ...prev,
@@ -443,7 +381,6 @@ export default function GriEditForm({
       });
       return false;
     } finally {
-      console.log("저장 프로세스 완료");
       setIsSaving(false);
     }
   };
@@ -454,13 +391,9 @@ export default function GriEditForm({
       ? griCategories
       : griCategories.filter((cat) => getGroupIdFromCategoryId(cat.id) === selectedGroup);
 
-  // 현재 값 표시 함수 수정
-  const displayCurrentValue = (value: CompanyGRICategoryValue | undefined): string => {
-    // 디버깅 로그 추가
-    console.log(`displayCurrentValue 호출:`, value);
-    
+  // 현재 값 표시 함수
+  const displayCurrentValue = (value: CompanyGRICategoryValue | undefined): string => {    
     if (!value) {
-      console.warn('displayCurrentValue: 값이 undefined입니다');
       return '-';
     }
 
@@ -468,25 +401,17 @@ export default function GriEditForm({
     
     switch (dataType) {
       case 'text':
-        console.log(`텍스트 값:`, value.textValue);
         return value.textValue ?? '-';
 
       case 'timeSeries':
         if (value.timeSeriesData && value.timeSeriesData.length > 0) {
           const latestYear = Math.max(...value.timeSeriesData.map((d) => d.year));
           const latestData = value.timeSeriesData.find((d) => d.year === latestYear);
-          console.log(`시계열 데이터:`, { 
-            총항목수: value.timeSeriesData.length,
-            최신연도: latestYear,
-            최신값: latestData?.value
-          });
           return latestData?.value?.toString() ?? `${value.timeSeriesData.length}개 항목`;
         }
-        console.log(`시계열 데이터: 항목 없음`);
         return '항목 없음';
 
       default:
-        console.warn(`알 수 없는 데이터 타입:`, dataType);
         return '-';
     }
   };
@@ -546,15 +471,6 @@ export default function GriEditForm({
                     ))}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground truncate max-w-[180px]">
-                    {/* 디버깅용 직접 데이터 값 표시 */}
-                    <div className="text-xs text-gray-400 mb-1">
-                      {formData[category.id]?.dataType === 'text' ? 
-                        `텍스트: "${formData[category.id]?.textValue?.substring(0, 15) || '-'}"` : 
-                      formData[category.id]?.dataType === 'timeSeries' ?
-                        `시계열(${formData[category.id]?.timeSeriesData?.length || 0}개)` : '-'
-                      }
-                    </div>
-                    {/* 기존 표시 로직 */}
                     {displayCurrentValue(formData[category.id])}
                   </TableCell>
                   <TableCell>
