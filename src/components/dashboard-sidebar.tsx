@@ -102,8 +102,8 @@ export default function DashboardSidebar() {
           className={clsx(
             'flex items-center px-3 py-2 rounded-md text-sm transition-colors',
             active
-              ? 'bg-gray-100 text-gray-900'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+              ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
+              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white',
             isLayoutLocked && 'justify-center px-2'
           )}
         >
@@ -140,7 +140,7 @@ export default function DashboardSidebar() {
       className={clsx(
         'fixed md:top-16 top-14 left-0',
         'h-[calc(100vh-56px)] md:h-[calc(100vh-64px)]',
-        'bg-white p-2 md:p-3 overflow-y-auto z-30 border-r',
+        'bg-white dark:bg-gray-900 p-2 md:p-3 overflow-y-auto z-30 border-r dark:border-gray-800',
         'transition-all duration-300 ease-in-out',
         isLayoutLocked ? 'md:w-16' : 'md:w-60',
         'md:translate-x-0 md:opacity-100',
@@ -149,7 +149,7 @@ export default function DashboardSidebar() {
     >
       <div
         className={clsx(
-          'flex items-center pb-2 border-b p-2 mb-4',
+          'flex items-center pb-2 border-b dark:border-gray-800 p-2 mb-4',
           isLayoutLocked ? 'justify-center' : 'justify-between'
         )}
       >
@@ -169,18 +169,18 @@ export default function DashboardSidebar() {
                 isLayoutLocked ? 'w-full h-10' : 'w-10 h-10'
               )}
             >
-              <UserIcon className="w-6 h-6 text-gray-600" />
+              <UserIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
             </div>
             <div className={clsx('text-right overflow-hidden', isLayoutLocked && 'hidden')}>
               {userInfo.company && (
                 <div className="flex items-center justify-end mb-0.5">
-                  <Building className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
-                  <p className="text-xs text-gray-600 truncate">{userInfo.company}</p>
+                  <Building className="w-3 h-3 mr-1 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                  <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{userInfo.company}</p>
                 </div>
               )}
               <div className="flex items-center justify-end">
-                <UserIcon className="w-3 h-3 mr-1 text-gray-500 flex-shrink-0" />
-                <p className="text-sm font-medium truncate">{userInfo.name}</p>
+                <UserIcon className="w-3 h-3 mr-1 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                <p className="text-sm font-medium truncate dark:text-gray-300">{userInfo.name}</p>
               </div>
             </div>
           </>

@@ -68,7 +68,7 @@ export default function DashboardTopBar({ rightMenuItems, pageTitle }: Dashboard
     <div
       className={clsx(
         'fixed top-16 right-0 z-20',
-        'flex flex-row justify-between items-center px-4 py-3 border-b bg-gray-50',
+        'flex flex-row justify-between items-center px-4 py-3 border-b bg-gray-50 dark:bg-gray-900 dark:border-gray-800',
         'transition-all duration-300 ease-in-out',
         isLayoutLocked
           ? 'md:left-16 md:w-[calc(100%-theme(space.16))] left-0 w-full'
@@ -107,15 +107,15 @@ export default function DashboardTopBar({ rightMenuItems, pageTitle }: Dashboard
               const isLast = index === breadcrumbs.length - 1;
               return (
                 <li key={crumb.href} className="inline-flex items-center">
-                  {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />}
+                  {index > 0 && <ChevronRight className="w-4 h-4 text-gray-400 dark:text-gray-600 mx-1" />}
                   {isLast ? (
-                    <span className="text-gray-600 font-medium text-sm md:text-base">
+                    <span className="text-gray-600 dark:text-gray-300 font-medium text-sm md:text-base">
                       {pageTitle || crumb.label}
                     </span>
                   ) : (
                     <Link
                       href={crumb.href}
-                      className="text-gray-500 hover:text-gray-700 text-sm md:text-base"
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm md:text-base"
                     >
                       {index === 0 ? (
                         <span className="flex items-center">
