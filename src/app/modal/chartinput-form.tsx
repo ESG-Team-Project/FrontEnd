@@ -1,6 +1,5 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { Upload, X } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -21,7 +20,6 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { Value } from '@radix-ui/react-select';
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useDropzone } from 'react-dropzone';
 import { ESGCombobox, esgIndicators } from './combobox';
 import DataTable from './datatable';
 import { useDashboard } from '@/contexts/dashboard-context';
@@ -39,11 +37,12 @@ import type { CompanyGRICategoryValue, CompanyGRIData } from '@/types/companyGri
 
 // 단계 타입 정의
 type ChartStep = 'info' | 'dataSource' | 'esgSelect' | 'datatable' | 'griSelect';
+type DataSource = 'gri' | 'direct';
 
 // 단계 관리 훅
 function useChartStepManager(initialStep: ChartStep = 'info', setSaveError?: (error: string | null) => void) {
   const [step, setStep] = useState<ChartStep>(initialStep);
-  const [dataSource, setDataSource] = useState<'gri' | 'direct' | 'csv'>('direct');
+  const [dataSource, setDataSource] = useState<DataSource>('direct');
   
   // 다음 단계로 이동하는 함수
   const goToNextStep = useCallback((
@@ -106,6 +105,17 @@ function useChartStepManager(initialStep: ChartStep = 'info', setSaveError?: (er
   const goToStep = useCallback((newStep: ChartStep) => {
     setStep(newStep);
   }, []);
+
+  // CSV 선택 시 처리 수정
+  useEffect(() => {
+    if (step === 'dataSource' && dataSource) {
+      if (dataSource === 'gri') {
+        goToStep('griSelect');
+      } else if (dataSource === 'direct') {
+        goToStep('esgSelect');
+      }
+    }
+  }, [step, dataSource]);
   
   return {
     step,
@@ -146,11 +156,8 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
   const [labels, setLabels] = useState<string[] | number[]>([]);
   const [datasets, setDatasets] = useState<ChartData['datasets']>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [csvError, setCsvError] = useState<string | null>(null);
-  const [file, setFile] = useState<File>();
   const [tableKey, setTableKey] = useState(0);
   const prevDataLength = useRef({ labels: 0, datasets: 0 });
-  const [worker, setWorker] = useState<Worker | null>(null);
 
   // GRI 데이터 관련 상태
   const { companyId } = useDashboard(); // 회사 ID 가져오기
@@ -167,41 +174,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
         category.defaultDataType === 'timeSeries'
     );
   }, []); // 의존성 없음 - 한 번만 계산
-
-  // Web Worker 초기화
-  useEffect(() => {
-    // 항상 Worker를 초기화하여 모든 데이터 소스에서 활용할 수 있도록 변경
-    const csvWorker = new Worker(new URL('../../worker/csvWorker.ts', import.meta.url), {
-      type: 'module',
-    });
-
-    csvWorker.onmessage = event => {
-      const { labels, datasets, error, message } = event.data;
-      
-      // 오류 처리
-      if (error) {
-        setCsvError(message || 'CSV 파일 처리 중 오류가 발생했습니다.');
-        return;
-      }
-      
-      // 데이터 유효성 검사
-      if (!labels || !datasets || labels.length === 0 || datasets.length === 0) {
-        setCsvError('CSV 파일에서 유효한 데이터를 추출할 수 없습니다.');
-        return;
-      }
-      
-      // 성공적으로 데이터를 받은 경우
-      setCsvError(null);
-      setLabels(labels);
-      setDatasets(datasets);
-    };
-
-    setWorker(csvWorker);
-
-    return () => {
-      csvWorker.terminate();
-    };
-  }, []);
 
   // 데이터 변경 시 테이블 키 업데이트
   useEffect(() => {
@@ -239,43 +211,8 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   }, [open, dataSource, griData, loadGriData]);
 
-  // CSV 파일 처리를 위한 드롭존 설정
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) {
-      setCsvError('파일이 선택되지 않았습니다.');
-      return;
-    }
-    
-    // 파일 크기 제한 (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      setCsvError('파일 크기는 10MB를 초과할 수 없습니다.');
-      return;
-    }
-    
-    // 파일 확장자 확인
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      setCsvError('CSV 파일만 업로드할 수 있습니다.');
-      return;
-    }
-    
-    setCsvError(null);
-    setFile(file);
-    
-    if (worker) {
-      worker.postMessage(file);
-    } else {
-      setCsvError('CSV 처리기가 초기화되지 않았습니다. 페이지를 새로고침해 주세요.');
-    }
-  }, [worker]);
-
-  const { getRootProps, getInputProps } = useDropzone({
-    onDrop,
-    accept: { 'text/csv': ['.csv'] },
-  });
-
   // 데이터 소스 변경 핸들러
-  const handleDataSourceChange = useCallback((source: 'gri' | 'direct' | 'csv') => {
+  const handleDataSourceChange = useCallback((source: 'gri' | 'direct') => {
     setDataSource(source);
   }, [setDataSource]);
 
@@ -347,7 +284,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setLabels([]);
     setDatasets([]);
     setSaveError(null);
-    setCsvError(null);
     goToStep('info');
   }, [goToStep]);
 
@@ -450,61 +386,10 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     }
   }, [step, selectedGriCategory, goToNextStep, prepareGriChartData, setSaveError, handleSave]);
 
-  // 렌더링을 위한 함수들 추가
-  const renderCsvUploadSection = useCallback(() => (
-    <div>
-      <div
-        {...getRootProps()}
-        className="w-full p-6 text-center border border-gray-300 rounded-lg cursor-pointer dark:border-gray-600 hover:border-gray-500 dark:hover:border-gray-400"
-      >
-        <input {...getInputProps()} />
-        <div className="flex flex-col items-center w-full">
-          <Upload className="w-full h-10 text-gray-500 dark:text-gray-400" />
-          <p className="w-full mt-2 text-gray-600 dark:text-gray-300">
-            CSV 파일을 추가하려면 파일 선택 <br /> 또는 여기로 파일을 끌고 오세요
-          </p>
-        </div>
-      </div>
-      
-      {csvError && (
-        <div className="mt-2 p-2 text-sm text-red-500 bg-red-50 border border-red-200 rounded">
-          <p>오류: {csvError}</p>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="mt-1" 
-            onClick={() => setCsvError(null)}
-          >
-            다시 시도
-          </Button>
-        </div>
-      )}
-      
-      {file && !csvError && (
-        <div className="mt-2 p-2 flex items-center justify-between bg-green-50 border border-green-200 rounded">
-          <span className="text-sm text-green-700">
-            {file.name} ({(file.size / 1024).toFixed(1)}KB)
-          </span>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => {
-              setFile(undefined);
-              setLabels([]);
-              setDatasets([]);
-            }}
-          >
-            제거
-          </Button>
-        </div>
-      )}
-    </div>
-  ), [getInputProps, getRootProps, csvError, file]);
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="flex flex-col p-6 bg-white rounded-lg shadow-lg dark:bg-gray-900 w-auto sm:min-w-[500px] sm:max-w-[80vw]">
-        <DialogDescription>CSV 업로드 후 차트를 설정하세요</DialogDescription>
+        <DialogDescription>차트를 설정하세요</DialogDescription>
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">차트 추가</DialogTitle>
           <DialogClose
@@ -586,7 +471,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           {step === 'dataSource' && (
             <div className="space-y-4">
               <h3 className="text-lg font-medium text-center">데이터 소스 선택</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <Button
                   variant={dataSource === 'gri' ? 'default' : 'outline'}
                   className="flex flex-col items-center justify-center p-4 h-28"
@@ -602,14 +487,6 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
                 >
                   <div className="text-2xl mb-2">✏️</div>
                   <div>직접 추가</div>
-                </Button>
-                <Button
-                  variant={dataSource === 'csv' ? 'default' : 'outline'}
-                  className="flex flex-col items-center justify-center p-4 h-28"
-                  onClick={() => handleDataSourceChange('csv')}
-                >
-                  <div className="text-2xl mb-2">📁</div>
-                  <div>CSV 추가</div>
                 </Button>
               </div>
             </div>
@@ -670,18 +547,14 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           )}
 
           {step === 'datatable' && (
-            <>
-              {renderCsvUploadSection()}
-              
-              <div className="mt-4">
-                <DataTable
-                  key={tableKey}
-                  initialLabels={labels}
-                  initialDatasets={datasets}
-                  onDataChange={handleDataChange}
-                />
-              </div>
-            </>
+            <div className="mt-4">
+              <DataTable
+                key={tableKey}
+                initialLabels={labels}
+                initialDatasets={datasets}
+                onDataChange={handleDataChange}
+              />
+            </div>
           )}
         </div>
 
@@ -693,7 +566,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
           )}
           <Button 
             onClick={handleNext} 
-            disabled={isLoading || (step === 'datatable' && csvError !== null)}
+            disabled={isLoading}
           >
             {getNextButtonText()}
           </Button>

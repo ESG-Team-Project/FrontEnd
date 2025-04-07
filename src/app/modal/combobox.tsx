@@ -177,10 +177,10 @@ interface ESGComboboxProps {
 }
 
 export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
-  // Props 받도록 수정
   const [openCategoryPopover, setOpenCategoryPopover] = useState(false);
   const [openIndicatorPopover, setOpenIndicatorPopover] = useState(false);
   const [category, setCategory] = useState<EsgCategory | ''>('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   // 초기 카테고리 설정 (value prop 기반)
   useEffect(() => {
@@ -200,7 +200,15 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
     { value: 'governance', label: '거버넌스 (Governance)' },
   ];
 
-  const indicators: EsgIndicator[] = category ? esgIndicators[category] : [];
+  // 원본 지표 목록
+  const allIndicators: EsgIndicator[] = category ? esgIndicators[category] : [];
+  
+  // 검색어로 필터링된 지표 목록
+  const filteredIndicators = allIndicators.filter(
+    indicator => 
+      indicator.id.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      indicator.label.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div>
@@ -230,45 +238,24 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
           <Command>
             <CommandList>
               <CommandGroup>
-                {!category ? (
-                  categoryOptions.map((option) => (
-                    <CommandItem
-                      key={option.value}
-                      value={option.value}
-                      onSelect={(selectedValue) => {
-                        setCategory(selectedValue as EsgCategory);
-                        onValueChange(null); // 카테고리 변경 시 indicator 초기화 콜백 호출
-                        setOpenCategoryPopover(false); // Close the category popover
-                        setOpenIndicatorPopover(true); // Open the indicator popover
-                      }}
-                    >
-                      {option.label}
-                    </CommandItem>
-                  ))
-                ) : (
-                  <ScrollArea className="w-48 overflow-auto border rounded-md h-72">
-                    <div className="p-4">
-                      {indicators.map((option) => (
-                        <CommandItem
-                          key={option.id}
-                          value={option.id}
-                          onSelect={(currentValue) => {
-                            onValueChange(currentValue === value ? null : currentValue); // 콜백 호출 (토글)
-                            setOpenIndicatorPopover(false); // Close the indicator popover
-                          }}
-                        >
-                          {option.label}
-                          <Check
-                            className={cn(
-                              'ml-auto',
-                              value === option.id ? 'opacity-100' : 'opacity-0'
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
+                {categoryOptions.map((option) => (
+                  <CommandItem
+                    key={option.value}
+                    value={option.value}
+                    onSelect={(selectedValue) => {
+                      setCategory(selectedValue as EsgCategory);
+                      onValueChange(null); // 카테고리 변경 시 indicator 초기화 콜백 호출
+                      setOpenCategoryPopover(false); // Close the category popover
+                      // 카테고리 선택 후 검색어 초기화
+                      setSearchTerm('');
+                      setTimeout(() => {
+                        setOpenIndicatorPopover(true); // Open the indicator popover after a brief delay
+                      }, 100);
+                    }}
+                  >
+                    {option.label}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             </CommandList>
           </Command>
@@ -283,41 +270,67 @@ export function ESGCombobox({ value, onValueChange }: ESGComboboxProps) {
               variant="outline"
               role="combobox"
               aria-expanded={openIndicatorPopover}
-              className="w-full max-w-[500px] justify-between bg-white mt-2"
+              className="w-full mt-2 justify-between bg-white truncate"
             >
-              {value ? indicators.find((item) => item.id === value)?.label : '지표 선택'}
-              <ChevronsUpDown className="opacity-50" />
+              {value ? (
+                allIndicators.find((item) => item.id === value)?.label
+              ) : (
+                '지표 선택'
+              )}
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full max-w-[500px] p-0 bg-white">
-            <Command>
-              <CommandInput placeholder="지표 검색" />
-              <CommandList>
-                <CommandEmpty>결과 없음</CommandEmpty>
-                <ScrollArea className="w-full overflow-auto border rounded-md h-72">
-                  <CommandGroup>
-                    {indicators.map((option) => (
-                      <CommandItem
-                        key={option.id}
-                        value={option.label}
-                        onSelect={() => {
-                          onValueChange(option.id === value ? null : option.id);
-                          setOpenIndicatorPopover(false);
-                        }}
-                      >
-                        {option.label}
-                        <Check
-                          className={cn(
-                            'ml-auto',
-                            value === option.id ? 'opacity-100' : 'opacity-0'
-                          )}
-                        />
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </ScrollArea>
-              </CommandList>
-            </Command>
+          <PopoverContent className="w-full p-0" align="start">
+            <div className="bg-white">
+              {/* 검색 입력 영역 */}
+              <div className="p-2 border-b sticky top-0 bg-white z-10">
+                <input 
+                  className="w-full p-2 text-sm border rounded-md focus:outline-none" 
+                  placeholder="지표 검색..." 
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  autoFocus
+                />
+              </div>
+              
+              {/* 검색 결과 없음 메시지 */}
+              {filteredIndicators.length === 0 && (
+                <div className="p-4 text-center text-sm text-gray-500">
+                  검색 결과가 없습니다.
+                </div>
+              )}
+              
+              {/* 스크롤 가능한 결과 목록 */}
+              <div 
+                className="max-h-[300px] overflow-auto" 
+                style={{ overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}
+              >
+                {filteredIndicators.map((indicator) => (
+                  <div
+                    key={indicator.id}
+                    className={`
+                      flex items-center p-3 border-b hover:bg-gray-50 cursor-pointer
+                      ${value === indicator.id ? 'bg-gray-50' : ''}
+                    `}
+                    onClick={() => {
+                      onValueChange(indicator.id);
+                      setOpenIndicatorPopover(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        'mr-3 h-4 w-4 flex-shrink-0',
+                        value === indicator.id ? 'opacity-100' : 'opacity-0'
+                      )}
+                    />
+                    <div className="flex flex-col">
+                      <span className="font-semibold">{indicator.label}</span>
+                      <span className="text-xs text-gray-500 mt-1">{indicator.id}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </PopoverContent>
         </Popover>
       )}

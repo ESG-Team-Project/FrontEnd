@@ -3,58 +3,6 @@ import type { AxiosResponse } from 'axios';
 import axiosInstance from '../core/axios';
 
 /**
- * CSV 파일 업로드 함수
- *
- * CSV 형식의 데이터 파일을 서버에 업로드합니다.
- * 데이터 분석, 차트 생성, 보고서 작성 등에 사용됩니다.
- *
- * @param {FormData} formData - 업로드할 파일을 포함한 FormData 객체
- * @returns {Promise<FileUploadResponse>} 업로드 결과 및 파일 정보
- *
- * 사용 예시:
- * ```typescript
- * const handleFileUpload = async (files: FileList) => {
- *   const formData = new FormData();
- *
- *   // 여러 파일 추가
- *   for (let i = 0; i < files.length; i++) {
- *     formData.append('files', files[i]);
- *   }
- *
- *   try {
- *     const result = await uploadCSV(formData);
- *     if (result.success) {
- *       console.log('파일 업로드 성공:', result.files);
- *       // 성공 처리 (예: 알림 표시, 파일 목록 갱신)
- *     } else {
- *       console.warn('업로드 실패:', result.message);
- *     }
- *   } catch (error) {
- *     console.error('CSV 업로드 오류:', error);
- *   }
- * };
- * ```
- */
-export const uploadCSV = async (formData: FormData): Promise<FileUploadResponse> => {
-  try {
-    console.log('[API File] CSV 파일 업로드 시도');
-
-    const response: AxiosResponse<FileUploadResponse> =
-      await axiosInstance.post<FileUploadResponse>('/data-import/csv', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-    console.log('[API File] CSV 파일 업로드 성공:', response.status);
-    return response.data;
-  } catch (error) {
-    console.error('[API File] CSV 파일 업로드 오류:', error);
-    throw error;
-  }
-};
-
-/**
  * Excel 파일 업로드 함수
  *
  * Excel(xlsx, xls) 형식의 데이터 파일을 서버에 업로드합니다.
@@ -144,7 +92,6 @@ export const getUploadedFiles = async (): Promise<string[]> => {
 
 // default export 추가
 const fileAPI = {
-  uploadCSV,
   uploadExcel,
   getUploadedFiles,
 };

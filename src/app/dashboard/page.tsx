@@ -1,7 +1,6 @@
 'use client';
 
 import { ESGChartDialog } from '@/app/modal/chartinput-form';
-import { FileInputDialog } from '@/app/modal/fileinput-form';
 import DashboardShell from '@/components/dashboard-shell';
 import TotalCharts from '@/components/dashboards/TotalCharts';
 import { Button } from '@/components/ui/button';
@@ -168,7 +167,6 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isChartModalOpen, setIsChartModalOpen] = useState(false);
-  const [fileModalOpen, setFileModalOpen] = useState(false);
   const [dashboardColumns] = useAtom(dashboardColumnsAtom);
 
   useEffect(() => {
@@ -292,7 +290,6 @@ export default function Dashboard() {
           setCharts((prevCharts) => [...prevCharts, newChart]);
         }}
       />
-      <FileInputDialog open={fileModalOpen} setOpen={setFileModalOpen} />
     </DashboardShell>
   );
 }
