@@ -1,5 +1,4 @@
 'use client';
-
 import * as React from 'react';
 import {
   Table,
@@ -16,7 +15,7 @@ import { ChartData } from '@/types/chart';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 interface DataTableProps {
-  initialLabels?: string[];
+  initialLabels?: string[]|number[];
   initialDatasets?: ChartData['datasets'];
   onDataChange: (labels: string[], datasets: ChartData['datasets']) => void;
 }
@@ -26,6 +25,8 @@ export default function DataTable({
   initialDatasets = [],
   onDataChange,
 }: DataTableProps) {
+
+  
   const [columns, setColumns] = React.useState<string[]>(() => {
     if (initialLabels.length > 0) {
       const datasetLabels = initialDatasets?.map(ds => ds?.label || '') || [];
@@ -103,8 +104,8 @@ export default function DataTable({
       label: colName,
       data: rows.map(row => {
         const value = row.columns[colIndex + 1];
-        const numericValue = Number(value);
-        return isNaN(numericValue) ? 0 : numericValue;
+        const numericValue =value;
+        return numericValue;
       }),
     }));
     onDataChange(newLabels, newDatasets);
