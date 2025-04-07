@@ -8,6 +8,7 @@ import { Building, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Logo from './Logo';
+import { ThemeToggle } from './theme-toggle';
 
 export default function NaviBar() {
   const [isLoggedIn] = useAtom(isLoggedInAtom);
@@ -34,7 +35,7 @@ export default function NaviBar() {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 min-w-full bg-white shadow-sm">
+    <div className="fixed top-0 left-0 right-0 z-50 min-w-full bg-white shadow-sm dark:bg-gray-950 dark:border-b dark:border-gray-800">
       <div className="w-full max-w-screen-xl px-4 mx-auto">
         <div className="flex items-center justify-between w-full h-16">
           <div className="flex items-center">
@@ -45,29 +46,31 @@ export default function NaviBar() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            <ThemeToggle />
+            
             {isLoggedIn ? (
               <>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <div className="cursor-pointer p-1 hover:bg-gray-100 rounded-full">
-                      <User className="w-6 h-6 text-gray-600" />
+                    <div className="cursor-pointer p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full">
+                      <User className="w-6 h-6 text-gray-600 dark:text-gray-300" />
                     </div>
                   </PopoverTrigger>
                   <PopoverContent className="w-60 p-0">
                     <div className="flex flex-col">
                       {/* 사용자 정보 섹션 */}
-                      <div className="p-4 bg-gray-50">
+                      <div className="p-4 bg-gray-50 dark:bg-gray-900">
                         <div className="flex items-center gap-3 mb-2">
-                          <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User className="w-5 h-5 text-gray-600" />
+                          <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                            <User className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                           </div>
                           <div>
                             <h3 className="font-medium">{currentUser?.name || '사용자'}</h3>
-                            <p className="text-xs text-gray-500">{currentUser?.email || '이메일 정보 없음'}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">{currentUser?.email || '이메일 정보 없음'}</p>
                           </div>
                         </div>
                         {currentUser?.company && (
-                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-600">
+                          <div className="flex items-center gap-2 mt-2 text-xs text-gray-600 dark:text-gray-400">
                             <Building className="w-3 h-3" />
                             <span>{currentUser.company}</span>
                           </div>
@@ -79,14 +82,14 @@ export default function NaviBar() {
                       {/* 메뉴 섹션 */}
                       <Link
                         href="/mypage/account"
-                        className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-3 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
                         <User size={16} />
                         <span>마이페이지</span>
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex items-center gap-2 px-4 py-3 text-left text-red-500 transition-colors hover:bg-gray-100"
+                        className="flex items-center gap-2 px-4 py-3 text-left text-red-500 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
                         type="button"
                       >
                         <LogOut size={16} />
@@ -98,7 +101,7 @@ export default function NaviBar() {
               </>
             ) : (
               <Link href="/login">
-                <Button variant="outline" className="text-black bg-white whitespace-nowrap">
+                <Button variant="outline" className="text-black bg-white dark:bg-gray-800 dark:text-white whitespace-nowrap">
                   로그인
                 </Button>
               </Link>
@@ -106,7 +109,7 @@ export default function NaviBar() {
             <Link href="/dashboard">
               <Button
                 variant="default"
-                className="text-xs text-white bg-black sm:text-sm whitespace-nowrap"
+                className="text-xs text-white bg-black dark:bg-gray-900 sm:text-sm whitespace-nowrap"
               >
                 <span className="hidden sm:inline">
                   {isMainPage ? '대시보드 시작하기' : '대시보드'}

@@ -98,7 +98,7 @@ export const handleApiError = (
   // 토스트로 오류 메시지 표시
   if (showToast) {
     toast({
-      variant: 'destructive',
+      variant: 'error',
       title: title,
       description: message,
       duration: 5000,

@@ -15,6 +15,7 @@ export interface LabeledInputBoxProps {
   width?: string;
   labelWidth?: string;
   required?: boolean;
+  error?: string;
 }
 
 export default function LabeledInputBox({
@@ -29,6 +30,7 @@ export default function LabeledInputBox({
   width,
   labelWidth,
   required = false,
+  error,
 }: LabeledInputBoxProps) {
   return (
     <div
@@ -48,12 +50,16 @@ export default function LabeledInputBox({
         placeholder={typeof children === 'string' ? children : undefined}
         className={cn(
           'border rounded py-2 px-3 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 focus:outline-none',
+          error ? 'border-red-500' : '',
           width
         )}
         value={value}
         onChange={onChange}
         required={required}
       />
+      {error && (
+        <p className="text-red-500 text-xs mt-1">{error}</p>
+      )}
     </div>
   );
 }

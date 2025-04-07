@@ -5,6 +5,9 @@ import AuthInitializer from '@/components/AuthInitializer';
 import NaviBar from '@/components/NaviBar';
 import { Provider as JotaiProvider } from 'jotai';
 
+// 테마 프로바이더 추가
+import { ThemeProvider } from '@/components/theme-provider';
+
 const pretendard = localFont({
   src: [
     {
@@ -43,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="overflow-x-hidden">
+    <html lang="ko" className="overflow-x-hidden" suppressHydrationWarning>
       <head>
         <meta
           name="viewport"
@@ -55,11 +58,13 @@ export default function RootLayout({
         style={{ overflowX: 'hidden', maxWidth: '100vw' }}
       >
         <JotaiProvider>
-          <AuthInitializer />
-          <div className="flex flex-col w-full min-h-full overflow-hidden">
-            <NaviBar />
-            <main className="w-full pt-16 overflow-hidden">{children}</main>
-          </div>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <AuthInitializer />
+            <div className="flex flex-col w-full min-h-full overflow-hidden">
+              <NaviBar />
+              <main className="w-full pt-16 overflow-hidden">{children}</main>
+            </div>
+          </ThemeProvider>
         </JotaiProvider>
       </body>
     </html>

@@ -29,7 +29,15 @@ const toastVariants = cva(
       variant: {
         default: "border bg-background text-foreground",
         destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
+          "border border-red-200 bg-white text-red-900 dark:border-red-800 dark:bg-gray-950 dark:text-red-300",
+        error: 
+          "border border-red-100 bg-red-50 text-red-800 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300",
+        success: 
+          "border border-green-100 bg-green-50 text-green-800 dark:border-green-900/50 dark:bg-green-950/50 dark:text-green-300",
+        warning: 
+          "border border-yellow-100 bg-yellow-50 text-yellow-800 dark:border-yellow-900/50 dark:bg-yellow-950/50 dark:text-yellow-300",
+        info: 
+          "border border-blue-100 bg-blue-50 text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/50 dark:text-blue-300",
       },
     },
     defaultVariants: {
@@ -75,7 +83,17 @@ const ToastClose = React.forwardRef<
   <ToastPrimitives.Close
     ref={ref}
     className={cn(
-      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100 group-[.destructive]:text-red-300 group-[.destructive]:hover:text-red-50 group-[.destructive]:focus:ring-red-400 group-[.destructive]:focus:ring-offset-red-600",
+      "absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100",
+      "group-[.destructive]:text-red-700/70 group-[.destructive]:hover:text-red-700",
+      "group-[.error]:text-red-700/70 group-[.error]:hover:text-red-700",
+      "group-[.success]:text-green-700/70 group-[.success]:hover:text-green-700",
+      "group-[.warning]:text-yellow-700/70 group-[.warning]:hover:text-yellow-700",
+      "group-[.info]:text-blue-700/70 group-[.info]:hover:text-blue-700",
+      "dark:group-[.destructive]:text-red-300/70 dark:group-[.destructive]:hover:text-red-300",
+      "dark:group-[.error]:text-red-300/70 dark:group-[.error]:hover:text-red-300",
+      "dark:group-[.success]:text-green-300/70 dark:group-[.success]:hover:text-green-300",
+      "dark:group-[.warning]:text-yellow-300/70 dark:group-[.warning]:hover:text-yellow-300",
+      "dark:group-[.info]:text-blue-300/70 dark:group-[.info]:hover:text-blue-300",
       className
     )}
     toast-close=""

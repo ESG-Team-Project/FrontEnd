@@ -120,6 +120,8 @@ export default function ReportPage() {
       api.documents.downloadBlob(blob, filename);
       
       toast({
+        variant: "success",
+        title: "다운로드 완료",
         description: `${filename} 파일이 다운로드되었습니다.`,
       });
     } catch (error) {
@@ -142,7 +144,7 @@ export default function ReportPage() {
     // 준비중인 프레임워크는 다운로드 비활성화
     if (framework.supportLevel === 'coming') {
       toast({
-        variant: "default",
+        variant: "info",
         title: "준비중인 기능",
         description: `${framework.name} 프레임워크는 현재 개발 중입니다.`,
       });
