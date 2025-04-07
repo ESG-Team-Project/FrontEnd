@@ -41,7 +41,7 @@ import type { CompanyGRICategoryValue, CompanyGRIData } from '@/types/companyGri
 type ChartStep = 'info' | 'dataSource' | 'esgSelect' | 'datatable' | 'griSelect';
 
 // 단계 관리 훅
-function useChartStepManager(initialStep: ChartStep = 'info') {
+function useChartStepManager(initialStep: ChartStep = 'info', setSaveError?: (error: string | null) => void) {
   const [step, setStep] = useState<ChartStep>(initialStep);
   const [dataSource, setDataSource] = useState<'gri' | 'direct' | 'csv'>('direct');
   
@@ -50,6 +50,9 @@ function useChartStepManager(initialStep: ChartStep = 'info') {
     currentSelectedGriCategory: string | null = null,
     prepareGriChartDataFn?: () => void
   ) => {
+    // 오류 메시지 초기화
+    setSaveError?.(null);
+    
     if (step === 'info') {
       setStep('dataSource');
     } else if (step === 'dataSource') {
@@ -62,7 +65,7 @@ function useChartStepManager(initialStep: ChartStep = 'info') {
       setStep('datatable');
     } else if (step === 'griSelect') {
       if (!currentSelectedGriCategory) {
-        alert('GRI 카테고리를 선택해주세요.');
+        setSaveError?.('GRI 카테고리를 선택해주세요.');
         return false;
       }
       // GRI 차트 데이터 준비 함수 호출
@@ -72,10 +75,13 @@ function useChartStepManager(initialStep: ChartStep = 'info') {
       setStep('datatable');
     }
     return true;
-  }, [step, dataSource]);
+  }, [step, dataSource, setSaveError]);
   
   // 이전 단계로 이동하는 함수
   const goToPreviousStep = useCallback(() => {
+    // 오류 메시지 초기화
+    setSaveError?.(null);
+    
     if (step === 'dataSource') {
       setStep('info');
     } else if (step === 'esgSelect') {
@@ -89,7 +95,7 @@ function useChartStepManager(initialStep: ChartStep = 'info') {
         setStep('esgSelect');
       }
     }
-  }, [step, dataSource]);
+  }, [step, dataSource, setSaveError]);
   
   // 단계별 다음 버튼 텍스트 결정
   const getNextButtonText = useCallback(() => {
@@ -119,6 +125,8 @@ interface ESGChartDialogProps {
 }
 
 export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProps) {
+  const [saveError, setSaveError] = useState<string | null>(null);
+  
   // 단계 관리 훅 사용
   const {
     step,
@@ -128,7 +136,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     goToPreviousStep,
     getNextButtonText,
     goToStep,
-  } = useChartStepManager();
+  } = useChartStepManager('info', setSaveError);
   
   const [chartType, setChartType] = useState<ChartType>('bar');
   const [chartTitle, setChartTitle] = useState('');
@@ -283,12 +291,15 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
 
   // GRI 차트 데이터 준비
   const prepareGriChartData = useCallback(() => {
-    if (!griData || !selectedGriCategory) return;
+    if (!griData || !selectedGriCategory) {
+      setSaveError('GRI 카테고리를 선택해주세요.');
+      return;
+    }
 
     // GRI 카테고리에 해당하는 데이터 가져오기
     const categoryData = griData.griValues[selectedGriCategory];
     if (!categoryData) {
-      alert('선택한 GRI 카테고리에 데이터가 없습니다.');
+      setSaveError('선택한 GRI 카테고리에 데이터가 없습니다.');
       return;
     }
 
@@ -316,9 +327,9 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       goToStep('datatable');
     } else {
       // 텍스트 데이터나 데이터가 없는 경우
-      alert('이 카테고리는 차트로 표시할 수 있는 데이터가 없습니다.');
+      setSaveError('이 카테고리는 차트로 표시할 수 있는 데이터가 없습니다.');
     }
-  }, [griData, selectedGriCategory, goToStep]);
+  }, [griData, selectedGriCategory, goToStep, setSaveError]);
 
   // 데이터 변경 핸들러
   const handleDataChange = useCallback((newLabels: string[] | number[], newDatasets: ChartData['datasets']) => {
@@ -326,26 +337,32 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     setDatasets(newDatasets);
   }, []);
 
-  // 다음 버튼 핸들러
-  const handleNext = useCallback(() => {
-    if (step === 'datatable') {
-      // 데이터 테이블 입력 후 저장
-      handleSave();
-    } else {
-      // 다음 단계로 이동
-      goToNextStep(selectedGriCategory, prepareGriChartData);
-    }
-  }, [step, selectedGriCategory, goToNextStep, prepareGriChartData]);
+  // 폼 초기화 함수
+  const resetForm = useCallback(() => {
+    setChartTitle('');
+    setChartDescription('');
+    setChartType('bar');
+    setColSpan(1);
+    setSelectedESG(null);
+    setLabels([]);
+    setDatasets([]);
+    setSaveError(null);
+    setCsvError(null);
+    goToStep('info');
+  }, [goToStep]);
 
   // 저장 핸들러
   const handleSave = useCallback(async () => {
+    // 기존 오류 메시지 초기화
+    setSaveError(null);
+
     if (!chartTitle) {
-      alert('차트 제목을 입력해주세요');
+      setSaveError('차트 제목을 입력해주세요');
       return;
     }
 
     if (dataSource !== 'gri' && !selectedESG) {
-      alert('ESG 항목을 선택해주세요.');
+      setSaveError('ESG 항목을 선택해주세요.');
       return;
     }
 
@@ -355,7 +372,7 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       datasets.length === 0 ||
       datasets.some((ds) => !ds || ds.data.length === 0)
     ) {
-      alert('차트 데이터를 입력해주세요.');
+      setSaveError('차트 데이터를 입력해주세요.');
       return;
     }
 
@@ -391,7 +408,15 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
       setOpen(false);
     } catch (error) {
       console.error('차트 저장 실패:', error);
-      alert('차트 저장 중 오류가 발생했습니다.');
+      let errorMessage = '차트 저장 중 오류가 발생했습니다.';
+      
+      if (error instanceof Error) {
+        errorMessage += ` (${error.message})`;
+      }
+      
+      // alert 대신 오류 상태 업데이트
+      setSaveError(errorMessage);
+      // 오류 발생 시 모달은 닫지 않고 유지 (사용자가 수정할 수 있도록)
     } finally {
       setIsLoading(false);
     }
@@ -405,20 +430,25 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
     chartType, 
     colSpan, 
     onChartAdd, 
-    setOpen
+    setOpen, 
+    resetForm, 
+    setSaveError,
+    selectedGriCategory
   ]);
 
-  // 폼 초기화
-  const resetForm = useCallback(() => {
-    setChartTitle('');
-    setChartDescription('');
-    setChartType('bar');
-    setColSpan(1);
-    setSelectedESG(null);
-    setLabels([]);
-    setDatasets([]);
-    goToStep('info');
-  }, [goToStep]);
+  // 다음 버튼 핸들러
+  const handleNext = useCallback(() => {
+    // 오류 메시지 초기화
+    setSaveError(null);
+    
+    if (step === 'datatable') {
+      // 데이터 테이블 입력 후 저장
+      handleSave();
+    } else {
+      // 다음 단계로 이동
+      goToNextStep(selectedGriCategory, prepareGriChartData);
+    }
+  }, [step, selectedGriCategory, goToNextStep, prepareGriChartData, setSaveError, handleSave]);
 
   // 렌더링을 위한 함수들 추가
   const renderCsvUploadSection = useCallback(() => (
@@ -482,6 +512,14 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             onClick={() => setOpen(false)}
           />
         </DialogHeader>
+
+        {/* 오류 메시지 표시 영역 - 모든 단계에서 표시되도록 최상단에 배치 */}
+        {saveError && (
+          <div className="mb-4 p-3 border border-red-200 bg-red-50 rounded-md text-red-600">
+            <p className="text-sm font-medium">저장 오류: {saveError}</p>
+            <p className="text-xs mt-1">데이터를 수정한 후 다시 시도해주세요.</p>
+          </div>
+        )}
 
         <div className="space-y-4">
           {step === 'info' && (
@@ -631,7 +669,20 @@ export function ESGChartDialog({ open, setOpen, onChartAdd }: ESGChartDialogProp
             </div>
           )}
 
-          {step === 'datatable' && renderCsvUploadSection()}
+          {step === 'datatable' && (
+            <>
+              {renderCsvUploadSection()}
+              
+              <div className="mt-4">
+                <DataTable
+                  key={tableKey}
+                  initialLabels={labels}
+                  initialDatasets={datasets}
+                  onDataChange={handleDataChange}
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex justify-between mt-6">
