@@ -156,6 +156,36 @@ export default function GriEditForm({
   const [modalNumericUnit, setModalNumericUnit] = useState<string>('');
   const [modalDecimalPlaces, setModalDecimalPlaces] = useState<number>(0);
 
+  // 데이터 검증을 위한 useEffect 추가
+  useEffect(() => {
+    console.log("=== GRI 초기 데이터 검증 ===");
+    console.log("initialData:", initialData);
+    
+    // 샘플 카테고리 값 검증 (특정 항목들)
+    const debugCategories = ['102-1', '102-2', '102-3', '102-4', '102-5'];
+    debugCategories.forEach(catId => {
+      if (initialData.griValues[catId]) {
+        console.log(`${catId} 원본 데이터:`, initialData.griValues[catId]);
+      } else {
+        console.warn(`${catId} 데이터가 initialData에 없습니다`);
+      }
+    });
+  }, [initialData]);
+
+  // formData 업데이트 시 검증 로그 추가
+  useEffect(() => {
+    console.log("=== GRI formData 업데이트 감지 ===");
+    // 현재 formData 상태를 콘솔에 출력하여 데이터가 있는지 확인
+    const sampleKeys = Object.keys(formData).slice(0, 5); // 처음 5개 항목만 로깅
+    console.log("현재 formData 일부:", sampleKeys.map(key => ({
+      key,
+      dataType: formData[key]?.dataType,
+      textValue: formData[key]?.textValue,
+      numericValue: formData[key]?.numericValue,
+      timeSeriesLength: formData[key]?.timeSeriesData?.length || 0
+    })));
+  }, [formData]);
+
   // 컴포넌트 마운트 시 또는 initialData 변경 시 formData 초기화 강화
   useEffect(() => {
     console.log("initialData 변경감지: formData 갱신 중");
@@ -167,6 +197,11 @@ export default function GriEditForm({
       // 기존 데이터가 있으면 그대로 사용
       if (existingValue) {
         initialFormValues[cat.id] = {...existingValue};
+        console.log(`카테고리 ${cat.id} 기존 데이터 복사:`, {
+          dataType: existingValue.dataType,
+          textValue: existingValue.textValue,
+          numericValue: existingValue.numericValue
+        });
       } else {
         // 새 카테고리라면 빈 데이터 생성
         initialFormValues[cat.id] = {
@@ -176,10 +211,13 @@ export default function GriEditForm({
           textValue: cat.defaultDataType === 'text' ? '' : null,
           numericValue: cat.defaultDataType === 'numeric' ? 0 : null
         };
+        console.log(`카테고리 ${cat.id} 새 데이터 생성:`, initialFormValues[cat.id]);
       }
     }
     
+    console.log("formData 설정 전:", initialFormValues);
     setFormData(initialFormValues);
+    console.log("formData 설정 완료");
   }, [initialData, griCategories]);
 
   // 모달 열기
@@ -434,20 +472,33 @@ export default function GriEditForm({
 
   // 현재 값 표시 함수 수정
   const displayCurrentValue = (value: CompanyGRICategoryValue | undefined): string => {
-    if (!value) return '-';
+    // 디버깅 로그 추가
+    console.log(`displayCurrentValue 호출:`, value);
+    
+    if (!value) {
+      console.warn('displayCurrentValue: 값이 undefined입니다');
+      return '-';
+    }
 
     const dataType = value.dataType as GRIDataType;
-
+    
     switch (dataType) {
       case 'text':
+        console.log(`텍스트 값:`, value.textValue);
         return value.textValue ?? '-';
 
       case 'timeSeries':
         if (value.timeSeriesData && value.timeSeriesData.length > 0) {
           const latestYear = Math.max(...value.timeSeriesData.map((d) => d.year));
           const latestData = value.timeSeriesData.find((d) => d.year === latestYear);
+          console.log(`시계열 데이터:`, { 
+            총항목수: value.timeSeriesData.length,
+            최신연도: latestYear,
+            최신값: latestData?.value
+          });
           return latestData?.value?.toString() ?? `${value.timeSeriesData.length}개 항목`;
         }
+        console.log(`시계열 데이터: 항목 없음`);
         return '항목 없음';
 
       case 'numeric':
@@ -456,11 +507,18 @@ export default function GriEditForm({
             value.decimalPlaces !== undefined && value.decimalPlaces > 0
               ? value.numericValue.toFixed(value.decimalPlaces)
               : value.numericValue.toString();
+          console.log(`숫자 값:`, { 
+            값: value.numericValue, 
+            단위: value.numericUnit,
+            서식: formattedValue
+          });
           return `${formattedValue}${value.numericUnit ? ` ${value.numericUnit}` : ''}`;
         }
+        console.log(`숫자 값: null 또는 undefined`);
         return '-';
 
       default:
+        console.warn(`알 수 없는 데이터 타입:`, dataType);
         return '-';
     }
   };
@@ -520,6 +578,17 @@ export default function GriEditForm({
                     ))}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground truncate max-w-[180px]">
+                    {/* 디버깅용 직접 데이터 값 표시 */}
+                    <div className="text-xs text-gray-400 mb-1">
+                      {formData[category.id]?.dataType === 'text' ? 
+                        `텍스트: "${formData[category.id]?.textValue?.substring(0, 15) || '-'}"` : 
+                      formData[category.id]?.dataType === 'numeric' ?
+                        `숫자: ${formData[category.id]?.numericValue || '-'}` :
+                      formData[category.id]?.dataType === 'timeSeries' ?
+                        `시계열(${formData[category.id]?.timeSeriesData?.length || 0}개)` : '-'
+                      }
+                    </div>
+                    {/* 기존 표시 로직 */}
                     {displayCurrentValue(formData[category.id])}
                   </TableCell>
                   <TableCell>
