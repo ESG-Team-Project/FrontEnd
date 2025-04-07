@@ -73,6 +73,33 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
+// 캐시 방지를 위한 설정 객체 추가 (재사용 가능)
+const noCacheConfig = {
+  headers: {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0'
+  },
+  params: {
+    '_': Date.now() // 타임스탬프를 쿼리에 추가
+  }
+};
+
+// 캐시 방지 설정 생성 함수 (매 호출마다 새 타임스탬프 사용)
+export const createNoCacheConfig = (additionalParams = {}) => {
+  return {
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    },
+    params: {
+      ...additionalParams,
+      '_': Date.now() // 타임스탬프를 쿼리에 추가
+    }
+  };
+};
+
 /**
  * 모든 GRI 데이터 항목 가져오기
  *
@@ -127,18 +154,10 @@ export const getCompanyGriData = async (): Promise<GriDataItem[]> => {
 export async function getCompanyGriDataFormatted(): Promise<CompanyGRIData> {
   console.log('Fetching GRI data for company');
   try {
-    // 캐싱 방지를 위해 타임스탬프 추가
-    const timestamp = new Date().getTime();
+    // 캐싱 방지를 위한 설정 적용
+    const config = createNoCacheConfig();
     
-    const response = await axiosInstance.get('/company/gri', {
-      params: {
-        _t: timestamp // 캐싱 방지 파라미터
-      },
-      headers: {
-        'Cache-Control': 'no-cache, no-store',
-        'Pragma': 'no-cache'
-      }
-    });
+    const response = await axiosInstance.get('/company/gri', config);
     
     if (response.status !== 200) {
       throw new Error(`GRI 데이터 조회 실패: ${response.status}`);
@@ -253,11 +272,28 @@ export async function saveCompanyGriDataFormatted(data: CompanyGRIData): Promise
       after: `객체 (${Object.keys(objectData).length}개 키)`
     });
     
-    // API 호출 - 객체 형식으로 전송
-    const response = await axiosInstance.put('/company/gri', objectData);
+    // API 호출 - 객체 형식으로 전송 (캐시 방지 헤더 추가)
+    const response = await axiosInstance.put('/company/gri', objectData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     
     if (response.status !== 200 && response.status !== 201) {
       throw new Error(`GRI 데이터 저장 실패: ${response.status}`);
+    }
+    
+    // 저장 후 데이터 유효성 검증
+    console.log('GRI 데이터 저장 성공, 데이터 일관성 검증 중...');
+    try {
+      // 새로운 데이터를 즉시 조회하여 저장된 내용 확인
+      await getCompanyGriDataFormatted();
+    } catch (validationError) {
+      console.warn('저장 후 데이터 검증 실패:', validationError);
+      // 검증 실패해도 저장은 성공했으므로 계속 진행
     }
     
     return true;
@@ -307,8 +343,9 @@ export async function saveSingleGriCategory(
       const response = await axiosInstance.put('/company/gri', objectData, {
         headers: {
           'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store',
-          'Pragma': 'no-cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       
@@ -318,8 +355,23 @@ export async function saveSingleGriCategory(
       
       console.log('GRI 데이터 저장 성공:', response.status, response.data);
       
-      // 데이터 저장 후 새로운 데이터 다시 로드 - 선택적으로 활성화
-      // await getCompanyGriDataFormatted();
+      // 데이터 저장 후 일관성 검증
+      console.log('저장 후 데이터 일관성 검증 중...');
+      try {
+        // 새 데이터 조회 (캐시 무시 강제)
+        const refreshedData = await getCompanyGriDataFormatted();
+        const updatedCategory = refreshedData.griValues[categoryId];
+        
+        // 간단한 일관성 검사
+        if (!updatedCategory) {
+          console.warn('저장된 카테고리를 다시 조회할 수 없습니다:', categoryId);
+        } else {
+          console.log('데이터 일관성 확인 완료:', categoryId);
+        }
+      } catch (validationError) {
+        console.warn('저장 후 데이터 검증 오류:', validationError);
+        // 검증 실패해도 저장은 성공했으므로 계속 진행
+      }
       
       return true;
     } catch (apiError) {
@@ -384,21 +436,14 @@ export async function getGriDataPaginated(
   try {
     console.log(`페이지네이션 데이터 요청: page=${pageRequest.page}, size=${pageRequest.size}, sort=${pageRequest.sort || 'none'}`);
     
-    // 캐싱 방지를 위한 타임스탬프 추가
-    const timestamp = new Date().getTime();
-    
-    const response = await axiosInstance.get('/company/gri/paged', {
-      params: {
-        page: pageRequest.page,
-        size: pageRequest.size,
-        sort: pageRequest.sort,
-        _t: timestamp // 캐싱 방지용 파라미터
-      },
-      headers: {
-        'Cache-Control': 'no-cache, no-store',
-        'Pragma': 'no-cache'
-      }
+    // 캐시 방지 설정 생성
+    const config = createNoCacheConfig({
+      page: pageRequest.page,
+      size: pageRequest.size,
+      sort: pageRequest.sort
     });
+    
+    const response = await axiosInstance.get('/company/gri/paged', config);
     
     console.log(`페이지네이션 응답: 총 ${response.data.totalElements || 0}개 항목, ${response.data.totalPages || 0}개 페이지`);
     

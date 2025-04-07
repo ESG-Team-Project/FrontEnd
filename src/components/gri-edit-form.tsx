@@ -25,6 +25,7 @@ import type {
 } from '@/types/companyGriData'; // TimeSeriesDataPoint 임포트
 import { useEffect, useState } from 'react';
 import { GriEditModal } from './gri-edit-modal'; // 새로 분리한 모달 컴포넌트 임포트
+import { toast } from '@/components/ui/use-toast';
 
 interface GriEditFormProps {
   initialData: CompanyGRIData;
@@ -54,6 +55,76 @@ const getGroupIdFromCategoryId = (categoryId: string): string => {
   if (prefix.startsWith('4')) return 'GRI 400'; // 400번대 -> 'GRI 400'
 
   return ''; // 매칭 안될 경우
+};
+
+// 데이터 일관성 검증 함수 추가
+const verifyDataConsistency = async (
+  categoryId: string, 
+  updatedValue: CompanyGRICategoryValue
+): Promise<boolean> => {
+  try {
+    // 저장한 데이터와 서버에서 다시 조회한 데이터 비교
+    const { getCompanyGriDataFormatted } = await import('@/lib/api/gri');
+    const freshData = await getCompanyGriDataFormatted();
+    
+    // 해당 카테고리 아이템 찾기
+    const freshValue = freshData.griValues[categoryId];
+    
+    if (!freshValue) {
+      console.warn(`데이터 일관성 문제: 서버에서 카테고리 ${categoryId}를 찾을 수 없습니다.`);
+      return false;
+    }
+    
+    // 데이터 타입에 따른 비교
+    if (updatedValue.dataType === 'text') {
+      if (freshValue.textValue !== updatedValue.textValue) {
+        console.warn('데이터 일관성 문제: 텍스트 값이 일치하지 않습니다.', {
+          saved: updatedValue.textValue,
+          fresh: freshValue.textValue
+        });
+        return false;
+      }
+    } else if (updatedValue.dataType === 'numeric') {
+      if (freshValue.numericValue !== updatedValue.numericValue) {
+        console.warn('데이터 일관성 문제: 숫자 값이 일치하지 않습니다.', {
+          saved: updatedValue.numericValue,
+          fresh: freshValue.numericValue
+        });
+        return false;
+      }
+    } else if (updatedValue.dataType === 'timeSeries') {
+      // 시계열 데이터는 마지막 항목만 간단하게 비교
+      const savedLastItem = updatedValue.timeSeriesData && updatedValue.timeSeriesData.length > 0 ?
+        updatedValue.timeSeriesData[updatedValue.timeSeriesData.length - 1] : null;
+      
+      const freshLastItem = freshValue.timeSeriesData && freshValue.timeSeriesData.length > 0 ?
+        freshValue.timeSeriesData[freshValue.timeSeriesData.length - 1] : null;
+      
+      if (!savedLastItem && !freshLastItem) {
+        // 둘 다 비어있으면 일치
+        return true;
+      }
+      
+      if (!savedLastItem || !freshLastItem) {
+        console.warn('데이터 일관성 문제: 시계열 데이터의 존재 여부가 다릅니다.');
+        return false;
+      }
+      
+      if (savedLastItem.year !== freshLastItem.year || 
+          savedLastItem.value !== freshLastItem.value) {
+        console.warn('데이터 일관성 문제: 시계열 마지막 항목이 일치하지 않습니다.', {
+          saved: savedLastItem,
+          fresh: freshLastItem
+        });
+        return false;
+      }
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('데이터 일관성 검증 중 오류:', error);
+    return false;
+  }
 };
 
 export default function GriEditForm({
@@ -192,29 +263,70 @@ export default function GriEditForm({
           onChange(updatedData);
           
           try {
-            // 저장 후 서버에서 최신 데이터를 다시 가져오기 (선택적)
+            // 서버에서 최신 데이터를 다시 가져오기
             console.log("서버에서 최신 데이터를 다시 로드합니다.");
             const refreshedData = await getCompanyGriDataFormatted();
-            const mergedData = {
-              ...refreshedData,
-              griValues: {
-                ...refreshedData.griValues,
-                [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
-              }
-            };
-            onChange(mergedData);
+            
+            // 데이터 일관성 검증
+            const isConsistent = await verifyDataConsistency(categoryId, updatedValue);
+            
+            if (isConsistent) {
+              // 성공 메시지 표시
+              toast({
+                title: "저장 성공",
+                description: "데이터가 성공적으로 저장되었습니다.",
+                variant: "default",
+              });
+              
+              // 최신 데이터 설정 (방금 수정한 항목은 유지)
+              const mergedData = {
+                ...refreshedData,
+                griValues: {
+                  ...refreshedData.griValues,
+                  [categoryId]: updatedValue  // 방금 수정한 항목은 항상 최신으로 유지
+                }
+              };
+              onChange(mergedData);
+            } else {
+              // 경고 메시지 표시
+              toast({
+                title: "일부 불일치 감지",
+                description: "데이터가 저장되었으나 서버와 일부 불일치가 감지되었습니다.",
+                variant: "destructive",
+              });
+              
+              // 최신 데이터로 강제 업데이트
+              onChange(refreshedData);
+            }
           } catch (refreshError) {
             console.error("데이터 새로고침 실패:", refreshError);
-            // 새로고침 실패 시에는 무시하고 계속 진행
+            // 새로고침 실패 시 오류 알림
+            toast({
+              title: "데이터 갱신 오류",
+              description: "저장 후 최신 데이터를 불러오는 중 오류가 발생했습니다.",
+              variant: "destructive",
+            });
           }
         }
 
         return true;
       }
 
+      // 저장 실패 시 알림
+      toast({
+        title: "저장 실패",
+        description: "데이터 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
+        variant: "destructive",
+      });
       return false;
     } catch (error) {
       console.error('데이터 저장 중 오류 발생:', error);
+      // 오류 알림
+      toast({
+        title: "저장 실패",
+        description: "데이터 저장 중 오류가 발생했습니다. 다시 시도해 주세요.",
+        variant: "destructive",
+      });
       return false;
     } finally {
       setIsSaving(false);

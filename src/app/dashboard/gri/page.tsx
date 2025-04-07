@@ -16,13 +16,15 @@ import { griCategories } from '@/data/griCategories';
 import { griGroups } from '@/data/griGroups';
 import { 
   getCompanyGriDataFormatted, 
-  getGriDataPaginated, 
+  getGriDataPaginated,
   saveCompanyGriDataFormatted,
   type PageRequest,
   type PageResponse  
 } from '@/lib/api/gri';
 import type { CompanyGRIData } from '@/types/companyGriData';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from '@/components/ui/use-toast';
+import { RefreshCw } from 'lucide-react';
 
 export default function DashboardGriEditPage() {
   const { companyId } = useDashboard();
@@ -38,13 +40,24 @@ export default function DashboardGriEditPage() {
   
   // 마지막 데이터 업데이트 시간 추적
   const [lastDataUpdate, setLastDataUpdate] = useState<Date>(new Date());
+  
+  // 데이터 상태 추적
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   // 데이터 로딩 함수
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (showToast: boolean = false) => {
     if (!companyId) return;
 
     try {
       setIsLoadingData(true);
+      if (showToast) {
+        setIsRefreshing(true);
+        toast({
+          title: "데이터 새로고침",
+          description: "최신 데이터를 가져오는 중...",
+          variant: "default",
+        });
+      }
       setDataError(null);
       
       // 페이지네이션된 데이터 요청
@@ -61,23 +74,47 @@ export default function DashboardGriEditPage() {
       setTotalPages(pageResponse.totalPages);
       setTotalElements(pageResponse.totalElements);
       
-      // 데이터 가져오기
+      // 기존 데이터 초기화 후 새 데이터 가져오기 (캐시 무시)
+      setCompanyData(null);
       const data = await getCompanyGriDataFormatted();
       setCompanyData(data);
       
       // 데이터 업데이트 시간 기록
-      setLastDataUpdate(new Date());
+      const updateTime = new Date();
+      setLastDataUpdate(updateTime);
+      
+      if (showToast) {
+        toast({
+          title: "새로고침 완료",
+          description: `데이터가 성공적으로 업데이트되었습니다. (${updateTime.toLocaleTimeString()})`,
+          variant: "default",
+        });
+      }
     } catch (err) {
       console.error('Error loading GRI data:', err);
       setDataError('GRI 데이터를 불러오는 중 오류가 발생했습니다.');
+      
+      if (showToast) {
+        toast({
+          title: "새로고침 실패",
+          description: "데이터를 불러오는 중 오류가 발생했습니다. 다시 시도해 주세요.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoadingData(false);
+      setIsRefreshing(false);
     }
   }, [companyId, currentPage, pageSize]);
 
   // 페이지 변경 핸들러
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+  
+  // 수동 새로고침 핸들러
+  const handleManualRefresh = () => {
+    loadData(true);
   };
   
   // GRI 데이터 변경 핸들러
@@ -128,6 +165,18 @@ export default function DashboardGriEditPage() {
     >
       {companyData && (
         <>
+          <div className="flex justify-end mb-4">
+            <CustomButton 
+              onClick={handleManualRefresh} 
+              variant="outline" 
+              disabled={isRefreshing}
+              className="flex items-center"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? '새로고침 중...' : '데이터 새로고침'}
+            </CustomButton>
+          </div>
+          
           <GriEditForm
             initialData={companyData}
             griCategories={griCategories}

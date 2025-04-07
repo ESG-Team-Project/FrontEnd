@@ -32,6 +32,7 @@ import type { GRICategory } from '@/data/griCategories';
 import type { CompanyGRICategoryValue, TimeSeriesDataPoint } from '@/types/companyGriData';
 import { PlusCircle, Trash2 } from 'lucide-react';
 import { type ChangeEvent, useEffect, useState } from 'react';
+import { toast } from '@/components/ui/use-toast';
 
 // GRI 데이터 타입 정의
 type GRIDataType = 'text' | 'timeSeries' | 'numeric';
@@ -298,16 +299,30 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
           text: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
         });
 
-        // 성공 메시지 후 2초 후에 모달 닫기 (시간을 늘려 사용자가 메시지를 확인할 시간 제공)
+        // Toast 메시지 표시
+        toast({
+          title: "저장 완료",
+          description: `${editingCategory.category.name} 데이터가 저장되었습니다.`,
+          variant: "default",
+        });
+
+        // 성공 메시지 후 2.5초 후에 모달 닫기 (시간 연장)
         setTimeout(() => {
           setSaveMessage(null);
           // 저장 성공 시 모달 닫기
           onOpenChange(false);
-        }, 2000);
+        }, 2500);
       } else {
         setSaveMessage({
           type: 'error',
           text: '데이터 저장 중 오류가 발생했습니다. 다시 시도해주세요.',
+        });
+        
+        // 오류 Toast 메시지 표시
+        toast({
+          title: "저장 실패",
+          description: "데이터 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -315,6 +330,13 @@ export function GriEditModal({ isOpen, onOpenChange, editingCategory, onSave }: 
       setSaveMessage({
         type: 'error',
         text: '데이터 저장 중 오류가 발생했습니다.',
+      });
+      
+      // 오류 Toast 메시지 표시
+      toast({
+        title: "저장 실패",
+        description: "데이터 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
